@@ -1,0 +1,9 @@
+# 排除本機實景照片資料夾、參考草稿圖與 OpenStreetMap 原始 XML 暫存檔（不傳上 GitHub，保障隱私與輕量化）
+tntcsh/
+osm_map.xml
+aa190fc6a5da5710e0aea63299779c6c.jpg
+d1e8d63ca67ed612bb52f370f34697f4.png
+.DS_Store
+Thumbs.db
+node_modules/
+.vercel/

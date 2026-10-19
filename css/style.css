@@ -1,0 +1,1347 @@
+:root {
+  --bg-glass: rgba(16, 26, 38, 0.86);
+  --bg-glass-light: rgba(24, 38, 54, 0.92);
+  --border-line: rgba(255, 255, 255, 0.14);
+  --text-main: #F4F6F8;
+  --text-muted: #9EB1C4;
+  --accent-gold: #FFD23F;
+  --accent-blue: #3898EC;
+  --accent-green: #58C98B;
+  --accent-coral: #FF6B5B;
+  --radius-lg: 14px;
+  --radius-md: 10px;
+  --shadow-lg: 0 12px 32px rgba(5, 12, 20, 0.45);
+  --font-sans: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-sans);
+  background: #0F1A26;
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+}
+
+#appContainer {
+  position: relative;
+  width: 100vw;
+  height: 100dvh;
+  overflow: hidden;
+  user-select: none;
+}
+
+#campusCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  cursor: grab;
+}
+
+#campusCanvas:active {
+  cursor: grabbing;
+}
+
+/* 3D 浮動標籤層 */
+#labelsOverlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 2;
+}
+
+.b-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(15, 24, 34, 0.84);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #FFFFFF;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  transition: background 0.15s, border-color 0.15s;
+  will-change: transform;
+}
+
+.b-label:hover,
+.b-label.selected {
+  background: #FFD23F;
+  color: #141B24;
+  border-color: #FFFFFF;
+  z-index: 10;
+}
+
+.b-label .b-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3898EC;
+}
+
+.b-label.cat-landmark .b-dot { background: #FFD23F; }
+.b-label.cat-admin .b-dot { background: #64B5F6; }
+.b-label.cat-teaching .b-dot { background: #58C98B; }
+.b-label.cat-tech .b-dot { background: #FF8A5B; }
+.b-label.cat-sport .b-dot { background: #BA68C8; }
+.b-label.cat-eco .b-dot { background: #4DD0E1; }
+
+.b-label .b-fl {
+  font-size: 10.5px;
+  opacity: 0.78;
+  padding-left: 2px;
+}
+
+/* 單層教室浮動標籤 */
+.r-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #121E2B;
+  font-size: 11px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+  white-space: nowrap;
+  z-index: 5;
+}
+
+.r-label.active,
+.r-label:hover {
+  background: #FFD23F;
+  color: #101820;
+  font-weight: 800;
+  z-index: 12;
+}
+
+.r-label .r-fl {
+  background: #1B2A3A;
+  color: #FFF;
+  font-size: 9.5px;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+/* 周邊外部道路路名牌標籤 (台灣綠底白字路牌風格) */
+.road-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 5px;
+  background: rgba(18, 104, 72, 0.92);
+  border: 1.5px solid #F2F5F4;
+  color: #FFFFFF;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+  z-index: 1;
+}
+
+.road-label.primary {
+  background: rgba(15, 86, 138, 0.94);
+  border-color: #FFD23F;
+  font-size: 12.5px;
+}
+
+.dir-hint {
+  font-size: 11.5px;
+  color: #B6D7F5;
+  background: rgba(56, 152, 236, 0.12);
+  border: 1px solid rgba(56, 152, 236, 0.28);
+  border-radius: 7px;
+  padding: 5px 9px;
+  margin-bottom: 8px;
+}
+
+/* 頂部導覽列 */
+#topHeader {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  right: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px;
+  z-index: 15;
+  pointer-events: none;
+}
+
+#topHeader > * {
+  pointer-events: auto;
+}
+
+.glass-card {
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.brand-card {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 8px 15px 8px 11px;
+}
+
+.school-logo-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: contain;
+  background: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.38);
+  flex: none;
+  display: block;
+}
+
+.brand-text h1 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.brand-text small {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* 搜尋框與結果下拉 */
+.search-box {
+  position: relative;
+  flex: 1 1 280px;
+  max-width: 420px;
+}
+
+.search-input-wrap {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  height: 44px;
+}
+
+.search-input-wrap input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--text-main);
+  font-size: 14px;
+  outline: none;
+  padding-left: 8px;
+}
+
+.search-input-wrap input::placeholder {
+  color: var(--text-muted);
+}
+
+.quick-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.quick-chip {
+  border: 1px solid var(--border-line);
+  background: rgba(16, 26, 38, 0.78);
+  color: #DCE6F0;
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.quick-chip:hover {
+  background: var(--accent-gold);
+  color: #121A24;
+  border-color: var(--accent-gold);
+}
+
+#searchResults {
+  position: absolute;
+  top: 48px;
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  max-height: 340px;
+  overflow-y: auto;
+  z-index: 30;
+}
+
+#searchResults li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+#searchResults li:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.s-badge {
+  font-size: 11px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.s-badge.building { background: rgba(56, 152, 236, 0.25); color: #7CC4FA; }
+.s-badge.room { background: rgba(88, 201, 139, 0.25); color: #7CE8AC; }
+
+.s-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.s-info b {
+  display: block;
+  font-size: 13.5px;
+}
+
+.s-info small {
+  display: block;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.s-go {
+  font-size: 12px;
+  color: var(--accent-gold);
+  font-weight: 700;
+}
+
+/* 頂部右側工具群：視覺風格＆精選導覽 */
+.top-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.seg-group {
+  display: inline-flex;
+  padding: 4px;
+  gap: 4px;
+}
+
+.seg-group button {
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  padding: 6px 11px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.seg-group button.active,
+.seg-group button:hover {
+  background: var(--accent-gold);
+  color: #141C24;
+}
+
+/* 分區快速切換列 */
+#zoneBar {
+  position: absolute;
+  left: 14px;
+  top: 102px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 6px;
+  z-index: 12;
+}
+
+.zone-btn {
+  border: 0;
+  background: transparent;
+  color: #DCE6F0;
+  padding: 7px 11px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.zone-btn:hover,
+.zone-btn.active {
+  background: rgba(255, 210, 63, 0.2);
+  color: var(--accent-gold);
+  border-left: 3px solid var(--accent-gold);
+}
+
+/* 左側路線導航與任務導覽小面板 */
+#leftNavBox {
+  position: absolute;
+  left: 14px;
+  top: 375px;
+  width: 245px;
+  padding: 11px 12px;
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#leftNavBox h3 {
+  margin: 0;
+  font-size: 13px;
+  color: var(--accent-gold);
+  letter-spacing: 0.04em;
+}
+
+.nav-select-row {
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.nav-select-row select {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+  border: 1px solid var(--border-line);
+  border-radius: 7px;
+  padding: 5px 6px;
+  font-size: 12px;
+}
+
+.nav-select-row select option {
+  background: #14202E;
+  color: #FFF;
+}
+
+.tour-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-line);
+}
+
+.tour-btn {
+  border: 1px solid var(--border-line);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-main);
+  border-radius: 8px;
+  padding: 6px 9px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tour-btn:hover {
+  border-color: var(--accent-gold);
+  background: rgba(255, 210, 63, 0.15);
+}
+
+/* 右下角：樓層剖面切換器 */
+#floorSwitcher {
+  position: absolute;
+  right: 16px;
+  bottom: 48px;
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  gap: 4px;
+  z-index: 12;
+}
+
+#floorSwitcher .fl-lbl {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 2px 0;
+}
+
+#floorSwitcher button {
+  border: 0;
+  background: transparent;
+  color: var(--text-main);
+  width: 48px;
+  height: 36px;
+  border-radius: 9px;
+  font-weight: 800;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+#floorSwitcher button.active,
+#floorSwitcher button:hover {
+  background: var(--accent-gold);
+  color: #141C24;
+}
+
+/* 右側建築與教室詳情抽屜 */
+#detailDrawer {
+  position: absolute;
+  right: 76px;
+  top: 76px;
+  bottom: 52px;
+  width: min(410px, calc(100vw - 96px));
+  padding: 16px;
+  overflow-y: auto;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.drawer-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.drawer-head h2 {
+  margin: 5px 0 2px;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.en-sub {
+  color: var(--text-muted);
+  font-size: 11.5px;
+}
+
+.cat-pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 210, 63, 0.2);
+  color: var(--accent-gold);
+}
+
+.close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border-line);
+  background: rgba(255, 255, 255, 0.08);
+  color: #FFF;
+  cursor: pointer;
+}
+
+.photo-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
+  gap: 8px;
+}
+
+.photo-thumb {
+  position: relative;
+  border-radius: 9px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  aspect-ratio: 16 / 10;
+  cursor: pointer;
+  background: #0B131C;
+}
+
+.photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.25s;
+}
+
+.photo-thumb:hover img {
+  transform: scale(1.06);
+}
+
+.photo-thumb span {
+  position: absolute;
+  right: 6px;
+  bottom: 5px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #FFF;
+  font-size: 10.5px;
+  padding: 2px 6px;
+  border-radius: 5px;
+}
+
+.b-summary {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.65;
+  color: #DCE5EE;
+}
+
+.feature-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ft-tag {
+  font-size: 11.5px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: rgba(56, 152, 236, 0.16);
+  border: 1px solid rgba(56, 152, 236, 0.35);
+  color: #9AD1FF;
+}
+
+.drawer-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.act-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--border-line);
+  background: rgba(255, 255, 255, 0.08);
+  color: #FFF;
+  font-weight: 700;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.act-btn.pri {
+  background: var(--accent-gold);
+  color: #141C24;
+  border-color: var(--accent-gold);
+}
+
+.floors-section {
+  border-top: 1px solid var(--border-line);
+  padding-top: 10px;
+}
+
+.sec-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.reset-fl-btn {
+  border: 1px solid var(--border-line);
+  background: transparent;
+  color: var(--accent-gold);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.floors-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.floor-row {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid transparent;
+}
+
+.floor-row.active-fl {
+  border-color: var(--accent-gold);
+  background: rgba(255, 210, 63, 0.1);
+}
+
+.fl-badge {
+  width: 38px;
+  border: 0;
+  border-radius: 6px;
+  background: #243447;
+  color: var(--accent-gold);
+  font-weight: 900;
+  font-size: 13px;
+  cursor: pointer;
+  flex: none;
+}
+
+.fl-rooms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  flex: 1;
+}
+
+.rm-chip {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  color: #FFF;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rm-chip.rtype-class1 { border-left: 3px solid #58B957; }
+.rm-chip.rtype-class2 { border-left: 3px solid #4CC3D9; }
+.rm-chip.rtype-class3 { border-left: 3px solid #F2D03B; }
+.rm-chip.rtype-lab { border-left: 3px solid #E08A4B; }
+.rm-chip.rtype-office { border-left: 3px solid #8E9AAF; }
+
+.rm-chip:hover,
+.rm-chip.sel {
+  background: var(--accent-gold);
+  color: #121A24;
+  font-weight: 800;
+}
+
+/* 左下角小地圖 */
+#minimapBox {
+  position: absolute;
+  left: 14px;
+  bottom: 44px;
+  width: 146px;
+  height: 175px;
+  padding: 6px;
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#minimapBox span {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+#minimapCanvas {
+  width: 100%;
+  flex: 1;
+  border-radius: 8px;
+  display: block;
+}
+
+/* 底部中央：導航狀態與任務導覽播放器 */
+#navStatusBar,
+#tourPlayerBar {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 48px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  z-index: 18;
+  max-width: calc(100vw - 32px);
+}
+
+#tourPlayerBar {
+  bottom: 112px;
+  border-color: var(--accent-gold);
+}
+
+.nav-info b,
+.tour-info b {
+  display: block;
+  font-size: 14px;
+  color: var(--accent-gold);
+}
+
+.nav-info small,
+.tour-info small {
+  display: block;
+  font-size: 12px;
+  color: #DCE6F0;
+  margin-top: 2px;
+}
+
+/* 實景照片放大燈箱 */
+#photoModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 12, 18, 0.88);
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.modal-inner {
+  max-width: min(1024px, 94vw);
+  max-height: 88vh;
+  background: #14202E;
+  border: 1px solid var(--border-line);
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-inner img {
+  max-width: 100%;
+  max-height: 76vh;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.modal-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+/* 頁尾資訊列 */
+#campusFooter {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 34px;
+  background: rgba(11, 18, 26, 0.88);
+  border-top: 1px solid var(--border-line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  z-index: 14;
+}
+
+#campusToast {
+  position: fixed;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #FFD23F;
+  color: #101820;
+  font-weight: 800;
+  padding: 8px 18px;
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+  z-index: 90;
+}
+
+#campusToast.show {
+  opacity: 1;
+}
+
+/* 頂部功能按鈕 (地面漫步、特色學程) */
+.mode-pill-btn {
+  border: 1px solid var(--border-line);
+  color: var(--text-main);
+  padding: 0 14px;
+  height: 38px;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.mode-pill-btn:hover,
+.mode-pill-btn.active {
+  background: var(--accent-gold);
+  color: #141C24;
+  border-color: var(--accent-gold);
+}
+
+.mode-pill-btn.pri-pill {
+  border-color: rgba(255, 210, 63, 0.65);
+  color: var(--accent-gold);
+}
+
+/* 右上角：3D 動態方位羅盤指北針 + 視角平移控制盤 */
+#compassBox {
+  position: absolute;
+  right: 16px;
+  top: 72px;
+  padding: 9px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  z-index: 15;
+}
+
+.mouse-mode-switch {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  background: rgba(8, 14, 22, 0.65);
+  padding: 3px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.m-mode-btn {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: #CBD8E6;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.m-mode-btn.active,
+.m-mode-btn:hover {
+  background: var(--accent-gold);
+  color: #121A24;
+}
+
+.pan-dpad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 32px);
+  grid-template-rows: repeat(3, 28px);
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.pan-btn {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: #FFFFFF;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  user-select: none;
+}
+
+.pan-btn:hover {
+  background: var(--accent-gold);
+  color: #121A24;
+  border-color: var(--accent-gold);
+}
+
+.pan-btn.home {
+  background: rgba(255, 210, 63, 0.2);
+  border-color: rgba(255, 210, 63, 0.6);
+}
+
+#compassResetBtn {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  background: radial-gradient(circle, rgba(28, 44, 62, 0.95) 0%, rgba(12, 20, 30, 0.98) 100%);
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+  display: grid;
+  place-items: center;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.6);
+}
+
+#compassResetBtn:hover {
+  border-color: var(--accent-gold);
+}
+
+#compassDial {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+}
+
+.c-dir {
+  position: absolute;
+  font-size: 10px;
+  font-weight: 900;
+  color: #B8C7D6;
+  line-height: 1;
+}
+
+.c-dir.c-n {
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #FF595E;
+  font-size: 11px;
+}
+
+.c-dir.c-s {
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.c-dir.c-e {
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.c-dir.c-w {
+  left: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.c-needle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 34px;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+}
+
+.c-needle .n-red {
+  flex: 1;
+  background: #FF595E;
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+}
+
+.c-needle .s-white {
+  flex: 1;
+  background: #DCE4EC;
+  clip-path: polygon(0% 0%, 100% 0%, 50% 100%);
+}
+
+.compass-caption {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--accent-gold);
+  white-space: nowrap;
+}
+
+/* 3D 場景邊界東西南北方位大標籤 */
+.cardinal-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: rgba(12, 20, 30, 0.88);
+  border: 2px solid var(--accent-gold);
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  z-index: 3;
+}
+
+.cardinal-label small {
+  font-weight: 600;
+  color: #CBD8E6;
+  font-size: 11px;
+}
+
+/* 專門學程與科館亮點抽屜 */
+#programsDrawer {
+  position: absolute;
+  right: 76px;
+  top: 76px;
+  bottom: 52px;
+  width: min(440px, calc(100vw - 96px));
+  padding: 16px;
+  overflow-y: auto;
+  z-index: 21;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.programs-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.prog-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-line);
+  border-left: 4px solid var(--accent-gold);
+  border-radius: 10px;
+  padding: 11px 12px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.prog-card:hover,
+.prog-card.active {
+  background: rgba(255, 210, 63, 0.13);
+  border-color: var(--accent-gold);
+}
+
+.prog-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+.prog-head b {
+  font-size: 14.5px;
+  color: #FFF;
+}
+
+.prog-head span {
+  font-size: 11.5px;
+  color: var(--accent-gold);
+  font-weight: 700;
+}
+
+.prog-desc {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: #D2DCE6;
+}
+
+.prog-labs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.prog-lab-tag {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.09);
+  color: #E8F0F8;
+}
+
+/* 第一人稱地面實境漫步控制列 */
+#walkHudBar {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 44px;
+  padding: 12px 16px;
+  width: min(680px, calc(100vw - 28px));
+  z-index: 22;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-color: var(--accent-gold);
+}
+
+.walk-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.walk-head b {
+  display: block;
+  font-size: 14px;
+  color: var(--accent-gold);
+}
+
+.walk-head small {
+  display: block;
+  font-size: 11.5px;
+  color: #D0DCE8;
+  margin-top: 2px;
+}
+
+.walk-controls-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.walk-dpad {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.w-btn {
+  border: 1px solid var(--border-line);
+  background: rgba(255, 255, 255, 0.1);
+  color: #FFF;
+  border-radius: 8px;
+  padding: 6px 11px;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.w-btn.pri,
+.w-btn:hover {
+  background: var(--accent-gold);
+  color: #141C24;
+  border-color: var(--accent-gold);
+}
+
+.walk-spawns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.spawn-chip {
+  border: 1px solid var(--border-line);
+  background: rgba(255, 255, 255, 0.07);
+  color: #DCE6F0;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.spawn-chip:hover,
+.spawn-chip.active {
+  background: #3898EC;
+  color: #FFF;
+  border-color: #7CC4FA;
+}
+
+/* 版權聲明彈窗與頁尾連結 */
+#copyrightModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 12, 18, 0.85);
+  z-index: 105;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.copy-modal-box {
+  max-width: 580px;
+  width: 100%;
+  padding: 18px 20px;
+  gap: 12px;
+}
+
+.copy-body {
+  font-size: 13px;
+  line-height: 1.65;
+  color: #DCE6F0;
+}
+
+.copy-body p {
+  margin: 0 0 8px;
+}
+
+.copy-body a {
+  color: var(--accent-gold);
+}
+
+.copy-link-btn {
+  border: 0;
+  background: rgba(255, 210, 63, 0.16);
+  color: var(--accent-gold);
+  border-radius: 5px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.copy-link-btn:hover {
+  background: var(--accent-gold);
+  color: #141C24;
+}
+
+@media (max-width: 900px) {
+  #zoneBar, #leftNavBox, #minimapBox {
+    display: none;
+  }
+  #detailDrawer, #programsDrawer {
+    right: 12px;
+    left: 12px;
+    width: auto;
+    top: auto;
+    bottom: 42px;
+    max-height: 54vh;
+  }
+}

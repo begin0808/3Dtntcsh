@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>國立臺南大學附屬高級中學 — 3D 互動校園導覽地圖</title>
+  <meta name="description" content="國立南大附中（TNTCSH）115學年度 3D 互動校園導覽：整合教學大樓、綜合高中專門學程館舍、地面實境漫步與動態羅盤方位標示。">
+  <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="assets/tntcsh-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="appContainer">
+    <!-- 3D WebGL 畫布 -->
+    <canvas id="campusCanvas" aria-label="國立南大附中 3D 校園"></canvas>
+
+    <!-- 3D 浮動建築、教室、周邊道路與東西南北方位標籤層 -->
+    <div id="labelsOverlay"></div>
+
+    <!-- 頂部導覽列 -->
+    <header id="topHeader">
+      <div class="brand-card glass-card">
+        <img class="school-logo-img" src="assets/tntcsh-logo.png" alt="國立臺南大學附屬高級中學校徽 (ASHS.NUTN)">
+        <div class="brand-text">
+          <h1>國立南大附中 3D 校園導覽</h1>
+          <small>115 學年度 ・ 臺南市永康區中山南路 948 號</small>
+        </div>
+      </div>
+
+      <!-- 搜尋框與熱門關鍵字 -->
+      <div class="search-box">
+        <div class="search-input-wrap glass-card">
+          <span>🔍</span>
+          <input id="campusSearchInput" type="search" placeholder="搜尋班級 (如 315、105、115)、處室、資訊學程、合作社、美術教室..." autocomplete="off">
+        </div>
+        <div class="quick-chips">
+          <button type="button" class="quick-chip" data-q="315">315 教室</button>
+          <button type="button" class="quick-chip" data-q="105">105 教室</button>
+          <button type="button" class="quick-chip" data-q="115">115 教室</button>
+          <button type="button" class="quick-chip" data-q="資訊">資訊應用學程</button>
+          <button type="button" class="quick-chip" data-q="美術">美術教室</button>
+          <button type="button" class="quick-chip" data-q="合作社">合作社</button>
+          <button type="button" class="quick-chip" data-q="機械">機械館＆電梯</button>
+        </div>
+        <ul id="searchResults" class="glass-card" hidden></ul>
+      </div>
+
+      <!-- 頂部右側：一鍵最佳全覽、地面漫步、專門學程導覽與三種視覺主題切換 -->
+      <div class="top-tools">
+        <button type="button" id="resetBestViewBtn" class="mode-pill-btn pri-pill glass-card" title="一鍵回到預設全校最佳全覽角度與置中位置">
+          🏠 最佳全覽視角
+        </button>
+        <button type="button" id="walkModeBtn" class="mode-pill-btn glass-card" title="切換至行人高度（1.75m）第一人稱校園實境漫步">
+          🚶 地面實境漫步
+        </button>
+        <button type="button" id="programsToggleBtn" class="mode-pill-btn glass-card" title="瀏覽南大附中學術與 7 大專門學程科館亮點">
+          🎓 特色學程導覽
+        </button>
+        <div id="themeSwitcher" class="seg-group glass-card" role="group" aria-label="視覺風格切換">
+          <button type="button" class="active" data-theme="day">☀️ 晴空寫實</button>
+          <button type="button" data-theme="blueprint">📐 工程藍圖</button>
+          <button type="button" data-theme="sunset">🌇 夕陽暖光</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 右上角：3D 動態方位羅盤指北針 + 畫面平移與全覽操控盤 -->
+    <div id="compassBox" class="glass-card">
+      <button type="button" id="compassResetBtn" title="點擊回正「正北朝上」視角（北＝中山南路校門口側）" aria-label="指北針：點擊回正北方">
+        <div id="compassDial">
+          <span class="c-dir c-n">北N</span>
+          <span class="c-dir c-e">E</span>
+          <span class="c-dir c-s">S</span>
+          <span class="c-dir c-w">W</span>
+          <div class="c-needle">
+            <span class="n-red"></span>
+            <span class="s-white"></span>
+          </div>
+        </div>
+      </button>
+      <div class="compass-caption" id="compassHeadingTxt">⬆️ 北方：校門側</div>
+
+      <!-- 滑鼠左鍵模式切換：左鍵平移 vs 左鍵旋轉 -->
+      <div class="mouse-mode-switch" role="group" aria-label="滑鼠左鍵拖曳模式">
+        <button type="button" id="leftDragPanBtn" class="m-mode-btn active" title="按住滑鼠左鍵拖曳＝前後左右平移畫面（右鍵拖曳＝旋轉）">✋ 左鍵平移</button>
+        <button type="button" id="leftDragRotBtn" class="m-mode-btn" title="按住滑鼠左鍵拖曳＝360°旋轉視角（右鍵拖曳＝平移）">🔄 左鍵旋轉</button>
+      </div>
+
+      <!-- 十字方向平移與最佳全覽控制盤 (支援按住連續平移) -->
+      <div class="pan-dpad-grid" role="group" aria-label="畫面平移與縮放控制">
+        <span></span>
+        <button type="button" class="pan-btn" data-pan="up" title="畫面往上（前）平移">⬆️</button>
+        <span></span>
+        <button type="button" class="pan-btn" data-pan="left" title="畫面往左平移">⬅️</button>
+        <button type="button" class="pan-btn home" id="panCenterHomeBtn" title="一鍵回到預設全校最佳全覽畫面">🏠</button>
+        <button type="button" class="pan-btn" data-pan="right" title="畫面往右平移">➡️</button>
+        <button type="button" class="pan-btn" data-pan="zoomIn" title="放大視角">➕</button>
+        <button type="button" class="pan-btn" data-pan="down" title="畫面往下（後）平移">⬇️</button>
+        <button type="button" class="pan-btn" data-pan="zoomOut" title="縮小視角">➖</button>
+      </div>
+    </div>
+
+    <!-- 左側：校園分區快速跳轉 -->
+    <nav id="zoneBar" class="glass-card" aria-label="校園分區快速視角"></nav>
+
+    <!-- 左中：校園路線導航 -->
+    <aside id="leftNavBox" class="glass-card">
+      <h3>🧭 校園路線導航</h3>
+      <div class="nav-select-row">
+        <span>起點</span>
+        <select id="navStartSelect" aria-label="導航起點"></select>
+      </div>
+      <div class="nav-select-row">
+        <span>終點</span>
+        <select id="navEndSelect" aria-label="導航終點"></select>
+      </div>
+      <button type="button" class="act-btn pri" id="runNavBtn">規劃最短步行路線</button>
+    </aside>
+
+    <!-- 右側：樓層剖面切換器 -->
+    <div id="floorSwitcher" class="glass-card" role="group" aria-label="樓層切換">
+      <span class="fl-lbl">樓層</span>
+      <button type="button" class="active" data-floor="0" title="顯示全部樓層">全</button>
+      <button type="button" data-floor="4" title="4 樓剖面">4F</button>
+      <button type="button" data-floor="3" title="3 樓剖面">3F</button>
+      <button type="button" data-floor="2" title="2 樓剖面">2F</button>
+      <button type="button" data-floor="1" title="1 樓剖面">1F</button>
+    </div>
+
+    <!-- 右側：建築物詳情、實景照片與各樓層教室面板 -->
+    <aside id="detailDrawer" class="glass-card" hidden></aside>
+
+    <!-- 右側／中央抽屜：綜合高中專門學程與科館亮點面板 -->
+    <aside id="programsDrawer" class="glass-card" hidden>
+      <div class="drawer-head">
+        <div>
+          <span class="cat-pill">綜合高中學術＆專門學程</span>
+          <h2>🎓 附中特色學程與科館導覽</h2>
+          <small class="en-sub">點擊任一學程可高亮對應科館並飛往檢視專科實習空間</small>
+        </div>
+        <button type="button" class="close-btn" id="closeProgramsBtn" aria-label="關閉">✕</button>
+      </div>
+      <div id="programsList" class="programs-grid"></div>
+    </aside>
+
+    <!-- 底部中央：第一人稱「地面實境漫步模式」控制列 -->
+    <div id="walkHudBar" class="glass-card" hidden>
+      <div class="walk-head">
+        <div>
+          <b>🚶 地面實境漫步模式（行人視角 1.75m）</b>
+          <small id="walkStatusTxt">使用 W/A/S/D 或方向鍵移動・滑鼠左鍵拖曳環視四周・點擊建築查看資訊</small>
+        </div>
+        <button type="button" class="act-btn" id="exitWalkBtn" style="flex:none;">🦅 返回鳥瞰視角</button>
+      </div>
+      <div class="walk-controls-row">
+        <div class="walk-dpad" role="group" aria-label="漫步方向控制">
+          <button type="button" class="w-btn" data-wact="turnLeft" title="左轉 (A / ←)">↺ 左轉</button>
+          <button type="button" class="w-btn pri" data-wact="forward" title="前進 (W / ↑)">⬆️ 前進</button>
+          <button type="button" class="w-btn" data-wact="backward" title="後退 (S / ↓)">⬇️ 後退</button>
+          <button type="button" class="w-btn" data-wact="turnRight" title="右轉 (D / →)">↻ 右轉</button>
+        </div>
+        <div class="walk-spawns" id="walkSpawnBtns"></div>
+      </div>
+    </div>
+
+    <!-- 左下角：2D 校園與周邊道路縮圖雷達 (含北N方位標示) -->
+    <div id="minimapBox" class="glass-card">
+      <span>校園與周邊道路縮圖 (⬆️北)</span>
+      <canvas id="minimapCanvas" width="150" height="190"></canvas>
+    </div>
+
+    <!-- 底部：A* 導航狀態列 -->
+    <div id="navStatusBar" class="glass-card" hidden>
+      <div class="nav-info">
+        <b id="navRouteTitle">導航路線</b>
+        <small id="navRouteMeta"></small>
+      </div>
+      <button type="button" class="act-btn pri" id="simWalkBtn">🚶 模擬沿路帶路</button>
+      <button type="button" class="close-btn" id="clearNavBtn" title="清除導航">✕</button>
+    </div>
+
+    <!-- 版權與系統資訊視窗 -->
+    <div id="copyrightModal" hidden>
+      <div class="modal-inner copy-modal-box glass-card">
+        <div class="drawer-head">
+          <div>
+            <span class="cat-pill">Copyright & Attribution</span>
+            <h2>ℹ️ 關於本系統與版權聲明</h2>
+          </div>
+          <button type="button" class="close-btn" id="closeCopyModalBtn" aria-label="關閉">✕</button>
+        </div>
+        <div class="copy-body">
+          <p><b>🏫 版權所有：</b>國立臺南大學附屬高級中學（The Affiliated Senior High School of National University of Tainan）</p>
+          <p><b>📍 學校地址：</b>710034 臺南市永康區中山南路 948 號 ｜ <b>電話：</b>(06) 232-6251</p>
+          <p><b>🏛️ 空間資料聲明：</b>本系統所載之 115 學年度班級教室配置、專門學程介紹與校園平面配置資料，均由國立南大附中彙整建置。</p>
+          <p><b>🗺️ 開放地理資料致謝（Open Data）：</b>校園周邊街道路網（中山南路、正強街、永平街、永二街、永興路等）與校界多邊形座標引用自 <a href="https://www.openstreetmap.org/way/161510567" target="_blank" rel="noopener">OpenStreetMap 開放街圖</a>（© OpenStreetMap contributors，依 ODbL 開放資料庫授權條款標示）。</p>
+          <p><b>⚙️ 3D 互動引擎技術：</b>基於 WebGL / Three.js (MIT License) 與原創程序化建築立面建模開發。</p>
+        </div>
+        <div class="modal-foot">
+          <span>© 2026 國立臺南大學附屬高級中學 All Rights Reserved.</span>
+          <button type="button" class="act-btn pri" id="okCopyModalBtn" style="flex:none;">了解並關閉</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 頂部浮動通知 -->
+    <div id="campusToast"></div>
+
+    <!-- 底部操作說明與版權列 -->
+    <footer id="campusFooter">
+      <span>🖱️ <b>操作</b>：左鍵拖曳平移 ・ 右鍵拖曳旋轉（可於右上角切換） ・ 滾輪縮放 ・ WASD 移動 ・ 點擊「🏠 最佳全覽視角」回正置中</span>
+      <span class="footer-copy">
+        © 2026 <b>國立臺南大學附屬高級中學 (TNTCSH)</b> All Rights Reserved. ｜ 地圖資料：© OpenStreetMap contributors ｜
+        <button type="button" id="openCopyModalBtn" class="copy-link-btn">ℹ️ 版權與資料來源說明</button>
+      </span>
+    </footer>
+  </div>
+
+  <!-- Three.js 與校園模組 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="data/campus-data.js"></script>
+  <script src="js/buildings-3d.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
