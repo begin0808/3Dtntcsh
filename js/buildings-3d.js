@@ -312,9 +312,7 @@ window.CampusBuilder3D = (function () {
     swimSouthLawn.position.set(-126, 0.02, 152);
     envGroup.add(swimSouthLawn);
 
-    const depotCourt = new THREE.Mesh(new THREE.BoxGeometry(24, 0.14, 34), brickPlazaMat);
-    depotCourt.position.set(96, 0.04, 150);
-    envGroup.add(depotCourt);
+    // (書庫南側曬場已依指示改為均勻植樹綠地公園)
 
     // (i) 餐飲館正門口前方道路 (x=114) 左右兩側的兩個獨立綠地區域 (對照平面圖)
     // 左側（西側）綠地區域：位於 x=79..109, z=-61..-42 (烹飪教室北側、餐飲館西南側)
@@ -406,6 +404,10 @@ window.CampusBuilder3D = (function () {
         if (Math.abs(x - rcX) < 4.2) return true;
       }
       if (z >= 110.0 && z <= 195.0 && Math.abs(x - 4.0) < 4.2) return true;
+      // 15. 游泳館周邊聯絡車道 (北側橫向道與東側迴圈道，依使用者黃色框標示)
+      if (z >= 61.5 && z <= 68.5 && x >= -152.0 && x <= -78.0) return true;
+      if (x >= -109.0 && x <= -101.0 && z >= 65.0 && z <= 90.0) return true;
+      if (z >= 84.5 && z <= 91.5 && x >= -107.0 && x <= -78.0) return true;
       return false;
     }
 
@@ -708,8 +710,8 @@ window.CampusBuilder3D = (function () {
     for (let z = -205; z <= -135; z += 11.0) {
       addTree(-88.5, z, 1.25, "mahogany");
     }
-    // (b) 西側直道樹列 (移至西圍牆邊綠帶 x = -167.5，距離跑道達 10.5m)
-    for (let z = -205; z <= -135; z += 11.0) {
+    // (b) 西側校界圍牆全線長條林帶 (依使用者紅色框指示：沿西圍牆內側 x = -167.5 由北到南貫穿種植)
+    for (let z = -205; z <= 195; z += 11.5) {
       addTree(-167.5, z, 1.25, "mahogany");
     }
     // (c) 北側半圓外環樹弧 (半徑擴大至 39.5m，北頂點達 z = -239.5，徹底遠離北弧跑道)
@@ -750,15 +752,28 @@ window.CampusBuilder3D = (function () {
       [-60, -48, -36, -24, -14].forEach(x => addTree(x, z, 1.25, "mahogany"));
     });
 
-    // (B) 土木館西側沿校牆林帶 (x = -72.0, z = 92..175)
-    for (let z = 92; z <= 175; z += 12.0) {
+    // (B) 土木館西側沿路林帶 (依使用者紅色框指示：x = -72.0 與 x = -89.0 兩側對稱均勻種植)
+    for (let z = 92; z <= 188; z += 12.0) {
       addTree(-72.0, z, 1.25, "mahogany");
+    }
+    for (let z = 142; z <= 186; z += 11.0) {
+      addTree(-89.0, z, 1.25, "mahogany");
     }
 
     // (C) 畜產館東側與道路間綠帶林帶 (x = -5.0，道路西側路旁草坪)
     for (let z = 92; z <= 165; z += 12.0) {
       addTree(-5.0, z, 1.3, "mahogany");
     }
+
+    // (D) 游泳館東側兩大綠地區塊 (依使用者紅色框指示：道路北側與南側各均勻種植)
+    // 北區塊 (Red 2)
+    [73.0, 81.0].forEach(z => {
+      [-96, -86].forEach(x => addTree(x, z, 1.25, "mahogany"));
+    });
+    // 南區塊 (Red 3)
+    [96.0, 104.0].forEach(z => {
+      [-96, -86].forEach(x => addTree(x, z, 1.25, "mahogany"));
+    });
 
     // ================= 8. 正德樓南側大綠園 (已整合於第 4 區 (E) 均勻對稱種植三排高大喬木) =================
 
@@ -797,11 +812,31 @@ window.CampusBuilder3D = (function () {
       [123, -57, 1.1], [127, -54, 1.15], [123, -49, 1.2]
     ].forEach(([x, z, s]) => addTree(x, z, s, "mahogany"));
 
-    // 游泳館南側大草坪樹林 (x = -155..-95, z = 178..188)
+    // (E) 游泳館正南方長條大綠地 (依使用者紅色框指示：z = 118 與 z = 129 均勻排列兩排景觀樹)
+    [118.0, 129.0].forEach(z => {
+      [-148, -136, -124, -112, -100, -88].forEach(x => addTree(x, z, 1.25, "mahogany"));
+    });
+
+    // 游泳館南側大草坪遠端景觀樹林 (x = -155..-95, z = 178..188)
     for (let x = -155; x <= -95; x += 15.0) {
       addTree(x, 178.0, 1.3, "mahogany");
       addTree(x + 7.5, 186.0, 1.25, "mahogany");
     }
+
+    // (F) 園藝教學區與農經館南側草坪 (依使用者紅色框指示：z = 180.0 均勻橫向種植一排景觀樹)
+    [16, 26, 36, 46, 56, 64].forEach(x => addTree(x, 180.0, 1.25, "mahogany"));
+
+    // (G) 書庫南側大草坪綠園 (依使用者紅色框指示：均勻種植 3×3 景觀林木)
+    [152, 166, 180].forEach(z => {
+      [90, 104, 118].forEach(x => addTree(x, z, 1.25, "mahogany"));
+    });
+
+    // (H) 工友室西側與南側綠帶 (依使用者紅色框指示：工友室西側與南側均勻種樹)
+    // 工友室西側 (Red 5)
+    [138, 147, 156, 165].forEach(z => addTree(145.0, z, 1.25, "mahogany"));
+    // 工友室南側 (Red 8)
+    [144, 154, 164].forEach(x => addTree(x, 178.0, 1.25, "mahogany"));
+
     return envGroup;
   }
 
