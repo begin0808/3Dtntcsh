@@ -1184,13 +1184,11 @@
     });
   }
 
-  // ================= 3D 動態羅盤指北針與左下角小地圖繪製 =================
+  // ================= 3D 動態羅盤指北針 =================
   const compassDialEl = document.getElementById("compassDial");
   const compassHeadingEl = document.getElementById("compassHeadingTxt");
-  const miniCanvas = document.getElementById("minimapCanvas");
-  const miniCtx = miniCanvas.getContext("2d");
 
-  function updateCompassAndMinimap() {
+  function updateCompass() {
     // 計算相機目前的水平視線角 (0 = 朝北 -Z, 90° = 朝東 +X, 180° = 朝南 +Z, -90° = 朝西 -X)
     const camDir = new THREE.Vector3();
     camera.getWorldDirection(camDir);
@@ -1210,96 +1208,6 @@
       else if (normDeg >= 225 && normDeg < 315) dirTxt = "⬅️ 面向：西方 W（永興路側）";
       compassHeadingEl.textContent = dirTxt;
     }
-
-    // 繪製左下角 2D 小地圖 (上方固定為北方 -Z)
-    const w = miniCanvas.width;
-    const h = miniCanvas.height;
-    miniCtx.clearRect(0, 0, w, h);
-
-    const mapX = x => ((x + 210) / 420) * w;
-    const mapZ = z => ((z + 305) / 540) * h;
-
-    miniCtx.fillStyle = "#16222B";
-    miniCtx.fillRect(0, 0, w, h);
-
-    if (DATA.campusBoundary && DATA.campusBoundary.length) {
-      miniCtx.fillStyle = "#2A4730";
-      miniCtx.beginPath();
-      DATA.campusBoundary.forEach(([bx, bz], i) => {
-        if (i === 0) miniCtx.moveTo(mapX(bx), mapZ(bz));
-        else miniCtx.lineTo(mapX(bx), mapZ(bz));
-      });
-      miniCtx.closePath();
-      miniCtx.fill();
-    }
-
-    miniCtx.strokeStyle = "#62727E";
-    miniCtx.lineWidth = 2.2;
-    (DATA.externalRoads || []).forEach(rd => {
-      miniCtx.beginPath();
-      rd.points.forEach(([rx, rz], i) => {
-        if (i === 0) miniCtx.moveTo(mapX(rx), mapZ(rz));
-        else miniCtx.lineTo(mapX(rx), mapZ(rz));
-      });
-      miniCtx.stroke();
-    });
-
-    miniCtx.strokeStyle = "#181C20";
-    miniCtx.lineWidth = 1.6;
-    (DATA.internalRoads || []).forEach(r => {
-      miniCtx.beginPath();
-      r.points.forEach(([rx, rz], i) => {
-        if (i === 0) miniCtx.moveTo(mapX(rx), mapZ(rz));
-        else miniCtx.lineTo(mapX(rx), mapZ(rz));
-      });
-      miniCtx.stroke();
-    });
-
-    DATA.buildings.forEach(b => {
-      const bx = mapX(b.x - b.w / 2);
-      const bz = mapZ(b.z - b.d / 2);
-      const bw = Math.max(3, (b.w / 420) * w);
-      const bd = Math.max(3, (b.d / 540) * h);
-
-      if (state.selectedBuilding && state.selectedBuilding.id === b.id) {
-        miniCtx.fillStyle = "#FFD23F";
-      } else if (b.category === "sport") {
-        miniCtx.fillStyle = "#58C98B";
-      } else {
-        miniCtx.fillStyle = "#DCE4EC";
-      }
-      miniCtx.fillRect(bx, bz, bw, bd);
-    });
-
-    // 繪製目前觀測位置與視線扇形
-    const focusPt = state.walkMode ? state.walkPos : camControl.target;
-    const tx = mapX(focusPt.x);
-    const tz = mapZ(focusPt.z);
-
-    // 視線方向扇形
-    miniCtx.fillStyle = "rgba(255, 210, 63, 0.28)";
-    miniCtx.beginPath();
-    miniCtx.moveTo(tx, tz);
-    const canvasAngle = Math.atan2(camDir.z, camDir.x);
-    miniCtx.arc(tx, tz, 18, canvasAngle - 0.45, canvasAngle + 0.45);
-    miniCtx.closePath();
-    miniCtx.fill();
-
-    miniCtx.strokeStyle = "#FF595E";
-    miniCtx.lineWidth = 2;
-    miniCtx.beginPath();
-    miniCtx.arc(tx, tz, 4.2, 0, Math.PI * 2);
-    miniCtx.stroke();
-
-    // 小地圖四邊 N / S / E / W 標記
-    miniCtx.font = "bold 10px sans-serif";
-    miniCtx.textAlign = "center";
-    miniCtx.fillStyle = "#FF595E";
-    miniCtx.fillText("▲北N", w / 2, 11);
-    miniCtx.fillStyle = "#9EB1C4";
-    miniCtx.fillText("南S", w / 2, h - 4);
-    miniCtx.fillText("西W", 12, h / 2 + 3);
-    miniCtx.fillText("東E", w - 12, h / 2 + 3);
   }
 
   let toastTimer = null;
@@ -1534,13 +1442,7 @@
       });
     });
 
-    // 6. 樓層切換器
-    document.querySelectorAll("#floorSwitcher button").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const fl = parseInt(btn.dataset.floor, 10);
-        setFloorFilter(fl);
-      });
-    });
+    // 6. 樓層切換器 (已依需求移除)
 
     // 7. 視覺風格切換器
     document.querySelectorAll("#themeSwitcher button").forEach(btn => {
@@ -1882,7 +1784,7 @@
 
     renderer.render(scene, camera);
     updateFloatingLabels();
-    updateCompassAndMinimap();
+    updateCompass();
   }
 
   initUI();

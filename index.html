@@ -109,16 +109,6 @@
       <button type="button" class="act-btn pri" id="runNavBtn">規劃最短步行路線</button>
     </aside>
 
-    <!-- 右側：樓層剖面切換器 -->
-    <div id="floorSwitcher" class="glass-card" role="group" aria-label="樓層切換">
-      <span class="fl-lbl">樓層</span>
-      <button type="button" class="active" data-floor="0" title="顯示全部樓層">全</button>
-      <button type="button" data-floor="4" title="4 樓剖面">4F</button>
-      <button type="button" data-floor="3" title="3 樓剖面">3F</button>
-      <button type="button" data-floor="2" title="2 樓剖面">2F</button>
-      <button type="button" data-floor="1" title="1 樓剖面">1F</button>
-    </div>
-
     <!-- 右側：建築物詳情、實景照片與各樓層教室面板 -->
     <aside id="detailDrawer" class="glass-card" hidden></aside>
     <!-- 縮小抽屜時的右下角浮動展開按鈕（保留3D標籤在場景上） -->
@@ -162,12 +152,6 @@
         </div>
         <div class="walk-spawns" id="walkSpawnBtns"></div>
       </div>
-    </div>
-
-    <!-- 左下角：2D 校園與周邊道路縮圖雷達 (含北N方位標示) -->
-    <div id="minimapBox" class="glass-card">
-      <span>校園與周邊道路縮圖 (⬆️北)</span>
-      <canvas id="minimapCanvas" width="150" height="190"></canvas>
     </div>
 
     <!-- 底部：A* 導航狀態列 -->
