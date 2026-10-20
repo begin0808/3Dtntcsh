@@ -115,7 +115,7 @@ html, body {
   padding-left: 2px;
 }
 
-/* 單層教室浮動標籤 */
+/* 單層教室浮動標籤（已移除每間教室重複的樓層前綴，版面更輕巧乾淨） */
 .r-label {
   position: absolute;
   left: 0;
@@ -123,17 +123,19 @@ html, body {
   pointer-events: auto;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px 7px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.94);
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.95);
   color: #121E2B;
   font-size: 11px;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+  font-weight: 600;
+  border: 1px solid rgba(0, 0, 0, 0.22);
+  box-shadow: 0 2px 7px rgba(0, 0, 0, 0.24);
   cursor: pointer;
   white-space: nowrap;
   z-index: 5;
+  transition: transform 0.14s ease, background 0.14s ease;
 }
 
 .r-label.active,
@@ -141,15 +143,50 @@ html, body {
   background: #FFD23F;
   color: #101820;
   font-weight: 800;
+  border-color: #101820;
+  transform: scale(1.08);
   z-index: 12;
 }
 
 .r-label .r-fl {
+  display: none; /* 已改為每棟大樓每層僅標示單一 1F/2F/3F 指標，隱藏個別教室重複前綴 */
+}
+
+/* 整體大樓各樓層獨立指標標籤 (1F、2F、3F... 整層樓僅標示一個，清楚醒目) */
+.fl-marker-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 3px 8px;
+  border-radius: 6px;
   background: #1B2A3A;
-  color: #FFF;
-  font-size: 9.5px;
-  padding: 1px 4px;
-  border-radius: 3px;
+  color: #FFD23F;
+  font-size: 12px;
+  font-weight: 800;
+  border: 1.5px solid #FFD23F;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  white-space: nowrap;
+  z-index: 10;
+  transition: transform 0.16s ease, background 0.16s ease;
+}
+
+.fl-marker-label:hover,
+.fl-marker-label.active {
+  background: #FFD23F;
+  color: #101820;
+  border-color: #FFFFFF;
+  transform: scale(1.12);
+  box-shadow: 0 4px 14px rgba(255, 210, 63, 0.6);
+}
+
+.fl-marker-label span {
+  letter-spacing: 0.5px;
 }
 
 /* 周邊外部道路路名牌標籤 (台灣綠底白字路牌風格) */

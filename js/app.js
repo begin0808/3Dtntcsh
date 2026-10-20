@@ -123,7 +123,8 @@
         rooms.forEach((rm, idx) => {
           const rx = isEW ? (-b.w / 2 + 0.6 + span * (idx + 0.5)) : 0;
           const rz = isEW ? 0 : (-b.d / 2 + 0.6 + span * (idx + 0.5));
-          const wy = (fl - 1) * (b.floorHeight || 3.6) + (b.floorHeight || 3.6) * 0.65;
+          const fh = b.floorHeight || 5.4;
+          const wy = (fl - 1) * fh + fh * 0.62;
           roomEntries.push({
             buildingId: b.id,
             buildingName: b.name,
@@ -149,19 +150,53 @@
     labelsContainer.appendChild(el);
     buildingLabels.set(b.id, {
       el,
-      pos: new THREE.Vector3(b.x, b.floors * (b.floorHeight || 3.6) + 3.5, b.z),
+      pos: new THREE.Vector3(b.x, b.floors * (b.floorHeight || 5.4) + 4.2, b.z),
       data: b
     });
   });
 
-  // 房間標籤容器 (當切換單一樓層或選取特定建築時顯示)
+  // 房間標籤與每棟大樓各樓層指標標籤容器 (大樓每層僅標一個 1F/2F/3F，個別教室不再重複 [3F] 前綴)
   const roomLabelPool = [];
+  const floorMarkerPool = [];
+
   function updateRoomLabelsDOM() {
     roomLabelPool.forEach(item => item.el.remove());
     roomLabelPool.length = 0;
+    floorMarkerPool.forEach(item => item.el.remove());
+    floorMarkerPool.length = 0;
 
     if (state.activeFloor === 0 && !state.selectedBuilding) return;
 
+    // 1. 若有點選特定建築，在該棟大樓各層樓旁呈現單一獨立的「1F、2F、3F」樓層指標
+    const b = state.selectedBuilding;
+    if (b && b.floorsData) {
+      const isEW = b.w >= b.d;
+      const fh = b.floorHeight || 5.4;
+
+      Object.keys(b.floorsData).forEach(flStr => {
+        const fl = parseInt(flStr, 10);
+        if (state.activeFloor !== 0 && state.activeFloor !== fl) return;
+
+        const flEl = document.createElement("button");
+        flEl.type = "button";
+        flEl.className = "fl-marker-label" + (state.activeFloor === fl ? " active" : "");
+        flEl.innerHTML = `<span>🏢 ${fl}F</span>`;
+        flEl.title = `點擊切換至 ${b.name} ${fl}F 剖面`;
+        flEl.addEventListener("click", e => {
+          e.stopPropagation();
+          setFloorFilter(state.activeFloor === fl ? 0 : fl);
+        });
+        labelsContainer.appendChild(flEl);
+
+        // 樓層標記定位在該層樓外端（東西向置於西側外端、南北向置於北側外端）
+        const fx = isEW ? (b.x - b.w / 2 - 3.2) : b.x;
+        const fz = isEW ? (b.z + b.d * 0.12) : (b.z - b.d / 2 - 3.2);
+        const fy = (fl - 1) * fh + fh * 0.62;
+        floorMarkerPool.push({ el: flEl, pos: new THREE.Vector3(fx, fy, fz), floor: fl });
+      });
+    }
+
+    // 2. 呈現各教室標籤（移除原本每間教室前面重複的 [3F] 樓層前綴，讓 105、106、203、303 等教室號碼更清晰一目了然）
     roomEntries.forEach(rm => {
       const matchFloor = state.activeFloor === 0 || rm.floor === state.activeFloor;
       const matchBld = !state.selectedBuilding || rm.buildingId === state.selectedBuilding.id;
@@ -170,7 +205,8 @@
 
       const el = document.createElement("div");
       el.className = `r-label rtype-${rm.type}` + (state.selectedRoom && state.selectedRoom.code === rm.code && state.selectedRoom.buildingId === rm.buildingId ? " active" : "");
-      el.innerHTML = `<span class="r-fl">${rm.floor}F</span><b>${rm.name}</b>`;
+      el.title = `${rm.floor}F ・ ${rm.name}`;
+      el.innerHTML = `<b>${rm.name}</b>`;
       el.addEventListener("click", e => {
         e.stopPropagation();
         focusOnRoom(rm);
@@ -463,7 +499,7 @@
 
     if (moveCamera && !state.walkMode) {
       const dist = Math.max(45, Math.max(b.w, b.d) * 1.45);
-      const topY = b.floors * (b.floorHeight || 3.6) * 0.5;
+      const topY = b.floors * (b.floorHeight || 5.4) * 0.5;
       flyTo([b.x, topY, b.z], [b.x + dist * 0.5, topY + dist * 0.72, b.z + dist * 0.85]);
     }
 
@@ -1256,7 +1292,22 @@
       item.el.classList.toggle("selected", !!(state.selectedBuilding && state.selectedBuilding.id === item.data.id));
     });
 
-    // 4. 教室標籤
+    // 4. 整體大樓各樓層獨立指標標籤 (1F, 2F, 3F...)
+    floorMarkerPool.forEach(item => {
+      tempV.copy(item.pos);
+      tempV.project(camera);
+      if (tempV.z > 1 || tempV.z < -1) {
+        item.el.style.display = "none";
+        return;
+      }
+      const x = (tempV.x * 0.5 + 0.5) * w;
+      const y = (-tempV.y * 0.5 + 0.5) * h;
+      item.el.style.display = "inline-flex";
+      item.el.style.transform = `translate(-50%, -50%) translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+      item.el.classList.toggle("active", state.activeFloor === item.floor);
+    });
+
+    // 5. 教室標籤（已移除每間教室重複的樓層前綴，版面更輕巧乾淨）
     roomLabelPool.forEach(item => {
       tempV.copy(item.pos);
       tempV.project(camera);

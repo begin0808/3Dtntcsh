@@ -427,7 +427,7 @@ window.CampusBuilder3D = (function () {
     if (b.rotY) root.rotation.y = b.rotY;
     root.userData = { buildingId: b.id, buildingData: b, floorGroups: {} };
 
-    const fh = b.floorHeight || 3.6;
+    const fh = b.floorHeight || 5.4;
     const totalH = b.floors * fh;
     const mainMat = getMat(b.colors.main);
     const secMat = getMat(b.colors.secondary);

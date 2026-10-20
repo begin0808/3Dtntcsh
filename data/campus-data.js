@@ -407,7 +407,7 @@ window.CAMPUS_DATA = {
       category: "landmark",
       zone: "north",
       x: 1.5, z: -181.5, w: 30, d: 8.5, rotY: -0.58,
-      floors: 1, floorHeight: 4.2,
+      floors: 1, floorHeight: 5.6,
       style: "gate",
       colors: {
         main: "#DDD2C0",
@@ -432,7 +432,7 @@ window.CAMPUS_DATA = {
       category: "admin",
       zone: "north",
       x: 41.0, z: -96.0, w: 48.0, d: 15.0, rotY: 0,
-      floors: 3, centerTowerFloors: 4, floorHeight: 3.7,
+      floors: 3, centerTowerFloors: 4, floorHeight: 5.5,
       style: "admin",
       colors: {
         main: "#EAE8E1",
@@ -481,7 +481,7 @@ window.CAMPUS_DATA = {
       category: "admin",
       zone: "north",
       x: -36.0, z: -96.0, w: 54.0, d: 15.0, rotY: 0,
-      floors: 3, floorHeight: 3.7,
+      floors: 3, floorHeight: 5.5,
       style: "jingye",
       colors: {
         main: "#EDEFF2",
@@ -527,7 +527,7 @@ window.CAMPUS_DATA = {
       category: "sport",
       zone: "north",
       x: -36.0, z: -134.0, w: 52.0, d: 36.0, rotY: 0,
-      floors: 2, floorHeight: 5.5,
+      floors: 2, floorHeight: 8.2,
       style: "activity",
       colors: {
         main: "#F0F3F7",
@@ -549,7 +549,7 @@ window.CAMPUS_DATA = {
       category: "facility",
       zone: "north",
       x: -36.0, z: -172.0, w: 38.0, d: 15.0, rotY: 0,
-      floors: 1, floorHeight: 3.4,
+      floors: 1, floorHeight: 4.8,
       style: "shed",
       colors: { main: "#CFD6DC", secondary: "#9A9A94", accent: "#4A4E52", roof: "#4A4E52" },
       summary: "位於活動中心北側、校門西側之單層停車棚。",
@@ -563,7 +563,7 @@ window.CAMPUS_DATA = {
       category: "facility",
       zone: "north",
       x: 88.5, z: -92.0, w: 13.0, d: 34.0, rotY: 0,
-      floors: 1, floorHeight: 3.4,
+      floors: 1, floorHeight: 4.8,
       style: "shed_green",
       colors: { main: "#9A9A94", secondary: "#8C8980", accent: "#6E967B", roof: "#9AB8A4" },
       summary: "位於東側南北向主幹道東側、餐飲館西側與北側之 L 型開放式學生單車／機車棚，採用薄荷綠波浪頂棚與波浪滾邊屋簷。",
@@ -579,7 +579,7 @@ window.CAMPUS_DATA = {
       category: "teaching",
       zone: "quad",
       x: -1.875, z: -46.0, w: 93.75, d: 15.0, rotY: 0,
-      floors: 3, floorHeight: 3.6,
+      floors: 3, floorHeight: 5.4,
       style: "legeng",
       colors: {
         main: "#F2F0EA",
@@ -633,7 +633,7 @@ window.CAMPUS_DATA = {
       category: "teaching",
       zone: "quad",
       x: -56.0, z: -2.375, w: 14.5, d: 72.25, rotY: 0,
-      floors: 2, floorHeight: 3.6,
+      floors: 2, floorHeight: 5.4,
       style: "liyong",
       colors: {
         main: "#E2E6EC",
@@ -677,7 +677,7 @@ window.CAMPUS_DATA = {
       category: "teaching",
       zone: "quad",
       x: 3.625, z: 42.0, w: 104.75, d: 16.5, rotY: 0,
-      floors: 3, floorHeight: 3.6,
+      floors: 3, floorHeight: 5.4,
       style: "zhengde",
       colors: {
         main: "#EAE5D9",
@@ -740,7 +740,7 @@ window.CAMPUS_DATA = {
       category: "teaching",
       zone: "quad",
       x: 56.0, z: -3.0, w: 14.5, d: 78.0, rotY: 0,
-      floors: 4, floorHeight: 3.6,
+      floors: 4, floorHeight: 5.4,
       style: "housheng",
       colors: {
         main: "#ECE7DF",
@@ -766,7 +766,7 @@ window.CAMPUS_DATA = {
       category: "tech",
       zone: "east",
       x: 118.0, z: 24.0, w: 22.0, d: 48.0, rotY: 0,
-      floors: 3, floorHeight: 3.8,
+      floors: 3, floorHeight: 5.7,
       style: "library",
       colors: {
         main: "#EFECE6",
@@ -800,7 +800,7 @@ window.CAMPUS_DATA = {
       zone: "east",
       // 往西移動至 x = 87.5 (w = 9.0)，使其西側左緣 (x = 83.0) 由上往下俯瞰時與烹飪教室左側 (x = 83.0) 完美對齊
       x: 87.5, z: 14.0, w: 9.0, d: 28.0, rotY: 0,
-      floors: 1, floorHeight: 3.8,
+      floors: 1, floorHeight: 5.5,
       style: "japanese_annex",
       colors: {
         main: "#EAEAE4",
@@ -821,7 +821,7 @@ window.CAMPUS_DATA = {
       category: "tech",
       zone: "east",
       x: 118.0, z: -82.0, w: 36.0, d: 16.0, rotY: 0,
-      floors: 3, floorHeight: 3.7,
+      floors: 3, floorHeight: 5.5,
       style: "catering",
       colors: {
         main: "#ECEFF2",
@@ -845,7 +845,7 @@ window.CAMPUS_DATA = {
       zone: "east",
       // 西側左緣位於 x = 97.0 - 14.0 = 83.0 (與原美術教室左側 x = 83.0 對齊)，東側與樂揚樓靠近但不連通、中間無道路
       x: 97.0, z: -21.0, w: 28.0, d: 13.5, rotY: 0,
-      floors: 3, floorHeight: 3.6,
+      floors: 3, floorHeight: 5.4,
       style: "cooking",
       colors: {
         main: "#9B9995",
@@ -869,7 +869,7 @@ window.CAMPUS_DATA = {
       zone: "east",
       // 往西微移至 x = 120.5 (w = 14.0)，西側 x = 113.5 與烹飪教室東側 (x = 111.0) 相隔 2.5m 靠近但不連通
       x: 120.5, z: -21.0, w: 14.0, d: 19.5, rotY: 0,
-      floors: 3, floorHeight: 3.6,
+      floors: 3, floorHeight: 5.4,
       style: "yueyang",
       colors: {
         main: "#F5F6F2",
@@ -892,7 +892,7 @@ window.CAMPUS_DATA = {
       category: "facility",
       zone: "east",
       x: 152.0, z: 12.0, w: 14.0, d: 28.0, rotY: 0,
-      floors: 1, floorHeight: 4.0,
+      floors: 1, floorHeight: 5.6,
       style: "flat_util",
       colors: { main: "#96948F", secondary: "#8DA3AD", accent: "#736E68", roof: "#595855" },
       summary: "東側車道旁 1 樓 5 開間水泥建築，負責全校資源回收與環保分類作業。",
@@ -906,7 +906,7 @@ window.CAMPUS_DATA = {
       category: "tech",
       zone: "east",
       x: 96.0, z: 78.0, w: 15.0, d: 38.0, rotY: 0,
-      floors: 3, centerTowerFloors: 4, floorHeight: 3.7,
+      floors: 3, centerTowerFloors: 4, floorHeight: 5.5,
       style: "food_proc",
       colors: {
         main: "#D48C74",
@@ -929,7 +929,7 @@ window.CAMPUS_DATA = {
       category: "tech",
       zone: "east",
       x: 118.0, z: 78.0, w: 14.0, d: 38.0, rotY: 0,
-      floors: 2, floorHeight: 3.8,
+      floors: 2, floorHeight: 5.6,
       style: "factory",
       colors: {
         main: "#A8AAAC",
@@ -951,7 +951,7 @@ window.CAMPUS_DATA = {
       category: "facility",
       zone: "east",
       x: 116.0, z: 128.0, w: 15.0, d: 36.0, rotY: 0,
-      floors: 4, floorHeight: 3.5,
+      floors: 4, floorHeight: 5.3,
       style: "book_depot",
       colors: {
         main: "#FFFFFF",
@@ -978,7 +978,7 @@ window.CAMPUS_DATA = {
       zone: "south_tech",
       // 往東方 (+X) 稍微平移至 x = 161.0，前方無樹木遮擋
       x: 161.0, z: 86.0, w: 15.5, d: 62.0, rotY: 0,
-      floors: 3, centerTowerFloors: 4, floorHeight: 3.8,
+      floors: 3, centerTowerFloors: 4, floorHeight: 5.7,
       style: "mechanical",
       colors: {
         main: "#C98C82",
@@ -1019,7 +1019,7 @@ window.CAMPUS_DATA = {
       category: "facility",
       zone: "south_tech",
       x: 160.0, z: 152.0, w: 13.0, d: 28.0, rotY: 0,
-      floors: 1, floorHeight: 4.2,
+      floors: 1, floorHeight: 5.8,
       style: "janitor",
       colors: { main: "#DFD6AE", secondary: "#A6A49B", accent: "#6E7378", roof: "#4A4B46" },
       summary: "位於機械館南側（平面圖右下角）之鵝黃色垂直浪板挑高平房，負責校園營繕與工友庶務，路底右側有一座深褐色架高觀景平台。",
@@ -1033,7 +1033,7 @@ window.CAMPUS_DATA = {
       category: "tech",
       zone: "south_tech",
       x: -22.0, z: 146.0, w: 20.0, d: 64.0, rotY: 0,
-      floors: 4, floorHeight: 3.7,
+      floors: 4, floorHeight: 5.5,
       style: "twin_tech",
       colors: {
         main: "#C8837B",
@@ -1077,7 +1077,7 @@ window.CAMPUS_DATA = {
       category: "tech",
       zone: "south_tech",
       x: -56.0, z: 146.0, w: 20.0, d: 64.0, rotY: 0,
-      floors: 4, floorHeight: 3.7,
+      floors: 4, floorHeight: 5.5,
       style: "twin_tech",
       colors: {
         main: "#CE8574",
@@ -1121,7 +1121,7 @@ window.CAMPUS_DATA = {
       category: "tech",
       zone: "south_tech",
       x: 38.0, z: 110.0, w: 42.0, d: 15.0, rotY: 0,
-      floors: 3, floorHeight: 3.7,
+      floors: 3, floorHeight: 5.5,
       style: "horticulture",
       colors: {
         main: "#EAE8E3",
@@ -1144,7 +1144,7 @@ window.CAMPUS_DATA = {
       category: "teaching",
       zone: "south_tech",
       x: 42.0, z: 158.0, w: 30.0, d: 26.0, rotY: 0,
-      floors: 2, floorHeight: 3.7,
+      floors: 2, floorHeight: 5.5,
       style: "farm_mgmt",
       colors: {
         main: "#6E352C",
@@ -1168,7 +1168,7 @@ window.CAMPUS_DATA = {
       category: "facility",
       zone: "west_sport",
       x: -97.0, z: 5.0, w: 22.0, d: 15.0, rotY: 0,
-      floors: 2, floorHeight: 3.8,
+      floors: 2, floorHeight: 5.6,
       style: "coop_art",
       colors: {
         main: "#CACCCF",
@@ -1196,7 +1196,7 @@ window.CAMPUS_DATA = {
       category: "sport",
       zone: "west_sport",
       x: -138.0, z: 90.0, w: 44.0, d: 34.0, rotY: 0,
-      floors: 2, floorHeight: 4.5,
+      floors: 2, floorHeight: 6.8,
       style: "swimming",
       colors: {
         main: "#C48880",
@@ -1246,7 +1246,7 @@ window.CAMPUS_DATA = {
       zone: "west_sport",
       badgeText: "風雨",
       x: -105.0, z: -71.0, w: 34.0, d: 46.0, rotY: 0,
-      floors: 1, floorHeight: 8.8,
+      floors: 1, floorHeight: 16.0,
       style: "sport_court",
       courtLayout: "basketball_3",
       covered: true,
@@ -1298,7 +1298,7 @@ window.CAMPUS_DATA = {
       zone: "west_sport",
       badgeText: "風雨",
       x: -143.0, z: 3.0, w: 32.0, d: 30.0, rotY: 0,
-      floors: 1, floorHeight: 8.5,
+      floors: 1, floorHeight: 15.6,
       style: "sport_court",
       courtLayout: "volleyball_2",
       covered: true,
@@ -1324,7 +1324,7 @@ window.CAMPUS_DATA = {
       zone: "west_sport",
       badgeText: "風雨",
       x: -118.5, z: 3.0, w: 12.0, d: 26.0, rotY: 0,
-      floors: 1, floorHeight: 8.2,
+      floors: 1, floorHeight: 15.0,
       style: "sport_court",
       courtLayout: "pickleball_1",
       covered: true,
@@ -1350,7 +1350,7 @@ window.CAMPUS_DATA = {
       zone: "west_sport",
       badgeText: "風雨",
       x: -122.5, z: 41.0, w: 73.0, d: 30.0, rotY: 0,
-      floors: 1, floorHeight: 8.8,
+      floors: 1, floorHeight: 16.0,
       style: "sport_court",
       courtLayout: "volleyball_4",
       covered: true,
