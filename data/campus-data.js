@@ -1217,7 +1217,6 @@ window.CAMPUS_DATA = {
       englishName: "Outdoor Tennis Courts",
       category: "sport",
       zone: "west_sport",
-      badgeText: "露天",
       x: -142.0, z: -71.0, w: 34.0, d: 46.0, rotY: 0,
       floors: 1, floorHeight: 1.2,
       style: "sport_court",
@@ -1244,7 +1243,6 @@ window.CAMPUS_DATA = {
       englishName: "Covered Solar Canopy Basketball Courts",
       category: "sport",
       zone: "west_sport",
-      badgeText: "風雨",
       x: -105.0, z: -71.0, w: 34.0, d: 46.0, rotY: 0,
       floors: 1, floorHeight: 16.0,
       style: "sport_court",
@@ -1270,7 +1268,6 @@ window.CAMPUS_DATA = {
       englishName: "Outdoor Basketball Court",
       category: "sport",
       zone: "west_sport",
-      badgeText: "露天",
       x: -110.0, z: -29.0, w: 26.0, d: 16.0, rotY: 0,
       floors: 1, floorHeight: 1.2,
       style: "sport_court",
@@ -1296,7 +1293,6 @@ window.CAMPUS_DATA = {
       englishName: "North Covered Volleyball Courts",
       category: "sport",
       zone: "west_sport",
-      badgeText: "風雨",
       x: -143.0, z: 3.0, w: 32.0, d: 30.0, rotY: 0,
       floors: 1, floorHeight: 15.6,
       style: "sport_court",
@@ -1322,7 +1318,6 @@ window.CAMPUS_DATA = {
       englishName: "Covered Pickleball Court",
       category: "sport",
       zone: "west_sport",
-      badgeText: "風雨",
       x: -118.5, z: 3.0, w: 12.0, d: 26.0, rotY: 0,
       floors: 1, floorHeight: 15.0,
       style: "sport_court",
@@ -1348,7 +1343,6 @@ window.CAMPUS_DATA = {
       englishName: "South Covered Volleyball Courts",
       category: "sport",
       zone: "west_sport",
-      badgeText: "風雨",
       x: -122.5, z: 41.0, w: 73.0, d: 30.0, rotY: 0,
       floors: 1, floorHeight: 16.0,
       style: "sport_court",
@@ -1370,23 +1364,44 @@ window.CAMPUS_DATA = {
     },
     {
       id: "track_field",
-      name: "彩虹田徑操場",
-      englishName: "Rainbow Athletics Track & Field",
+      name: "田徑操場",
+      englishName: "Athletics Track & Field",
       category: "sport",
       zone: "west_sport",
       x: -128.0, z: -170.0, w: 58.0, d: 118.0, rotY: 0,
       floors: 1, floorHeight: 1.0,
       style: "track",
       colors: {
-        main: "#4C8C4A",
-        secondary: "#D8433A",
-        accent: "#3A7BD5",
-        roof: "#EAEAEA"
+        main: "#9D3528",
+        secondary: "#4A92C8",
+        accent: "#558C45",
+        roof: "#F4F4F0"
       },
-      summary: "南大附中招牌「彩虹跑道」田徑場，紅、黃、綠、藍四色繽紛跑道環繞翠綠中央草皮，東側設有司令台與看台階梯。",
-      features: ["特色紅黃綠藍彩虹 PU 跑道", "中央天然草皮足球／田徑場", "東側司令台"],
+      summary: "南大附中標準紅褐色 PU 田徑場，外緣設有天藍色排水邊溝，內側環繞翠綠中央草皮，東側設有司令台看台與球門。",
+      features: ["標準紅褐 PU 跑道（外緣天藍色邊溝）", "中央天然草皮足球／田徑場", "東側司令台與看台"],
       floorsData: {
-        1: [{ code: "TRK", name: "彩虹跑道＆司令台", type: "sport" }]
+        1: [{ code: "TRK", name: "PU 跑道＆東側司令台", type: "sport" }]
+      }
+    },
+    {
+      id: "hort_teach_shed",
+      name: "園藝學程教學區（高架鋼棚）",
+      englishName: "Horticulture Teaching Shed",
+      category: "teaching",
+      zone: "south_tech",
+      x: -24.0, z: 98.0, w: 19.0, d: 15.0, rotY: 0,
+      floors: 1, floorHeight: 7.2,
+      style: "hort_teach_shed",
+      colors: {
+        main: "#A6B1B8",
+        secondary: "#687580",
+        accent: "#C5A059",
+        roof: "#4E5A65"
+      },
+      summary: "位於畜產館北側前方的園藝學程專用高架鋼構教學大棚架，設有銀灰 H 型鋼骨柱列、X 型交叉斜撐、高架實作平台與雙斜金屬光電頂棚，供園藝植物栽培與農作實務操作使用。",
+      features: ["挑高雙斜採光鋼構棚架", "銀灰鋼骨結構與 X 型交叉斜撐", "高架教學操作實務平台"],
+      floorsData: {
+        1: [{ code: "HT1", name: "園藝教學操作場", type: "lab" }]
       }
     }
   ],
@@ -1531,6 +1546,7 @@ window.CAMPUS_DATA = {
     covered_volleyball_n: "n_scourts",
     covered_pickleball: "n_coop",
     covered_volleyball_s: "n_scourts",
-    track_field: "n_track"
+    track_field: "n_track",
+    hort_teach_shed: "n_animal"
   }
 };

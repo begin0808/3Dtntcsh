@@ -142,7 +142,9 @@
     const el = document.createElement("button");
     el.type = "button";
     el.className = `b-label cat-${b.category}`;
-    el.innerHTML = `<span class="b-dot"></span><span class="b-txt">${b.name.replace(/（.*）/, "")}</span><small class="b-fl">${b.badgeText || (b.floors + "F")}</small>`;
+    const showFlBadge = b.style !== "sport_court" && b.category !== "sport" && (b.badgeText || b.floors > 0);
+    const flBadgeHtml = showFlBadge ? `<small class="b-fl">${b.badgeText || (b.floors + "F")}</small>` : "";
+    el.innerHTML = `<span class="b-dot"></span><span class="b-txt">${b.name.replace(/（.*）/, "")}</span>${flBadgeHtml}`;
     el.addEventListener("click", e => {
       e.stopPropagation();
       selectBuilding(b.id, !state.walkMode);
@@ -287,6 +289,8 @@
     if (state.walkMode) toggleWalkMode(false);
     setFloorFilter(0);
     document.getElementById("detailDrawer").hidden = true;
+    const reopenPill = document.getElementById("reopenDrawerPill");
+    if (reopenPill) reopenPill.hidden = true;
     document.getElementById("programsDrawer").hidden = true;
     document.getElementById("programsToggleBtn").classList.remove("active");
     state.selectedBuilding = null;
@@ -490,6 +494,8 @@
     // 關閉學程面板避免重疊
     document.getElementById("programsDrawer").hidden = true;
     document.getElementById("programsToggleBtn").classList.remove("active");
+    const reopenPill = document.getElementById("reopenDrawerPill");
+    if (reopenPill) reopenPill.hidden = true;
 
     const r = Math.max(b.w, b.d) * 0.58;
     highlightRing.geometry.dispose();
@@ -536,6 +542,9 @@
     const panel = document.getElementById("detailDrawer");
     panel.hidden = false;
 
+    const reopenPill = document.getElementById("reopenDrawerPill");
+    if (reopenPill) reopenPill.hidden = true;
+
     const categoryNames = {
       landmark: "校園地標",
       admin: "行政與教學支援",
@@ -544,6 +553,9 @@
       sport: "運動與集會場館",
       facility: "校園生活與服務設施"
     };
+
+    const isSportCourt = b.style === "sport_court" || b.category === "sport";
+    const bldgBadgeText = isSportCourt ? "" : (" ・ " + (b.badgeText ? (b.badgeText + "場地") : (b.floors + " 層樓")));
 
     const isEW = b.w >= b.d;
     const dirNote = isEW
@@ -569,11 +581,16 @@
     panel.innerHTML = `
       <div class="drawer-head">
         <div>
-          <span class="cat-pill cat-${b.category}">${categoryNames[b.category] || "校園建築"} ・ ${b.badgeText ? (b.badgeText + "場地") : (b.floors + " 層樓")}</span>
+          <span class="cat-pill cat-${b.category}">${categoryNames[b.category] || "校園建築"}${bldgBadgeText}</span>
           <h2>${b.name}</h2>
           <small class="en-sub">${b.englishName || ""}</small>
         </div>
-        <button type="button" class="close-btn" id="closeDrawerBtn" aria-label="關閉">✕</button>
+        <div class="drawer-head-actions">
+          <button type="button" class="drawer-action-btn minimize-btn" id="minimizeDrawerBtn" title="縮小／隱藏介紹面板，保留大樓空間標籤">
+            <span>收起面板 ▾</span>
+          </button>
+          <button type="button" class="close-btn" id="closeDrawerBtn" title="收起介紹面板（保留3D標籤）" aria-label="收起面板">✕</button>
+        </div>
       </div>
 
       <p class="b-summary">${b.summary}</p>
@@ -583,8 +600,9 @@
       </div>
 
       <div class="drawer-actions">
-        <button type="button" class="act-btn pri" id="navToHereBtn">🧭 導航帶路到此棟</button>
-        <button type="button" class="act-btn" id="setStartHereBtn">🚩 設為導航起點</button>
+        <button type="button" class="act-btn pri" id="navToHereBtn">🧭 導航帶路</button>
+        <button type="button" class="act-btn" id="setStartHereBtn">🚩 設為起點</button>
+        <button type="button" class="act-btn deselect-btn" id="deselectBldgBtn" title="取消選取此棟建築並清除教室標籤">✕ 取消選取</button>
       </div>
 
       <div class="floors-section">
@@ -599,12 +617,34 @@
       </div>
     `;
 
-    document.getElementById("closeDrawerBtn").addEventListener("click", () => {
+    function hideDrawerKeepLabels() {
       panel.hidden = true;
-      state.selectedBuilding = null;
-      highlightRing.visible = false;
-      updateRoomLabelsDOM();
-    });
+      if (reopenPill) {
+        reopenPill.innerHTML = `<span>📖 展開「${b.name.replace(/（.*）/, "")}」介紹 ▴</span>`;
+        reopenPill.hidden = false;
+        reopenPill.onclick = () => {
+          panel.hidden = false;
+          reopenPill.hidden = true;
+        };
+      }
+    }
+
+    const minBtn = document.getElementById("minimizeDrawerBtn");
+    if (minBtn) minBtn.addEventListener("click", hideDrawerKeepLabels);
+
+    const closeBtn = document.getElementById("closeDrawerBtn");
+    if (closeBtn) closeBtn.addEventListener("click", hideDrawerKeepLabels);
+
+    const deselectBtn = document.getElementById("deselectBldgBtn");
+    if (deselectBtn) {
+      deselectBtn.addEventListener("click", () => {
+        panel.hidden = true;
+        if (reopenPill) reopenPill.hidden = true;
+        state.selectedBuilding = null;
+        highlightRing.visible = false;
+        updateRoomLabelsDOM();
+      });
+    }
 
     document.getElementById("navToHereBtn").addEventListener("click", () => {
       startNavigation(state.navStartId || "main_gate", b.id);
