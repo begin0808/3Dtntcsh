@@ -428,72 +428,73 @@ window.CampusBuilder3D = (function () {
         pTopBox.position.y = trunkH + 0.5 * scale;
         varPixel.add(pTopBox);
       } else if (style === "trumpet_tree") {
-        const trunkH = (5.5 + Math.random() * 0.8) * scale;
-        // 1. Day
-        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.24 * scale, 0.38 * scale, trunkH, 8), getMat("#6B6258"));
+        // 風鈴木 (依使用者需求：全數改為翠綠茂盛樹冠，絕無黃葉)
+        const trunkH = (6.0 + Math.random() * 0.8) * scale;
+        // 1. Day (翠綠色樹冠)
+        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.26 * scale, 0.40 * scale, trunkH, 8), getMat("#6B6258"));
         trunk.position.y = trunkH / 2;
         trunk.castShadow = true;
         varDay.add(trunk);
-        const fMat = Math.random() > 0.4 ? trumpetFlowerMat : trumpetFlowerMat2;
-        const mainCrown = new THREE.Mesh(new THREE.SphereGeometry((2.6 + Math.random() * 0.4) * scale, 8, 7), fMat);
+        const fMat = Math.random() > 0.4 ? leafMatDark : leafMat1;
+        const mainCrown = new THREE.Mesh(new THREE.SphereGeometry((2.8 + Math.random() * 0.4) * scale, 8, 7), fMat);
         mainCrown.scale.set(1.2, 1.15, 1.2);
         mainCrown.position.y = trunkH + 1.8 * scale;
         mainCrown.castShadow = true;
         varDay.add(mainCrown);
         [-1.1, 1.1].forEach((ox, i) => {
-          const subCrown = new THREE.Mesh(new THREE.DodecahedronGeometry((1.6 + i * 0.2) * scale, 1), fMat);
+          const subCrown = new THREE.Mesh(new THREE.DodecahedronGeometry((1.7 + i * 0.2) * scale, 1), fMat);
           subCrown.position.set(ox * scale, trunkH + (1.2 + i * 0.3) * scale, (Math.random() - 0.5) * 1.5 * scale);
           subCrown.castShadow = true;
           varDay.add(subCrown);
         });
 
-        // 2. Brick
+        // 2. Brick (亮綠積木盤)
         const bTrunk = new THREE.Mesh(new THREE.CylinderGeometry(0.28 * scale, 0.40 * scale, trunkH, 12), getMat("#6E4D30", { roughness: 0.16, metalness: 0.15 }));
         bTrunk.position.y = trunkH / 2;
         bTrunk.castShadow = true;
         varBrick.add(bTrunk);
-        const bYellowMat = getMat("#FFD700", { roughness: 0.16, metalness: 0.15 });
-        const discRadii = [2.9 * scale, 2.1 * scale, 1.3 * scale];
+        const bGreenMat = getMat("#1B8738", { roughness: 0.16, metalness: 0.15 });
+        const discRadii = [3.0 * scale, 2.2 * scale, 1.4 * scale];
         const discH = 0.65 * scale;
         let curY = trunkH + 0.3 * scale;
         discRadii.forEach((r, idx) => {
-          const disc = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.94, r, discH, 16), bYellowMat);
+          const disc = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.94, r, discH, 16), bGreenMat);
           disc.position.y = curY;
           disc.castShadow = true;
           varBrick.add(disc);
           const studCount = idx === 0 ? 8 : (idx === 1 ? 6 : 4);
           for (let si = 0; si < studCount; si++) {
             const sa = (si / studCount) * Math.PI * 2;
-            const stud = new THREE.Mesh(new THREE.CylinderGeometry(0.20 * scale, 0.20 * scale, 0.18 * scale, 8), bYellowMat);
+            const stud = new THREE.Mesh(new THREE.CylinderGeometry(0.20 * scale, 0.20 * scale, 0.18 * scale, 8), bGreenMat);
             stud.position.set(Math.cos(sa) * (r * 0.72), curY + discH * 0.55, Math.sin(sa) * (r * 0.72));
             varBrick.add(stud);
           }
           curY += discH;
         });
-        const topStud = new THREE.Mesh(new THREE.CylinderGeometry(0.42 * scale, 0.42 * scale, 0.35 * scale, 12), bYellowMat);
+        const topStud = new THREE.Mesh(new THREE.CylinderGeometry(0.42 * scale, 0.42 * scale, 0.35 * scale, 12), bGreenMat);
         topStud.position.y = curY + 0.15 * scale;
         varBrick.add(topStud);
 
-        // 3. Pixel
+        // 3. Pixel (鮮綠體素方塊)
         const pTrunk = new THREE.Mesh(new THREE.BoxGeometry(0.55 * scale, trunkH, 0.55 * scale), getMat("#4A3525", { roughness: 0.85, flatShading: true }));
         pTrunk.position.y = trunkH / 2;
         pTrunk.castShadow = true;
         varPixel.add(pTrunk);
-        const pYellowMat = getMat("#FFE600", { roughness: 0.8, flatShading: true });
-        const b1 = new THREE.Mesh(new THREE.BoxGeometry(3.6 * scale, 1.6 * scale, 3.6 * scale), pYellowMat);
+        const pGreenMat = getMat("#20BA4B", { roughness: 0.8, flatShading: true });
+        const b1 = new THREE.Mesh(new THREE.BoxGeometry(3.6 * scale, 1.6 * scale, 3.6 * scale), pGreenMat);
         b1.position.y = trunkH + 1.0 * scale;
         b1.castShadow = true;
         varPixel.add(b1);
-        const b2 = new THREE.Mesh(new THREE.BoxGeometry(2.6 * scale, 1.4 * scale, 2.6 * scale), pYellowMat);
+        const b2 = new THREE.Mesh(new THREE.BoxGeometry(2.6 * scale, 1.4 * scale, 2.6 * scale), pGreenMat);
         b2.position.y = trunkH + 2.3 * scale;
         b2.castShadow = true;
         varPixel.add(b2);
-        const b3 = new THREE.Mesh(new THREE.BoxGeometry(1.6 * scale, 1.2 * scale, 1.6 * scale), pYellowMat);
+        const b3 = new THREE.Mesh(new THREE.BoxGeometry(1.6 * scale, 1.2 * scale, 1.6 * scale), pGreenMat);
         b3.position.y = trunkH + 3.4 * scale;
         b3.castShadow = true;
         varPixel.add(b3);
         [ [-1.5, 1.4, -1.5], [1.5, 1.4, 1.5], [-1.5, 1.4, 1.5], [1.5, 1.4, -1.5] ].forEach(([vx, vy, vz]) => {
-          const vc = new THREE.Mesh(new THREE.BoxGeometry(0.9 * scale, 0.9 * scale, 0.9 * scale), pYellowMat);
+          const vc = new THREE.Mesh(new THREE.BoxGeometry(0.9 * scale, 0.9 * scale, 0.9 * scale), pGreenMat);
           vc.position.set(vx * scale, trunkH + vy * scale, vz * scale);
           vc.castShadow = true;
           varPixel.add(vc);
@@ -613,28 +614,28 @@ window.CampusBuilder3D = (function () {
     [-34, -26, -18, -10].forEach(x => addTree(x, 24.0, 1.25, "mahogany"));
     [10, 18, 26, 34].forEach(x => addTree(x, 24.0, 1.25, "mahogany"));
 
-    // ================= 5. 田徑操場外圍一圈高大樹木 (圍繞跑道外緣，不壓跑道) =================
-    // (a) 東側直道樹列 (跑道與西主幹道之間綠帶, x = -93.0)
-    for (let z = -200; z <= -140; z += 10.0) {
-      addTree(-93.0, z, 1.3, "mahogany");
+    // ================= 5. 田徑操場外圍一圈高大樹木 (依使用者需求：徹底拉開距離，離跑道更遠一點) =================
+    // (a) 東側直道樹列 (移至西主幹道西緣綠帶 x = -88.5，距離跑道達 10m)
+    for (let z = -205; z <= -135; z += 11.0) {
+      addTree(-88.5, z, 1.25, "mahogany");
     }
-    // (b) 西側直道樹列 (跑道與西圍牆之間綠帶, x = -163.0)
-    for (let z = -200; z <= -140; z += 10.0) {
-      addTree(-163.0, z, 1.3, "mahogany");
+    // (b) 西側直道樹列 (移至西圍牆邊綠帶 x = -167.5，距離跑道達 10.5m)
+    for (let z = -205; z <= -135; z += 11.0) {
+      addTree(-167.5, z, 1.25, "mahogany");
     }
-    // (c) 北側半圓外環樹弧 (圓心 -128.0, -200.0, 半徑 33.5m)
+    // (c) 北側半圓外環樹弧 (半徑擴大至 39.5m，北頂點達 z = -239.5，徹底遠離北弧跑道)
     for (let i = 0; i <= 8; i++) {
       const a = (i / 8) * Math.PI;
-      const tx = -128.0 + 33.5 * Math.cos(a);
-      const tz = -200.0 - 33.5 * Math.sin(a);
-      addTree(tx, tz, 1.35, "mahogany");
+      const tx = -128.0 + 39.5 * Math.cos(a);
+      const tz = -200.0 - 39.5 * Math.sin(a);
+      addTree(tx, tz, 1.3, "mahogany");
     }
-    // (d) 南側半圓外環樹弧 (圓心 -128.0, -140.0, 半徑 33.5m)
+    // (d) 南側半圓外環樹弧 (半徑擴大至 38.5m，南頂點達 z = -101.5，徹底遠離南弧跑道)
     for (let i = 0; i <= 8; i++) {
       const a = Math.PI + (i / 8) * Math.PI;
-      const tx = -128.0 + 33.5 * Math.cos(a);
-      const tz = -140.0 - 33.5 * Math.sin(a);
-      addTree(tx, tz, 1.35, "mahogany");
+      const tx = -128.0 + 38.5 * Math.cos(a);
+      const tz = -140.0 - 38.5 * Math.sin(a);
+      addTree(tx, tz, 1.3, "mahogany");
     }
 
     // ================= 6. 園藝館周邊深綠大森林區 (路外草坪，嚴格避開園藝館建物輪廓) =================
@@ -740,6 +741,14 @@ window.CampusBuilder3D = (function () {
 
       const span = (isEW ? b.w - 1.2 : b.d - 1.2) / count;
       rooms.forEach((rm, idx) => {
+        // 樂耕樓 1F 中央玄關穿堂通道徹底打通：絕不在穿堂走廊中央生成任何 roomBlock 障礙方塊！
+        if (b.style === "legeng" && floorIndex === 1) {
+          const rxCheck = isEW ? (-b.w / 2 + 0.6 + span * (idx + 0.5)) : 0;
+          const hallCenter = -b.x;
+          if (rm.code === "LG4" || rm.type === "common" || rm.name.includes("穿堂") || rm.name.includes("玄關") || Math.abs(rxCheck - hallCenter) < 6.8) {
+            return; // 穿堂範圍完全淨空通透，絕無任何障礙！
+          }
+        }
         const cHex = roomColors[rm.type] || "#CFD4D8";
         const rMat = getMat(cHex, { roughness: 0.65 });
         const rw = isEW ? span * 0.9 : (b.w - 2.6);
@@ -884,9 +893,60 @@ window.CampusBuilder3D = (function () {
         g1.add(goalBar, postL, postR);
       });
 
-      // 5. 東側司令台 (還原 20261020_125032.jpg 實景：白色平頂雨遮、藍色看台階梯、正中國旗)
+      // 3b. 東側 100 公尺直道衝刺跑道延伸段 (依圖一實景與地圖設計：右側靠近司令台直道向南北兩端筆直延伸，呈現正統體育田徑場 D 字衝刺跑道形狀)
+      const sprintExtLen = 19.5; // 南北各向外延伸約 19.5m，達成全直道 100 公尺長度
+      const sprintTrackW = numLanes * laneWidth; // 8.7m
+      const sprintCenterX = b.w / 2 - 0.9 - sprintTrackW / 2; // 對齊東直道 6 道中心
+
+      // (A) 北側直道起跑衝刺延伸段 (PU + 藍色洗石子排水邊溝)
+      const northSprintPU = new THREE.Mesh(new THREE.BoxGeometry(sprintTrackW, 0.16, sprintExtLen), trackMat);
+      northSprintPU.position.set(sprintCenterX, 0.12, -b.d / 2 + sprintExtLen / 2);
+      northSprintPU.receiveShadow = true;
+      g1.add(northSprintPU);
+
+      const northSprintCurb = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.12, sprintExtLen + 0.5), curbMat);
+      northSprintCurb.position.set(b.w / 2 - 0.27, 0.10, -b.d / 2 + sprintExtLen / 2);
+      g1.add(northSprintCurb);
+
+      // (B) 南側直道終點衝刺延伸緩衝段 (PU + 藍色排水邊溝)
+      const southSprintPU = new THREE.Mesh(new THREE.BoxGeometry(sprintTrackW, 0.16, sprintExtLen), trackMat);
+      southSprintPU.position.set(sprintCenterX, 0.12, b.d / 2 - sprintExtLen / 2);
+      southSprintPU.receiveShadow = true;
+      g1.add(southSprintPU);
+
+      const southSprintCurb = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.12, sprintExtLen + 0.5), curbMat);
+      southSprintCurb.position.set(b.w / 2 - 0.27, 0.10, b.d / 2 - sprintExtLen / 2);
+      g1.add(southSprintCurb);
+
+      // (C) 100公尺延伸段 6 道直道白色分道標線 (貫穿南北延伸段)
+      for (let i = 0; i <= numLanes; i++) {
+        const lx = (b.w / 2 - 0.9) - i * laneWidth;
+        // 北延伸段直道標線
+        const nLinePts = [
+          new THREE.Vector3(lx, 0.23, -b.d / 2),
+          new THREE.Vector3(lx, 0.23, -b.d / 2 + sprintExtLen)
+        ];
+        g1.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(nLinePts), laneLineMat));
+        // 南延伸段直道標線
+        const sLinePts = [
+          new THREE.Vector3(lx, 0.23, b.d / 2 - sprintExtLen),
+          new THREE.Vector3(lx, 0.23, b.d / 2)
+        ];
+        g1.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(sLinePts), laneLineMat));
+      }
+
+      // (D) 100 公尺起跑線與終點線橫向白線
+      [-b.d / 2 + 1.2, b.d / 2 - 1.2].forEach(zy => {
+        const markPts = [
+          new THREE.Vector3(b.w / 2 - 0.9, 0.24, zy),
+          new THREE.Vector3(b.w / 2 - 0.9 - sprintTrackW, 0.24, zy)
+        ];
+        g1.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(markPts), laneLineMat));
+      });
+
+      // 5. 東側司令台 (位於 100 公尺直道延伸跑道外側草坪 x = b.w / 2 + 5.2，面向田徑場西側)
       const stageGroup = new THREE.Group();
-      stageGroup.position.set(b.w / 2 - 2.8, 0, 0);
+      stageGroup.position.set(b.w / 2 + 5.2, 0, 0);
 
       const stageBase = new THREE.Mesh(new THREE.BoxGeometry(6.2, 3.2, 18.0), whiteMat);
       stageBase.position.y = 1.6;

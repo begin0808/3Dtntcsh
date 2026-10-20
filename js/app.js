@@ -606,19 +606,20 @@
     }
     bodyGroup.add(rightArmPivot);
 
-    // 5. 左腿與右腿 (具有髖關節旋轉軸心)
+    // 5. 左腿與右腿 (具有髖關節旋轉軸心，延長腿部至 0.64m 並調整比例，確保跑步動態與雙腿鞋襪完整清晰可見)
+    const legLength = 0.64;
     const legGeo = isPixel
-      ? new THREE.BoxGeometry(0.13, 0.58, 0.13)
-      : (isBrick ? new THREE.BoxGeometry(0.13, 0.58, 0.13) : new THREE.BoxGeometry(0.12, 0.58, 0.12));
+      ? new THREE.BoxGeometry(0.13, legLength, 0.13)
+      : (isBrick ? new THREE.BoxGeometry(0.13, legLength, 0.13) : new THREE.CylinderGeometry(0.055, 0.05, legLength, 10));
 
     const leftLegPivot = new THREE.Group();
     leftLegPivot.position.set(-0.11, 0.74, 0);
     const leftLegMesh = new THREE.Mesh(legGeo, skinMat);
-    leftLegMesh.position.y = -0.27;
+    leftLegMesh.position.y = -legLength / 2;
     leftLegMesh.castShadow = true;
     leftLegPivot.add(leftLegMesh);
-    const leftShoe = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.11, 0.22), shoesMat);
-    leftShoe.position.set(0, -0.54, 0.04);
+    const leftShoe = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.12, 0.23), shoesMat);
+    leftShoe.position.set(0, -legLength + 0.02, 0.04);
     leftShoe.castShadow = true;
     leftLegPivot.add(leftShoe);
     bodyGroup.add(leftLegPivot);
@@ -626,11 +627,11 @@
     const rightLegPivot = new THREE.Group();
     rightLegPivot.position.set(0.11, 0.74, 0);
     const rightLegMesh = new THREE.Mesh(legGeo, skinMat);
-    rightLegMesh.position.y = -0.27;
+    rightLegMesh.position.y = -legLength / 2;
     rightLegMesh.castShadow = true;
     rightLegPivot.add(rightLegMesh);
-    const rightShoe = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.11, 0.22), shoesMat);
-    rightShoe.position.set(0, -0.54, 0.04);
+    const rightShoe = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.12, 0.23), shoesMat);
+    rightShoe.position.set(0, -legLength + 0.02, 0.04);
     rightShoe.castShadow = true;
     rightLegPivot.add(rightShoe);
     bodyGroup.add(rightLegPivot);
@@ -1697,26 +1698,32 @@
         avatarLimbParts.body.position.y = bobY;
       }
 
-      // 更新角色位置與朝向 (角色正面朝向行走方向)
+      // 更新角色位置與朝向 (設定 y = 0.08 確保雙腳平穩踩於路面之上，絕不埋入地面)
       if (studentAvatarGroup) {
-        studentAvatarGroup.position.set(state.walkPos.x, 0, state.walkPos.z);
+        studentAvatarGroup.position.set(state.walkPos.x, 0.08, state.walkPos.z);
         studentAvatarGroup.rotation.y = state.walkYaw + Math.PI;
       }
 
       if (state.walkView === "third_person") {
-        // 第三人稱追尾視角：提高仰角與後退跟隨距離，讓同學公仔完美居中顯示於畫面中央，絕不被底端控制面板遮擋
+        // 第三人稱跟隨視角：採用角色重心跟隨彈簧臂 (Spring-Arm Orbit)，鏡頭對焦於人偶胸肩高度，雙腿與鞋子始終完整呈現於螢幕安全區域內
         if (studentAvatarGroup) studentAvatarGroup.visible = true;
 
-        const followDist = 5.2;
-        const camY = 3.2 + Math.sin(state.walkPitch) * 2.0;
-        const camX = state.walkPos.x - lookDirX * followDist;
-        const camZ = state.walkPos.z - lookDirZ * followDist;
+        const followDist = 5.6;
+        const pitchClamped = Math.max(-0.35, Math.min(0.65, state.walkPitch));
+        const horizDist = followDist * Math.cos(pitchClamped);
+        const vertDist = followDist * Math.sin(pitchClamped);
+
+        const camX = state.walkPos.x - lookDirX * Math.max(2.5, horizDist);
+        const camZ = state.walkPos.z - lookDirZ * Math.max(2.5, horizDist);
+        const camY = Math.max(1.6, 2.8 + vertDist);
 
         camera.position.set(camX, camY, camZ);
+
+        // 瞄準點對焦於人偶前方，維持全身在畫面中央下三分之一處，全身雙腿擺動清晰可見
         const lookTarget = new THREE.Vector3(
-          state.walkPos.x + lookDirX * 10,
-          1.65 + Math.sin(state.walkPitch) * 6,
-          state.walkPos.z + lookDirZ * 10
+          state.walkPos.x + lookDirX * 3.8,
+          1.25 + Math.sin(pitchClamped) * 1.8,
+          state.walkPos.z + lookDirZ * 3.8
         );
         camera.lookAt(lookTarget);
       } else {
