@@ -300,9 +300,7 @@
     highlightRing.visible = false;
     updateRoomLabelsDOM();
 
-    document.querySelectorAll("#zoneBar .zone-btn").forEach((b, idx) => {
-      b.classList.toggle("active", idx === 0);
-    });
+
 
     camControl.targetGoal.set(...DEFAULT_OVERVIEW.target);
     camControl.sphericalGoal.radius = DEFAULT_OVERVIEW.radius;
@@ -1315,28 +1313,11 @@
 
   // ================= 初始化 UI 與事件綁定 =================
   function initUI() {
-    // 1. 分區快速跳轉按鈕
+    // 1. 分區快速跳轉按鈕 (已依需求移除)
     const zoneBar = document.getElementById("zoneBar");
-    zoneBar.innerHTML = DATA.zones.map((z, idx) => `
-      <button type="button" class="zone-btn ${idx === 0 ? "active" : ""}" data-zid="${z.id}">
-        <span>${z.icon}</span> ${z.name}
-      </button>
-    `).join("");
-
-    zoneBar.querySelectorAll(".zone-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        zoneBar.querySelectorAll(".zone-btn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        const z = DATA.zones.find(item => item.id === btn.dataset.zid);
-        if (z) {
-          if (z.id === "all") {
-            resetToBestOverview();
-          } else {
-            flyTo(z.target, z.camPos);
-          }
-        }
-      });
-    });
+    if (zoneBar) {
+      zoneBar.innerHTML = "";
+    }
 
     // 2. 右上角指北針按鈕與「🏠 最佳全覽視角」按鈕
     document.getElementById("compassResetBtn").addEventListener("click", () => {
@@ -1625,12 +1606,25 @@
 
   // ================= 投影 3D 標籤至螢幕座標 =================
   const tempV = new THREE.Vector3();
+  const camDirV = new THREE.Vector3();
+  const toLabelV = new THREE.Vector3();
+
   function updateFloatingLabels() {
     const w = window.innerWidth;
     const h = window.innerHeight;
 
-    // 1. 周邊道路路名牌
+    if (state.walkMode) {
+      camera.getWorldDirection(camDirV);
+      camDirV.y = 0;
+      camDirV.normalize();
+    }
+
+    // 1. 周邊道路路名牌 (地面實境漫步模式全數隱藏，鳥瞰模式顯示)
     roadLabels.forEach(item => {
+      if (state.walkMode) {
+        item.el.style.display = "none";
+        return;
+      }
       tempV.copy(item.pos);
       tempV.project(camera);
       if (tempV.z > 1 || tempV.z < -1) {
@@ -1643,8 +1637,12 @@
       item.el.style.transform = `translate(-50%, -50%) translate(${Math.round(x)}px, ${Math.round(y)}px)`;
     });
 
-    // 2. 東西南北方位大標籤
+    // 2. 東西南北方位大標籤 (地面實境漫步模式全數隱藏，鳥瞰模式顯示)
     cardinalLabels.forEach(item => {
+      if (state.walkMode) {
+        item.el.style.display = "none";
+        return;
+      }
       tempV.copy(item.pos);
       tempV.project(camera);
       if (tempV.z > 1 || tempV.z < -1) {
@@ -1657,8 +1655,29 @@
       item.el.style.transform = `translate(-50%, -50%) translate(${Math.round(x)}px, ${Math.round(y)}px)`;
     });
 
-    // 3. 建築物標籤
+    // 3. 建築物標籤 (地面漫步模式嚴格只顯示身旁 <= 65m 且在視線前方的建築，遠距大樓與兩側街道徹底隱藏)
     buildingLabels.forEach(item => {
+      if (state.walkMode) {
+        const isSelected = !!(state.selectedBuilding && state.selectedBuilding.id === item.data.id);
+        const dist = Math.hypot(item.pos.x - state.walkPos.x, item.pos.z - state.walkPos.z);
+        const maxDist = isSelected ? 120 : 65;
+        if (dist > maxDist) {
+          item.el.style.display = "none";
+          return;
+        }
+        toLabelV.set(item.pos.x - camera.position.x, 0, item.pos.z - camera.position.z).normalize();
+        const dot = camDirV.dot(toLabelV);
+        if (dot < 0.28 && !isSelected) {
+          item.el.style.display = "none";
+          return;
+        }
+        // 依距離平滑淡入淡出
+        const alpha = isSelected ? 1.0 : Math.min(1.0, Math.max(0.2, 1.0 - (dist - 40) / 25));
+        item.el.style.opacity = alpha;
+      } else {
+        item.el.style.opacity = "1";
+      }
+
       tempV.copy(item.pos);
       tempV.project(camera);
       if (tempV.z > 1 || tempV.z < -1) {
@@ -1674,6 +1693,16 @@
 
     // 4. 整體大樓各樓層獨立指標標籤 (1F, 2F, 3F...)
     floorMarkerPool.forEach(item => {
+      if (state.walkMode) {
+        const isSelected = !!(state.selectedBuilding && state.selectedBuilding.id === item.bId);
+        if (!isSelected) {
+          const dist = Math.hypot(item.pos.x - state.walkPos.x, item.pos.z - state.walkPos.z);
+          if (dist > 35) {
+            item.el.style.display = "none";
+            return;
+          }
+        }
+      }
       tempV.copy(item.pos);
       tempV.project(camera);
       if (tempV.z > 1 || tempV.z < -1) {
@@ -1687,8 +1716,18 @@
       item.el.classList.toggle("active", state.activeFloor === item.floor);
     });
 
-    // 5. 教室標籤（已移除每間教室重複的樓層前綴，版面更輕巧乾淨）
+    // 5. 教室標籤（地面漫步模式只在極近距離或選取該大樓時顯示）
     roomLabelPool.forEach(item => {
+      if (state.walkMode) {
+        const isSelected = !!(state.selectedBuilding && state.selectedBuilding.id === item.bId);
+        if (!isSelected) {
+          const dist = Math.hypot(item.pos.x - state.walkPos.x, item.pos.z - state.walkPos.z);
+          if (dist > 30) {
+            item.el.style.display = "none";
+            return;
+          }
+        }
+      }
       tempV.copy(item.pos);
       tempV.project(camera);
       if (tempV.z > 1 || tempV.z < -1) {
