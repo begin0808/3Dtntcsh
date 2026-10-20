@@ -4,6 +4,10 @@ osm_map.xml
 aa190fc6a5da5710e0aea63299779c6c.jpg
 d1e8d63ca67ed612bb52f370f34697f4.png
 20261020.png
+20261020-2.png
+/*.png
+!assets/tntcsh-logo.png
+!favicon.png
 *.jpg
 *.jpeg
 .DS_Store
