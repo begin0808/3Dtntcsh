@@ -1337,6 +1337,100 @@ html, body {
   color: var(--accent-gold);
 }
 
+.walk-char-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.char-chip {
+  border: 1px solid var(--border-line);
+  background: rgba(255, 255, 255, 0.08);
+  color: #FFF;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.char-chip:hover {
+  background: rgba(255, 210, 63, 0.2);
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+}
+
+.char-chip.active {
+  background: var(--accent-gold);
+  color: #141C24;
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 10px rgba(255, 210, 63, 0.4);
+}
+
+.char-chip.view-chip {
+  border-color: #3898EC;
+  color: #9AD1FF;
+}
+
+.char-chip.view-chip.active {
+  background: #2575C0;
+  color: #FFF;
+  border-color: #58A6FF;
+  box-shadow: 0 0 10px rgba(56, 152, 236, 0.4);
+}
+
+.hud-sub-sep {
+  color: var(--border-line);
+  font-size: 12px;
+  margin: 0 2px;
+}
+
+/* 復古遊戲像素風格 */
+body.theme-pixel #webglCanvas {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+body.theme-pixel {
+  --accent-gold: #00FFCC;
+  --accent-secondary: #FF0055;
+}
+
+body.theme-pixel .glass-card {
+  border-color: rgba(0, 255, 204, 0.4);
+  box-shadow: 0 0 16px rgba(0, 255, 204, 0.15);
+}
+
+body.theme-pixel #themeSwitcher button.active {
+  background: #00FFCC;
+  color: #0E1620;
+  text-shadow: none;
+  font-weight: 900;
+}
+
+/* 微縮積木世界風格 */
+body.theme-brick {
+  --accent-gold: #FF3B30;
+  --accent-secondary: #007AFF;
+}
+
+body.theme-brick .glass-card {
+  border-color: rgba(255, 59, 48, 0.45);
+  box-shadow: 0 8px 24px rgba(255, 59, 48, 0.2);
+}
+
+body.theme-brick #themeSwitcher button.active {
+  background: #FFCC00;
+  color: #141C24;
+  font-weight: 900;
+}
+
 .walk-head small {
   display: block;
   font-size: 11.5px;

@@ -62,8 +62,8 @@
         </button>
         <div id="themeSwitcher" class="seg-group glass-card" role="group" aria-label="視覺風格切換">
           <button type="button" class="active" data-theme="day">☀️ 晴空寫實</button>
-          <button type="button" data-theme="blueprint">📐 工程藍圖</button>
-          <button type="button" data-theme="sunset">🌇 夕陽暖光</button>
+          <button type="button" data-theme="pixel">🕹️ 像素冒險</button>
+          <button type="button" data-theme="brick">🧱 微縮積木</button>
         </div>
       </div>
     </header>
@@ -149,14 +149,20 @@
       <div id="programsList" class="programs-grid"></div>
     </aside>
 
-    <!-- 底部中央：第一人稱「地面實境漫步模式」控制列 -->
+    <!-- 底部中央：第三人稱「地面實境漫步冒險」控制列 -->
     <div id="walkHudBar" class="glass-card" hidden>
       <div class="walk-head">
         <div>
-          <b>🚶 地面實境漫步模式（行人視角 1.75m）</b>
-          <small id="walkStatusTxt">使用 W/A/S/D 或方向鍵移動・滑鼠左鍵拖曳環視四周・點擊建築查看資訊</small>
+          <b>🎮 地面漫步冒險（第三人稱角色探索）</b>
+          <small id="walkStatusTxt">使用 W/A/S/D 或方向鍵操控附中同學前進跑動・滑鼠旋轉視角</small>
         </div>
-        <button type="button" class="act-btn" id="exitWalkBtn" style="flex:none;">🦅 返回鳥瞰視角</button>
+        <div class="walk-char-select" role="group" aria-label="漫步角色與視角">
+          <button type="button" class="char-chip active" id="charBoyBtn" data-char="boy" title="切換為南大附中男同學角色">👦 男同學</button>
+          <button type="button" class="char-chip" id="charGirlBtn" data-char="girl" title="切換為南大附中女同學角色">👧 女同學</button>
+          <span class="hud-sub-sep">|</span>
+          <button type="button" class="char-chip view-chip active" id="toggleWalkCamViewBtn" title="切換第三人稱／第一人稱視角">🎥 第三人稱</button>
+          <button type="button" class="act-btn" id="exitWalkBtn" style="flex:none; margin-left:6px;">🦅 返回鳥瞰</button>
+        </div>
       </div>
       <div class="walk-controls-row">
         <div class="walk-dpad" role="group" aria-label="漫步方向控制">
