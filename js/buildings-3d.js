@@ -4,6 +4,24 @@
 window.CampusBuilder3D = (function () {
   const matCache = new Map();
 
+  const themeObjects = {
+    day: [],
+    brick: [],
+    pixel: []
+  };
+
+  function registerThemeObject(theme, obj) {
+    if (themeObjects[theme]) {
+      themeObjects[theme].push(obj);
+    }
+  }
+
+  function setVisualTheme(themeName) {
+    (themeObjects.day || []).forEach(o => { o.visible = (themeName === "day"); });
+    (themeObjects.brick || []).forEach(o => { o.visible = (themeName === "brick"); });
+    (themeObjects.pixel || []).forEach(o => { o.visible = (themeName === "pixel"); });
+  }
+
   function getMat(colorHex, opts = {}) {
     const key = colorHex + JSON.stringify(opts);
     if (matCache.has(key)) return matCache.get(key);
@@ -338,69 +356,218 @@ window.CampusBuilder3D = (function () {
       const g = new THREE.Group();
       g.position.set(x, 0, z);
 
+      // (A) 晴空寫實風格 (有機圓潤樹木)
+      const varDay = new THREE.Group();
+      varDay.name = "var-day";
+      g.add(varDay);
+      registerThemeObject("day", varDay);
+
+      // (B) 微縮積木世界風格 (階梯圓形積木盤樹與圓柱凸粒)
+      const varBrick = new THREE.Group();
+      varBrick.name = "var-brick";
+      varBrick.visible = false;
+      g.add(varBrick);
+      registerThemeObject("brick", varBrick);
+
+      // (C) 復古像素冒險風格 (體素階梯方塊樹 Minecraft/Crossy Road)
+      const varPixel = new THREE.Group();
+      varPixel.name = "var-pixel";
+      varPixel.visible = false;
+      g.add(varPixel);
+      registerThemeObject("pixel", varPixel);
+
       if (style === "palm") {
         const trunkH = 8.5 * scale;
+        // 1. Day
         const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.28 * scale, 0.42 * scale, trunkH, 8), getMat("#8A857A"));
         trunk.position.y = trunkH / 2;
         trunk.castShadow = true;
-        g.add(trunk);
+        varDay.add(trunk);
         const crown = new THREE.Mesh(new THREE.DodecahedronGeometry(2.4 * scale, 1), palmLeafMat);
         crown.scale.set(1.35, 0.55, 1.35);
         crown.position.y = trunkH + 0.6 * scale;
         crown.castShadow = true;
-        g.add(crown);
+        varDay.add(crown);
+
+        // 2. Brick
+        const bTrunk = new THREE.Mesh(new THREE.CylinderGeometry(0.32 * scale, 0.44 * scale, trunkH, 12), getMat("#6E4D30", { roughness: 0.16, metalness: 0.15 }));
+        bTrunk.position.y = trunkH / 2;
+        bTrunk.castShadow = true;
+        varBrick.add(bTrunk);
+        const bLeafMat = getMat("#228B22", { roughness: 0.16, metalness: 0.15 });
+        for (let i = 0; i < 6; i++) {
+          const ang = (i / 6) * Math.PI * 2;
+          const leaf = new THREE.Mesh(new THREE.BoxGeometry(0.38 * scale, 0.12 * scale, 3.2 * scale), bLeafMat);
+          leaf.position.set(Math.cos(ang) * 1.5 * scale, trunkH - 0.2 * scale, Math.sin(ang) * 1.5 * scale);
+          leaf.rotation.y = ang;
+          leaf.rotation.x = 0.28;
+          leaf.castShadow = true;
+          varBrick.add(leaf);
+        }
+        const palmTopStud = new THREE.Mesh(new THREE.CylinderGeometry(0.35 * scale, 0.35 * scale, 0.25 * scale, 12), bLeafMat);
+        palmTopStud.position.y = trunkH + 0.15 * scale;
+        varBrick.add(palmTopStud);
+
+        // 3. Pixel
+        const pTrunk = new THREE.Mesh(new THREE.BoxGeometry(0.55 * scale, trunkH, 0.55 * scale), getMat("#4A3525", { roughness: 0.85, flatShading: true }));
+        pTrunk.position.y = trunkH / 2;
+        pTrunk.castShadow = true;
+        varPixel.add(pTrunk);
+        const pLeafMat = getMat("#00E676", { roughness: 0.8, flatShading: true });
+        [-1, 1].forEach(dx => {
+          const bArm = new THREE.Mesh(new THREE.BoxGeometry(3.6 * scale, 0.4 * scale, 1.2 * scale), pLeafMat);
+          bArm.position.set(dx * 1.0 * scale, trunkH + 0.2 * scale, 0);
+          varPixel.add(bArm);
+        });
+        [-1, 1].forEach(dz => {
+          const bArm = new THREE.Mesh(new THREE.BoxGeometry(1.2 * scale, 0.4 * scale, 3.6 * scale), pLeafMat);
+          bArm.position.set(0, trunkH + 0.2 * scale, dz * 1.0 * scale);
+          varPixel.add(bArm);
+        });
+        const pTopBox = new THREE.Mesh(new THREE.BoxGeometry(1.4 * scale, 0.8 * scale, 1.4 * scale), pLeafMat);
+        pTopBox.position.y = trunkH + 0.5 * scale;
+        varPixel.add(pTopBox);
       } else if (style === "trumpet_tree") {
-        // 風鈴木 (黃花風鈴木：金黃燦爛盛開花冠，南大附中校門圍牆景觀特徵)
         const trunkH = (5.5 + Math.random() * 0.8) * scale;
+        // 1. Day
         const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.24 * scale, 0.38 * scale, trunkH, 8), getMat("#6B6258"));
         trunk.position.y = trunkH / 2;
         trunk.castShadow = true;
-        g.add(trunk);
-
+        varDay.add(trunk);
         const fMat = Math.random() > 0.4 ? trumpetFlowerMat : trumpetFlowerMat2;
         const mainCrown = new THREE.Mesh(new THREE.SphereGeometry((2.6 + Math.random() * 0.4) * scale, 8, 7), fMat);
         mainCrown.scale.set(1.2, 1.15, 1.2);
         mainCrown.position.y = trunkH + 1.8 * scale;
         mainCrown.castShadow = true;
-        g.add(mainCrown);
-
+        varDay.add(mainCrown);
         [-1.1, 1.1].forEach((ox, i) => {
           const subCrown = new THREE.Mesh(new THREE.DodecahedronGeometry((1.6 + i * 0.2) * scale, 1), fMat);
           subCrown.position.set(ox * scale, trunkH + (1.2 + i * 0.3) * scale, (Math.random() - 0.5) * 1.5 * scale);
           subCrown.castShadow = true;
-          g.add(subCrown);
+          varDay.add(subCrown);
         });
-      } else if (style === "tall_grove") {
-        const trunkH = 10.5 * scale;
-        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.28 * scale, 0.42 * scale, trunkH, 7), trunkMat);
-        trunk.position.y = trunkH / 2;
-        trunk.castShadow = true;
-        g.add(trunk);
-        const crown = new THREE.Mesh(new THREE.SphereGeometry(2.6 * scale, 8, 7), leafMat2);
-        crown.scale.set(0.95, 1.45, 0.95);
-        crown.position.y = trunkH + 1.6 * scale;
-        crown.castShadow = true;
-        g.add(crown);
+
+        // 2. Brick
+        const bTrunk = new THREE.Mesh(new THREE.CylinderGeometry(0.28 * scale, 0.40 * scale, trunkH, 12), getMat("#6E4D30", { roughness: 0.16, metalness: 0.15 }));
+        bTrunk.position.y = trunkH / 2;
+        bTrunk.castShadow = true;
+        varBrick.add(bTrunk);
+        const bYellowMat = getMat("#FFD700", { roughness: 0.16, metalness: 0.15 });
+        const discRadii = [2.9 * scale, 2.1 * scale, 1.3 * scale];
+        const discH = 0.65 * scale;
+        let curY = trunkH + 0.3 * scale;
+        discRadii.forEach((r, idx) => {
+          const disc = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.94, r, discH, 16), bYellowMat);
+          disc.position.y = curY;
+          disc.castShadow = true;
+          varBrick.add(disc);
+          const studCount = idx === 0 ? 8 : (idx === 1 ? 6 : 4);
+          for (let si = 0; si < studCount; si++) {
+            const sa = (si / studCount) * Math.PI * 2;
+            const stud = new THREE.Mesh(new THREE.CylinderGeometry(0.20 * scale, 0.20 * scale, 0.18 * scale, 8), bYellowMat);
+            stud.position.set(Math.cos(sa) * (r * 0.72), curY + discH * 0.55, Math.sin(sa) * (r * 0.72));
+            varBrick.add(stud);
+          }
+          curY += discH;
+        });
+        const topStud = new THREE.Mesh(new THREE.CylinderGeometry(0.42 * scale, 0.42 * scale, 0.35 * scale, 12), bYellowMat);
+        topStud.position.y = curY + 0.15 * scale;
+        varBrick.add(topStud);
+
+        // 3. Pixel
+        const pTrunk = new THREE.Mesh(new THREE.BoxGeometry(0.55 * scale, trunkH, 0.55 * scale), getMat("#4A3525", { roughness: 0.85, flatShading: true }));
+        pTrunk.position.y = trunkH / 2;
+        pTrunk.castShadow = true;
+        varPixel.add(pTrunk);
+        const pYellowMat = getMat("#FFE600", { roughness: 0.8, flatShading: true });
+        const b1 = new THREE.Mesh(new THREE.BoxGeometry(3.6 * scale, 1.6 * scale, 3.6 * scale), pYellowMat);
+        b1.position.y = trunkH + 1.0 * scale;
+        b1.castShadow = true;
+        varPixel.add(b1);
+        const b2 = new THREE.Mesh(new THREE.BoxGeometry(2.6 * scale, 1.4 * scale, 2.6 * scale), pYellowMat);
+        b2.position.y = trunkH + 2.3 * scale;
+        b2.castShadow = true;
+        varPixel.add(b2);
+        const b3 = new THREE.Mesh(new THREE.BoxGeometry(1.6 * scale, 1.2 * scale, 1.6 * scale), pYellowMat);
+        b3.position.y = trunkH + 3.4 * scale;
+        b3.castShadow = true;
+        varPixel.add(b3);
+        [ [-1.5, 1.4, -1.5], [1.5, 1.4, 1.5], [-1.5, 1.4, 1.5], [1.5, 1.4, -1.5] ].forEach(([vx, vy, vz]) => {
+          const vc = new THREE.Mesh(new THREE.BoxGeometry(0.9 * scale, 0.9 * scale, 0.9 * scale), pYellowMat);
+          vc.position.set(vx * scale, trunkH + vy * scale, vz * scale);
+          vc.castShadow = true;
+          varPixel.add(vc);
+        });
       } else {
-        // 高大挺拔的桃花心木／樟樹（維持上一版飽滿茂盛的尺寸）
         const trunkH = (7.5 + Math.random() * 1.5) * scale;
+        // 1. Day
         const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.38 * scale, 0.58 * scale, trunkH, 8), trunkMat);
         trunk.position.y = trunkH / 2;
         trunk.castShadow = true;
-        g.add(trunk);
-
+        varDay.add(trunk);
         const fMat = Math.random() > 0.4 ? leafMatDark : leafMat1;
         const mainCrown = new THREE.Mesh(new THREE.SphereGeometry((3.4 + Math.random() * 0.6) * scale, 8, 7), fMat);
         mainCrown.scale.set(1.15, 1.25, 1.15);
         mainCrown.position.y = trunkH + 2.4 * scale;
         mainCrown.castShadow = true;
-        g.add(mainCrown);
-
+        varDay.add(mainCrown);
         [-1.4, 1.4].forEach((ox, i) => {
           const subCrown = new THREE.Mesh(new THREE.DodecahedronGeometry((2.2 + i * 0.3) * scale, 1), fMat);
           subCrown.position.set(ox * scale, trunkH + (1.6 + i * 0.5) * scale, (Math.random() - 0.5) * 2.2 * scale);
           subCrown.castShadow = true;
-          g.add(subCrown);
+          varDay.add(subCrown);
+        });
+
+        // 2. Brick
+        const bTrunk = new THREE.Mesh(new THREE.CylinderGeometry(0.38 * scale, 0.54 * scale, trunkH, 12), getMat("#6E4D30", { roughness: 0.16, metalness: 0.15 }));
+        bTrunk.position.y = trunkH / 2;
+        bTrunk.castShadow = true;
+        varBrick.add(bTrunk);
+        const bGreenMat = getMat("#1B8738", { roughness: 0.16, metalness: 0.15 });
+        const discRadii = [3.8 * scale, 2.9 * scale, 2.0 * scale, 1.2 * scale];
+        const discH = 0.75 * scale;
+        let curY = trunkH + 0.3 * scale;
+        discRadii.forEach((r, idx) => {
+          const disc = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.94, r, discH, 16), bGreenMat);
+          disc.position.y = curY;
+          disc.castShadow = true;
+          varBrick.add(disc);
+          const studCount = idx === 0 ? 10 : (idx === 1 ? 8 : 5);
+          for (let si = 0; si < studCount; si++) {
+            const sa = (si / studCount) * Math.PI * 2;
+            const stud = new THREE.Mesh(new THREE.CylinderGeometry(0.22 * scale, 0.22 * scale, 0.20 * scale, 8), bGreenMat);
+            stud.position.set(Math.cos(sa) * (r * 0.72), curY + discH * 0.55, Math.sin(sa) * (r * 0.72));
+            varBrick.add(stud);
+          }
+          curY += discH;
+        });
+        const topStud = new THREE.Mesh(new THREE.CylinderGeometry(0.48 * scale, 0.48 * scale, 0.38 * scale, 12), bGreenMat);
+        topStud.position.y = curY + 0.18 * scale;
+        varBrick.add(topStud);
+
+        // 3. Pixel
+        const pTrunk = new THREE.Mesh(new THREE.BoxGeometry(0.68 * scale, trunkH, 0.68 * scale), getMat("#423020", { roughness: 0.85, flatShading: true }));
+        pTrunk.position.y = trunkH / 2;
+        pTrunk.castShadow = true;
+        varPixel.add(pTrunk);
+        const pGreenMat = getMat("#20BA4B", { roughness: 0.8, flatShading: true });
+        const b1 = new THREE.Mesh(new THREE.BoxGeometry(4.6 * scale, 2.0 * scale, 4.6 * scale), pGreenMat);
+        b1.position.y = trunkH + 1.2 * scale;
+        b1.castShadow = true;
+        varPixel.add(b1);
+        const b2 = new THREE.Mesh(new THREE.BoxGeometry(3.4 * scale, 1.8 * scale, 3.4 * scale), pGreenMat);
+        b2.position.y = trunkH + 2.8 * scale;
+        b2.castShadow = true;
+        varPixel.add(b2);
+        const b3 = new THREE.Mesh(new THREE.BoxGeometry(2.2 * scale, 1.5 * scale, 2.2 * scale), pGreenMat);
+        b3.position.y = trunkH + 4.2 * scale;
+        b3.castShadow = true;
+        varPixel.add(b3);
+        [ [-2.0, 2.2, -2.0], [2.0, 2.2, 2.0], [-2.0, 2.2, 2.0], [2.0, 2.2, -2.0] ].forEach(([vx, vy, vz]) => {
+          const vc = new THREE.Mesh(new THREE.BoxGeometry(1.2 * scale, 1.2 * scale, 1.2 * scale), pGreenMat);
+          vc.position.set(vx * scale, trunkH + vy * scale, vz * scale);
+          vc.castShadow = true;
+          varPixel.add(vc);
         });
       }
       envGroup.add(g);
@@ -1148,6 +1315,53 @@ window.CampusBuilder3D = (function () {
     // ================= 各棟大樓專屬地標造型細節 (從 43 張實景照片提取) =================
     const topGroup = root.userData.floorGroups[b.floors];
 
+    // 為各棟建築頂樓增添「微縮積木 Stud 凸粒陣列」與「像素冒險體素階梯女兒牆」
+    if (topGroup && b.style !== "track" && b.style !== "sport_court" && b.w > 6 && b.d > 6) {
+      // (1) 微縮積木風格：屋頂均勻排列的圓形凸粒陣列 (Brick Studs)
+      const brickStudsGrp = new THREE.Group();
+      brickStudsGrp.name = "var-brick";
+      brickStudsGrp.visible = false;
+      const studMat = getMat(b.colors.roof || "#AAB4C0", { roughness: 0.16, metalness: 0.15 });
+      const studGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.24, 10);
+      const step = 2.6;
+      for (let sx = -b.w / 2 + 1.4; sx <= b.w / 2 - 1.4; sx += step) {
+        for (let sz = -b.d / 2 + 1.4; sz <= b.d / 2 - 1.4; sz += step) {
+          const stud = new THREE.Mesh(studGeo, studMat);
+          stud.position.set(sx, fh + 0.12, sz);
+          stud.castShadow = true;
+          brickStudsGrp.add(stud);
+        }
+      }
+      topGroup.add(brickStudsGrp);
+      registerThemeObject("brick", brickStudsGrp);
+
+      // (2) 復古像素冒險風格：屋頂四周邊緣的體素方塊女兒牆 (Voxel Battlements)
+      const voxelEdgesGrp = new THREE.Group();
+      voxelEdgesGrp.name = "var-pixel";
+      voxelEdgesGrp.visible = false;
+      const vEdgeMat = getMat(b.colors.accent || "#00E5FF", { roughness: 0.85, flatShading: true });
+      const vCubeGeo = new THREE.BoxGeometry(0.72, 0.72, 0.72);
+      const vStep = 1.6;
+      for (let vx = -b.w / 2 + 0.4; vx <= b.w / 2; vx += vStep) {
+        [-b.d / 2 + 0.4, b.d / 2 - 0.4].forEach(vz => {
+          const cube = new THREE.Mesh(vCubeGeo, vEdgeMat);
+          cube.position.set(vx, fh + 0.36, vz);
+          cube.castShadow = true;
+          voxelEdgesGrp.add(cube);
+        });
+      }
+      for (let vz = -b.d / 2 + 0.4 + vStep; vz <= b.d / 2 - 0.4 - vStep; vz += vStep) {
+        [-b.w / 2 + 0.4, b.w / 2 - 0.4].forEach(vx => {
+          const cube = new THREE.Mesh(vCubeGeo, vEdgeMat);
+          cube.position.set(vx, fh + 0.36, vz);
+          cube.castShadow = true;
+          voxelEdgesGrp.add(cube);
+        });
+      }
+      topGroup.add(voxelEdgesGrp);
+      registerThemeObject("pixel", voxelEdgesGrp);
+    }
+
         // 敬業樓 (`jingye`) — 東南側入口圓弧陽台 + 金色「敬業樓」牌匾 (還原 20261020_125209.jpg)
     if (b.style === "jingye") {
       const goldMat = getMat("#C59B27", { metalness: 0.4, roughness: 0.3 });
@@ -1629,6 +1843,7 @@ window.CampusBuilder3D = (function () {
 
   return {
     buildCampusGrounds,
-    createBuildingMesh
+    createBuildingMesh,
+    setVisualTheme
   };
 })();

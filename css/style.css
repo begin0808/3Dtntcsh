@@ -1390,11 +1390,28 @@ html, body {
   margin: 0 2px;
 }
 
-/* 復古遊戲像素風格 */
-body.theme-pixel #webglCanvas {
-  image-rendering: pixelated;
-  image-rendering: -moz-crisp-edges;
-  image-rendering: crisp-edges;
+/* 復古遊戲像素風格 (原生高解析度銳利體素渲染) */
+#walkHudBar.minimized {
+  padding: 8px 18px;
+  bottom: 14px;
+  width: auto;
+  min-width: 0;
+  max-width: 95vw;
+  border-radius: 999px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(14, 22, 32, 0.88);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+
+#walkHudBar.minimized .walk-controls-row,
+#walkHudBar.minimized #walkStatusTxt {
+  display: none !important;
+}
+
+#walkHudBar.minimized .walk-head {
+  margin-bottom: 0;
+  gap: 12px;
 }
 
 body.theme-pixel {

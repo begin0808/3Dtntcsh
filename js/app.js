@@ -417,19 +417,21 @@
     grp.name = "StudentAvatar";
 
     const isBrick = themeStyle === "brick";
-    const roughness = isBrick ? 0.2 : 0.7;
-    const metalness = isBrick ? 0.35 : 0.08;
+    const isPixel = themeStyle === "pixel";
+    const roughness = isBrick ? 0.16 : (isPixel ? 0.85 : 0.68);
+    const metalness = isBrick ? 0.15 : 0.06;
 
     // 材質庫
-    const skinMat = new THREE.MeshStandardMaterial({ color: isBrick ? "#FFD034" : "#F8D5C2", roughness, metalness });
-    const hairColor = gender === "boy" ? (isBrick ? "#2B1D14" : "#2B211B") : (isBrick ? "#5C381E" : "#3B2A20");
-    const hairMat = new THREE.MeshStandardMaterial({ color: hairColor, roughness, metalness });
-    const shirtMat = new THREE.MeshStandardMaterial({ color: "#F8F9FA", roughness, metalness }); // 附中白襯衫
-    const purpleMat = new THREE.MeshStandardMaterial({ color: "#7B1F34", roughness, metalness }); // 附中校服紫紅領／蝴蝶結
+    const skinColor = isBrick ? "#FFD034" : "#F8D5C2";
+    const skinMat = new THREE.MeshStandardMaterial({ color: skinColor, roughness, metalness, flatShading: isPixel });
+    const hairColor = gender === "boy" ? (isBrick ? "#2B1D14" : (isPixel ? "#1A1A1A" : "#2B211B")) : (isBrick ? "#5C381E" : "#3B2A20");
+    const hairMat = new THREE.MeshStandardMaterial({ color: hairColor, roughness, metalness, flatShading: isPixel });
+    const shirtMat = new THREE.MeshStandardMaterial({ color: "#F8F9FA", roughness, metalness, flatShading: isPixel }); // 附中白襯衫
+    const purpleMat = new THREE.MeshStandardMaterial({ color: "#7B1F34", roughness, metalness, flatShading: isPixel }); // 附中校服紫紅領／蝴蝶結
     const pantsColor = gender === "boy" ? "#243342" : "#1B2631"; // 深藍制服短褲／裙
-    const pantsMat = new THREE.MeshStandardMaterial({ color: pantsColor, roughness, metalness });
-    const shoesMat = new THREE.MeshStandardMaterial({ color: "#2B3542", roughness, metalness });
-    const bagMat = new THREE.MeshStandardMaterial({ color: "#2E5540", roughness, metalness }); // 附中深綠書包
+    const pantsMat = new THREE.MeshStandardMaterial({ color: pantsColor, roughness, metalness, flatShading: isPixel });
+    const shoesMat = new THREE.MeshStandardMaterial({ color: "#2B3542", roughness, metalness, flatShading: isPixel });
+    const bagMat = new THREE.MeshStandardMaterial({ color: "#2E5540", roughness, metalness, flatShading: isPixel }); // 附中深綠書包
 
     const bodyGroup = new THREE.Group();
     bodyGroup.position.y = 0;
@@ -437,16 +439,22 @@
 
     // 1. 骨盆與下身 (Pelvis / Shorts / Skirt)
     const pelvis = new THREE.Mesh(
-      isBrick ? new THREE.BoxGeometry(0.38, 0.16, 0.22) : new THREE.BoxGeometry(0.36, 0.16, 0.20),
+      isBrick ? new THREE.BoxGeometry(0.40, 0.16, 0.22) : (isPixel ? new THREE.BoxGeometry(0.38, 0.16, 0.22) : new THREE.BoxGeometry(0.36, 0.16, 0.20)),
       pantsMat
     );
     pelvis.position.y = 0.82;
     pelvis.castShadow = true;
     bodyGroup.add(pelvis);
 
-    if (gender === "girl" && !isBrick) {
-      // 女同學百褶裙擺
+    if (gender === "girl" && !isBrick && !isPixel) {
+      // 寫實女同學百褶裙擺
       const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.30, 0.22, 16), pantsMat);
+      skirt.position.y = 0.78;
+      skirt.castShadow = true;
+      bodyGroup.add(skirt);
+    } else if (gender === "girl" && (isBrick || isPixel)) {
+      // 積木／像素百褶裙 (直筒方裙)
+      const skirt = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.22, 0.26), pantsMat);
       skirt.position.y = 0.78;
       skirt.castShadow = true;
       bodyGroup.add(skirt);
@@ -454,7 +462,7 @@
 
     // 2. 軀幹與上衣 (Torso with School Uniform)
     const torso = new THREE.Mesh(
-      isBrick ? new THREE.BoxGeometry(0.42, 0.48, 0.24) : new THREE.BoxGeometry(0.38, 0.46, 0.22),
+      isBrick ? new THREE.BoxGeometry(0.42, 0.48, 0.24) : (isPixel ? new THREE.BoxGeometry(0.40, 0.46, 0.24) : new THREE.BoxGeometry(0.38, 0.46, 0.22)),
       shirtMat
     );
     torso.position.y = 1.12;
@@ -476,7 +484,10 @@
     bodyGroup.add(badge);
 
     // 側背斜肩書包 (附中綠色書包)
-    const schoolBag = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.22, 0.09), bagMat);
+    const schoolBag = new THREE.Mesh(
+      isPixel ? new THREE.BoxGeometry(0.28, 0.24, 0.12) : new THREE.BoxGeometry(0.26, 0.22, 0.09),
+      bagMat
+    );
     schoolBag.position.set(0.22, 0.95, -0.04);
     schoolBag.rotation.z = -0.15;
     schoolBag.castShadow = true;
@@ -492,37 +503,54 @@
     bodyGroup.add(headGroup);
 
     if (isBrick) {
-      // 微縮積木圓柱頭與頂部圓凸點 (Stud)
-      const brickHead = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.24, 16), skinMat);
+      // 微縮積木經典圓柱頭與頂部圓凸點 (Stud)
+      const brickHead = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.25, 16), skinMat);
       brickHead.castShadow = true;
       headGroup.add(brickHead);
       const topStud = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.08, 12), skinMat);
       topStud.position.y = 0.16;
       headGroup.add(topStud);
+    } else if (isPixel) {
+      // 體素像素風格：正立方體方塊頭 (Minecraft / Crossy Road)
+      const pixelHead = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.36, 0.36), skinMat);
+      pixelHead.castShadow = true;
+      headGroup.add(pixelHead);
+      // 方塊體素髮型
+      const pixelHairTop = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.12, 0.38), hairMat);
+      pixelHairTop.position.set(0, 0.14, -0.01);
+      headGroup.add(pixelHairTop);
     } else {
-      // 寫實／像素比例圓潤頭部
+      // 寫實圓潤頭部
       const head = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.26), skinMat);
       head.castShadow = true;
       headGroup.add(head);
     }
 
-    // 髮型
+    // 髮型細節
     if (gender === "boy") {
-      const hair = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.14, 0.28), hairMat);
-      hair.position.set(0, 0.11, -0.01);
-      hair.castShadow = true;
-      headGroup.add(hair);
+      if (!isPixel) {
+        const hair = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.14, 0.28), hairMat);
+        hair.position.set(0, 0.11, -0.01);
+        hair.castShadow = true;
+        headGroup.add(hair);
+      }
     } else {
-      const hair = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.18, 0.30), hairMat);
-      hair.position.set(0, 0.09, -0.02);
-      hair.castShadow = true;
-      headGroup.add(hair);
-      // 女同學側邊馬尾
-      const ponytail = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.08, 0.24, 8), hairMat);
-      ponytail.rotation.x = -0.55;
-      ponytail.position.set(0, 0.04, -0.20);
-      headGroup.add(ponytail);
-      // 髮飾
+      if (!isPixel) {
+        const hair = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.18, 0.30), hairMat);
+        hair.position.set(0, 0.09, -0.02);
+        hair.castShadow = true;
+        headGroup.add(hair);
+        // 女同學側邊馬尾
+        const ponytail = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.08, 0.24, 8), hairMat);
+        ponytail.rotation.x = -0.55;
+        ponytail.position.set(0, 0.04, -0.20);
+        headGroup.add(ponytail);
+      } else {
+        // 像素女同學方塊馬尾
+        const pixelPonytail = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.18, 0.18), hairMat);
+        pixelPonytail.position.set(0, 0.04, -0.24);
+        headGroup.add(pixelPonytail);
+      }
       const hairpin = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.08), purpleMat);
       hairpin.position.set(0.14, 0.08, 0.08);
       headGroup.add(hairpin);
@@ -530,14 +558,17 @@
 
     // 臉部五官 (黑眼珠)
     const eyeMat = new THREE.MeshBasicMaterial({ color: "#1A1A1A" });
+    const eyeZ = isPixel ? 0.185 : 0.14;
     [-0.065, 0.065].forEach(ex => {
-      const eye = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.05, 0.02), eyeMat);
-      eye.position.set(ex, 0.02, 0.14);
+      const eye = new THREE.Mesh(new THREE.BoxGeometry(isPixel ? 0.05 : 0.035, isPixel ? 0.05 : 0.05, 0.02), eyeMat);
+      eye.position.set(ex, 0.02, eyeZ);
       headGroup.add(eye);
     });
 
     // 4. 左手臂與右手臂 (具有肩膀旋轉關節軸心)
-    const armGeo = isBrick ? new THREE.BoxGeometry(0.10, 0.42, 0.10) : new THREE.CylinderGeometry(0.055, 0.05, 0.42, 8);
+    const armGeo = isPixel
+      ? new THREE.BoxGeometry(0.12, 0.42, 0.12)
+      : (isBrick ? new THREE.BoxGeometry(0.10, 0.42, 0.10) : new THREE.CylinderGeometry(0.055, 0.05, 0.42, 8));
 
     const leftArmPivot = new THREE.Group();
     leftArmPivot.position.set(-0.25, 1.30, 0);
@@ -545,9 +576,17 @@
     leftArmMesh.position.y = -0.19;
     leftArmMesh.castShadow = true;
     leftArmPivot.add(leftArmMesh);
-    const leftSleeve = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.14, 0.12), shirtMat);
+    const leftSleeve = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.14, 0.13), shirtMat);
     leftSleeve.position.y = -0.06;
     leftArmPivot.add(leftSleeve);
+
+    if (isBrick) {
+      // 微縮積木經典 C 形圓夾手 (C-clamp Hand)
+      const cHand = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.016, 8, 16, Math.PI * 1.5), skinMat);
+      cHand.position.set(0, -0.42, 0);
+      cHand.rotation.z = Math.PI / 2;
+      leftArmPivot.add(cHand);
+    }
     bodyGroup.add(leftArmPivot);
 
     const rightArmPivot = new THREE.Group();
@@ -556,13 +595,23 @@
     rightArmMesh.position.y = -0.19;
     rightArmMesh.castShadow = true;
     rightArmPivot.add(rightArmMesh);
-    const rightSleeve = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.14, 0.12), shirtMat);
+    const rightSleeve = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.14, 0.13), shirtMat);
     rightSleeve.position.y = -0.06;
     rightArmPivot.add(rightSleeve);
+
+    if (isBrick) {
+      // 微縮積木經典 C 形圓夾手 (C-clamp Hand)
+      const cHand = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.016, 8, 16, Math.PI * 1.5), skinMat);
+      cHand.position.set(0, -0.42, 0);
+      cHand.rotation.z = -Math.PI / 2;
+      rightArmPivot.add(cHand);
+    }
     bodyGroup.add(rightArmPivot);
 
     // 5. 左腿與右腿 (具有髖關節旋轉軸心)
-    const legGeo = isBrick ? new THREE.BoxGeometry(0.13, 0.58, 0.13) : new THREE.BoxGeometry(0.12, 0.58, 0.12);
+    const legGeo = isPixel
+      ? new THREE.BoxGeometry(0.13, 0.58, 0.13)
+      : (isBrick ? new THREE.BoxGeometry(0.13, 0.58, 0.13) : new THREE.BoxGeometry(0.12, 0.58, 0.12));
 
     const leftLegPivot = new THREE.Group();
     leftLegPivot.position.set(-0.11, 0.74, 0);
@@ -918,8 +967,15 @@
     document.body.classList.toggle("theme-pixel", themeName === "pixel");
     document.body.classList.toggle("theme-brick", themeName === "brick");
 
+    // 一鍵同步全校樹木 (有機圓潤 / 圓盤積木樹 / 體素方塊樹) 與屋頂 (積木 Stud 凸粒 / 體素女兒牆)
+    if (BUILDER && BUILDER.setVisualTheme) {
+      BUILDER.setVisualTheme(themeName);
+    }
+
+    // 始終維持原生高解析度渲染，徹底告別模糊
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
     if (themeName === "day") {
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
       scene.background.set("#CFE5F5");
       scene.fog.color.set("#CFE5F5");
       hemiLight.color.set("#FFFFFF");
@@ -930,20 +986,18 @@
       sunLight.position.set(120, 185, 110);
       showToast("☀️ 已切換為「晴空寫實風格」");
     } else if (themeName === "pixel") {
-      // 復古像素冒險風格：38% 畫素低取樣搭配 CSS pixelated 呈現 100% 俐落的 8-Bit 街機冒險質感
-      renderer.setPixelRatio(0.38);
-      scene.background.set("#242A38");
-      scene.fog.color.set("#242A38");
+      // 復古像素冒險風格：極致清晰體素方塊世界 (Minecraft / Crossy Road 稜角分明體素大樓與方塊樹)
+      scene.background.set("#1E2430");
+      scene.fog.color.set("#1E2430");
       hemiLight.color.set("#7DFFB3");
       hemiLight.groundColor.set("#3D1E4A");
       hemiLight.intensity = 0.95;
       sunLight.color.set("#FFF677");
       sunLight.intensity = 1.25;
       sunLight.position.set(100, 180, 100);
-      showToast("🕹️ 已切換為「復古像素冒險風格」！全校轉化為 8-Bit 像素遊戲冒險世界");
+      showToast("🕹️ 已切換為「復古像素冒險風格」！全校體素方塊樹、方塊女兒牆與像素冒險家已生成");
     } else if (themeName === "brick") {
-      // 微縮積木世界風格：高飽和度高光玩具塑膠模型質感
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      // 微縮積木世界風格：全校屋頂滿滿 Stud 圓形凸粒、階梯圓盤積木樹、高光玩具塑膠模型
       scene.background.set("#E8F3FD");
       scene.fog.color.set("#E8F3FD");
       hemiLight.color.set("#FFFFFF");
@@ -952,10 +1006,10 @@
       sunLight.color.set("#FFF0D0");
       sunLight.intensity = 1.30;
       sunLight.position.set(140, 210, 95);
-      showToast("🧱 已切換為「微縮積木世界風格」！以飽滿高光玩具模型質感呈現");
+      showToast("🧱 已切換為「微縮積木世界風格」！圓盤積木樹、全校屋頂 Stud 凸粒與積木人偶已就緒");
     }
 
-    // 若角色模型存在，同步更新角色外觀風格 (如積木圓柱頭、高光塑膠)
+    // 若角色公仔存在，同步重構為對應風格公仔 (寫實學生 / 積木人偶 / 體素方塊人)
     if (studentAvatarGroup) {
       buildStudentAvatar(state.walkChar, state.theme);
       studentAvatarGroup.visible = state.walkMode && (state.walkView === "third_person");
@@ -1375,6 +1429,25 @@
       });
     }
 
+    // 縮小 / 展開地面漫步操作面板 (或按鍵盤 H)
+    const toggleHudCollapseBtn = document.getElementById("toggleHudCollapseBtn");
+    if (toggleHudCollapseBtn) {
+      toggleHudCollapseBtn.addEventListener("click", () => {
+        const hud = document.getElementById("walkHudBar");
+        if (!hud) return;
+        const isMin = hud.classList.toggle("minimized");
+        toggleHudCollapseBtn.innerHTML = isMin ? "🔼 展開面板" : "🔽 收合面板";
+        toggleHudCollapseBtn.title = isMin ? "展開完整方向控制盤與快捷傳送按鈕" : "收合下方操作面板以獲得全螢幕清晰漫步視野 (快捷鍵 H)";
+      });
+    }
+
+    window.addEventListener("keydown", (e) => {
+      if (state.walkMode && (e.key === "h" || e.key === "H") && !e.ctrlKey && !e.altKey) {
+        if (document.activeElement && (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA")) return;
+        if (toggleHudCollapseBtn) toggleHudCollapseBtn.click();
+      }
+    });
+
     // 3. 第一人稱「地面實境漫步」按鈕與面板
     document.getElementById("walkModeBtn").addEventListener("click", () => {
       toggleWalkMode(!state.walkMode, "gate");
@@ -1690,19 +1763,19 @@
       }
 
       if (state.walkView === "third_person") {
-        // 第三人稱追尾視角：角色在前方領跑，攝影機在後上方平滑跟隨
+        // 第三人稱追尾視角：提高仰角與後退跟隨距離，讓同學公仔完美居中顯示於畫面中央，絕不被底端控制面板遮擋
         if (studentAvatarGroup) studentAvatarGroup.visible = true;
 
-        const followDist = 3.8;
-        const camY = 2.2 + Math.sin(state.walkPitch) * 1.5;
+        const followDist = 5.2;
+        const camY = 3.2 + Math.sin(state.walkPitch) * 2.0;
         const camX = state.walkPos.x - lookDirX * followDist;
         const camZ = state.walkPos.z - lookDirZ * followDist;
 
         camera.position.set(camX, camY, camZ);
         const lookTarget = new THREE.Vector3(
-          state.walkPos.x + lookDirX * 12,
-          1.55 + Math.sin(state.walkPitch) * 8,
-          state.walkPos.z + lookDirZ * 12
+          state.walkPos.x + lookDirX * 10,
+          1.65 + Math.sin(state.walkPitch) * 6,
+          state.walkPos.z + lookDirZ * 10
         );
         camera.lookAt(lookTarget);
       } else {
