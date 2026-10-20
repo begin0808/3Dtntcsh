@@ -141,7 +141,7 @@
     const el = document.createElement("button");
     el.type = "button";
     el.className = `b-label cat-${b.category}`;
-    el.innerHTML = `<span class="b-dot"></span><span class="b-txt">${b.name.replace(/（.*）/, "")}</span><small class="b-fl">${b.floors}F</small>`;
+    el.innerHTML = `<span class="b-dot"></span><span class="b-txt">${b.name.replace(/（.*）/, "")}</span><small class="b-fl">${b.badgeText || (b.floors + "F")}</small>`;
     el.addEventListener("click", e => {
       e.stopPropagation();
       selectBuilding(b.id, !state.walkMode);
@@ -533,7 +533,7 @@
     panel.innerHTML = `
       <div class="drawer-head">
         <div>
-          <span class="cat-pill cat-${b.category}">${categoryNames[b.category] || "校園建築"} ・ ${b.floors} 層樓</span>
+          <span class="cat-pill cat-${b.category}">${categoryNames[b.category] || "校園建築"} ・ ${b.badgeText ? (b.badgeText + "場地") : (b.floors + " 層樓")}</span>
           <h2>${b.name}</h2>
           <small class="en-sub">${b.englishName || ""}</small>
         </div>

@@ -1167,7 +1167,7 @@ window.CAMPUS_DATA = {
       englishName: "Co-op & Art Classroom Building",
       category: "facility",
       zone: "west_sport",
-      x: -96.0, z: 8.0, w: 24.0, d: 15.0, rotY: 0,
+      x: -97.0, z: 5.0, w: 22.0, d: 15.0, rotY: 0,
       floors: 2, floorHeight: 3.8,
       style: "coop_art",
       colors: {
@@ -1176,12 +1176,12 @@ window.CAMPUS_DATA = {
         accent: "#B89D4F",
         roof: "#9FA4A8"
       },
-      summary: "2 層樓現代建築（舊圖書館原址，門楣仍留有圖書館字樣）：1 樓為「員生消費合作社」，2 樓為「美術教室」。灰白外牆搭配深森林綠窗間牆，入口右側有一座 2.5 層高的圓柱形塔樓，北側附設 1 樓洗手台與器材室平房。",
+      summary: "2 層樓現代建築（舊圖書館原址，門楣仍留有圖書館字樣）：1 樓為「員生消費合作社」，2 樓為「美術教室」。西鄰風雨匹克球場，北臨露天籃球場。",
       features: ["1F 員生消費合作社（含自動販賣機）", "2F 美術教室", "右側高聳圓柱形菱網窗塔樓"],
       floorsData: {
         1: [
           { code: "COOP", name: "員生消費合作社", type: "common" },
-          { code: "WASH", name: "北側洗手台與體育器材室", type: "common" }
+          { code: "WASH", name: "洗手台與體育器材室", type: "common" }
         ],
         2: [
           { code: "ART1", name: "美術教室（一）", type: "special" },
@@ -1191,11 +1191,11 @@ window.CAMPUS_DATA = {
     },
     {
       id: "swimming",
-      name: "游泳館",
+      name: "游泳館（游泳池）",
       englishName: "Swimming Building",
       category: "sport",
       zone: "west_sport",
-      x: -142.0, z: 92.0, w: 44.0, d: 34.0, rotY: 0,
+      x: -138.0, z: 90.0, w: 44.0, d: 34.0, rotY: 0,
       floors: 2, floorHeight: 4.5,
       style: "swimming",
       colors: {
@@ -1212,52 +1212,159 @@ window.CAMPUS_DATA = {
       }
     },
     {
-      id: "north_courts",
-      name: "北座太陽能光電風雨球場（籃球／單槓）",
-      englishName: "North Solar Canopy Basketball Courts",
+      id: "tennis_courts",
+      name: "網球場（露天）",
+      englishName: "Outdoor Tennis Courts",
       category: "sport",
       zone: "west_sport",
-      x: -122.0, z: -68.0, w: 58.0, d: 52.0, rotY: 0,
-      floors: 1, floorHeight: 9.2,
-      style: "solar_courts",
-      courtType: "basketball",
+      badgeText: "露天",
+      x: -142.0, z: -71.0, w: 34.0, d: 46.0, rotY: 0,
+      floors: 1, floorHeight: 1.2,
+      style: "sport_court",
+      courtLayout: "tennis_3",
+      covered: false,
       colors: {
-        main: "#2F353B",
-        secondary: "#78BE75",
-        accent: "#4B77A3",
-        roof: "#2B3238"
+        main: "#9D2F2A",
+        secondary: "#3F8A4F",
+        accent: "#F4F6F8",
+        roof: "#9D2F2A"
       },
-      summary: "位於操場南側的大型挑高太陽能光電風雨球場，採用深炭灰 H 型鋼構搭配亮蘋果綠防撞護墊，內含多面藍黃配色籃球場與單槓體能練習區。",
-      features: ["挑高 9 米太陽能光電雙斜鋼棚", "亮蘋果綠安全防撞柱墊", "風雨籃球場與單槓區"],
+      summary: "位於彩虹操場南側西半部的露天網球場，紅褐色場地面配置 3 面東西向標準綠色網球場與球網，西側緊鄰網球對牆練習區。",
+      features: ["3 面東西向標準露天網球場", "紅褐底色配翠綠球場地面", "西側設有網球練習牆"],
       floorsData: {
         1: [
-          { code: "BC1", name: "風雨籃球場 A～D 場", type: "sport" },
-          { code: "BAR", name: "單槓與體能訓練區", type: "sport" }
+          { code: "TN1", name: "露天網球場 A～C 場", type: "sport" },
+          { code: "TNW", name: "西側網球對牆練習區", type: "sport" }
         ]
       }
     },
     {
-      id: "south_courts",
-      name: "南座太陽能光電風雨球場（排球／網球）",
-      englishName: "South Solar Canopy Volleyball & Tennis Courts",
+      id: "covered_basketball",
+      name: "風雨籃球場",
+      englishName: "Covered Solar Canopy Basketball Courts",
       category: "sport",
       zone: "west_sport",
-      x: -134.0, z: 32.0, w: 66.0, d: 52.0, rotY: 0,
-      floors: 1, floorHeight: 9.0,
-      style: "solar_courts",
-      courtType: "volley_tennis",
+      badgeText: "風雨",
+      x: -105.0, z: -71.0, w: 34.0, d: 46.0, rotY: 0,
+      floors: 1, floorHeight: 8.8,
+      style: "sport_court",
+      courtLayout: "basketball_3",
+      covered: true,
       colors: {
-        main: "#2F353B",
-        secondary: "#78BE75",
-        accent: "#688EB0",
-        roof: "#2A3038"
+        main: "#9D2F2A",
+        secondary: "#65A877",
+        accent: "#2F353B",
+        roof: "#2B3238"
       },
-      summary: "位於游泳館北側、合作社西側的大型太陽能光電風雨球場，涵蓋排球場、網球場與深綠色水泥網球對牆練習場。",
-      features: ["太陽能光電斜頂大鋼棚", "排球場、網球場與綠色對牆練習場", "綠色圍網與看台階梯"],
+      summary: "位於露天網球場東側、敬業樓與利用樓西側的挑高太陽能光電風雨籃球場，設有 3 面東西向標準籃球場，不受日曬雨淋影響。",
+      features: ["挑高太陽能光電風雨鋼棚", "3 面東西向標準風雨籃球場", "亮蘋果綠防撞安全柱墊"],
       floorsData: {
         1: [
-          { code: "VC1", name: "風雨排球場", type: "sport" },
-          { code: "TC1", name: "風雨網球場＆網球練習牆", type: "sport" }
+          { code: "CBC1", name: "風雨籃球場 A～C 場", type: "sport" }
+        ]
+      }
+    },
+    {
+      id: "outdoor_basketball",
+      name: "籃球場（露天）",
+      englishName: "Outdoor Basketball Court",
+      category: "sport",
+      zone: "west_sport",
+      badgeText: "露天",
+      x: -110.0, z: -29.0, w: 26.0, d: 16.0, rotY: 0,
+      floors: 1, floorHeight: 1.2,
+      style: "sport_court",
+      courtLayout: "basketball_1",
+      covered: false,
+      colors: {
+        main: "#9D2F2A",
+        secondary: "#65A877",
+        accent: "#F4F6F8",
+        roof: "#9D2F2A"
+      },
+      summary: "位於風雨籃球場南側、合作社與風雨匹克球場北側的標準東西向露天籃球場。",
+      features: ["標準東西向露天全場籃球場", "紅綠雙色標準球場鋪面與籃架"],
+      floorsData: {
+        1: [
+          { code: "OBC1", name: "露天標準籃球場", type: "sport" }
+        ]
+      }
+    },
+    {
+      id: "covered_volleyball_n",
+      name: "風雨排球場（北區）",
+      englishName: "North Covered Volleyball Courts",
+      category: "sport",
+      zone: "west_sport",
+      badgeText: "風雨",
+      x: -143.0, z: 3.0, w: 32.0, d: 30.0, rotY: 0,
+      floors: 1, floorHeight: 8.5,
+      style: "sport_court",
+      courtLayout: "volleyball_2",
+      covered: true,
+      colors: {
+        main: "#CD5B45",
+        secondary: "#3E9252",
+        accent: "#2F353B",
+        roof: "#2A3038"
+      },
+      summary: "位於風雨匹克球場西側的風雨排球場（北區），橘紅底色配 2 面東西向標準綠色排球場，上方設有太陽能光電風雨鋼棚。",
+      features: ["太陽能光電風雨鋼棚", "2 面東西向標準排球場"],
+      floorsData: {
+        1: [
+          { code: "CVN1", name: "北區風雨排球場 A・B 場", type: "sport" }
+        ]
+      }
+    },
+    {
+      id: "covered_pickleball",
+      name: "風雨匹克球場",
+      englishName: "Covered Pickleball Court",
+      category: "sport",
+      zone: "west_sport",
+      badgeText: "風雨",
+      x: -118.5, z: 3.0, w: 12.0, d: 26.0, rotY: 0,
+      floors: 1, floorHeight: 8.2,
+      style: "sport_court",
+      courtLayout: "pickleball_1",
+      covered: true,
+      colors: {
+        main: "#B8BFC6",
+        secondary: "#8C98A4",
+        accent: "#2F353B",
+        roof: "#343C46"
+      },
+      summary: "位於合作社大樓西側與北區風雨排球場之間的淺灰色風雨匹克球場，上方覆蓋風雨鋼棚，提供新興匹克球運動教學與練習空間。",
+      features: ["專屬風雨頂棚遮蔽", "南北向淺灰鋪面標準匹克球場"],
+      floorsData: {
+        1: [
+          { code: "PKB1", name: "風雨匹克球場", type: "sport" }
+        ]
+      }
+    },
+    {
+      id: "covered_volleyball_s",
+      name: "風雨排球場（南區）",
+      englishName: "South Covered Volleyball Courts",
+      category: "sport",
+      zone: "west_sport",
+      badgeText: "風雨",
+      x: -122.5, z: 41.0, w: 73.0, d: 30.0, rotY: 0,
+      floors: 1, floorHeight: 8.8,
+      style: "sport_court",
+      courtLayout: "volleyball_4",
+      covered: true,
+      colors: {
+        main: "#CD5B45",
+        secondary: "#3E9252",
+        accent: "#2F353B",
+        roof: "#2A3038"
+      },
+      summary: "位於游泳館北側、合作社南側的大型風雨排球場（南區），橘紅場地內配置 2×2 共 4 面東西向標準綠色排球場，覆蓋大型太陽能光電風雨鋼棚。",
+      features: ["大型太陽能光電風雨大鋼棚", "4 面東西向標準排球場（2×2 配置）"],
+      floorsData: {
+        1: [
+          { code: "CVS1", name: "南區風雨排球場 A～D 場", type: "sport" }
         ]
       }
     },
@@ -1418,8 +1525,12 @@ window.CAMPUS_DATA = {
     farm_mgmt: "n_farm_mgmt",
     coop_art: "n_coop",
     swimming: "n_swim",
-    north_courts: "n_ncourts",
-    south_courts: "n_scourts",
+    tennis_courts: "n_ncourts",
+    covered_basketball: "n_ncourts",
+    outdoor_basketball: "n_coop",
+    covered_volleyball_n: "n_scourts",
+    covered_pickleball: "n_coop",
+    covered_volleyball_s: "n_scourts",
     track_field: "n_track"
   }
 };

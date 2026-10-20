@@ -241,6 +241,35 @@ window.CampusBuilder3D = (function () {
     cateringGreenEast.receiveShadow = true;
     envGroup.add(cateringGreenEast);
 
+    // (j) 西側運動場區鋪面細節（對照球場配置圖：淺米灰廣場底、網球場南側深灰車棚／器材區、露天籃球場東側棕色平台）
+    const westSportPlaza = new THREE.Mesh(
+      new THREE.BoxGeometry(75.0, 0.10, 72.0),
+      getMat("#E2D6CE", { roughness: 0.88, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 })
+    );
+    westSportPlaza.position.set(-122.0, 0.01, -10.0);
+    westSportPlaza.receiveShadow = true;
+    envGroup.add(westSportPlaza);
+
+    // 網球場與北區風雨排球場之間的深灰黑色棚架／鋪面區 (-143, -29)
+    const westDarkPad = new THREE.Mesh(
+      new THREE.BoxGeometry(31.0, 0.45, 17.5),
+      getMat("#2C3034", { roughness: 0.8 })
+    );
+    westDarkPad.position.set(-143.0, 0.22, -29.0);
+    westDarkPad.castShadow = true;
+    westDarkPad.receiveShadow = true;
+    envGroup.add(westDarkPad);
+
+    // 露天籃球場東側（行道樹西側）的淺棕色長方平台／亭 (-90, -29)
+    const eastBasketballDeck = new THREE.Mesh(
+      new THREE.BoxGeometry(6.6, 0.36, 14.5),
+      getMat("#A67B4B", { roughness: 0.82 })
+    );
+    eastBasketballDeck.position.set(-90.0, 0.18, -29.0);
+    eastBasketballDeck.castShadow = true;
+    eastBasketballDeck.receiveShadow = true;
+    envGroup.add(eastBasketballDeck);
+
     // 6. 植栽與樹木群 (椰林大道、中庭大樹、書庫西側筆直樹林步道、校園行道樹)
     const trunkMat = getMat("#5C4332", { roughness: 0.9 });
     const leafMat1 = getMat("#3E6E35", { roughness: 0.8 });
@@ -479,69 +508,213 @@ window.CampusBuilder3D = (function () {
       return root;
     }
 
-    // 特殊場域 3：太陽能光電風雨球場 (`solar_courts`) — 還原 `160903.jpg` & `161117.jpg`
-    if (b.style === "solar_courts") {
+    // 特殊場域 3：西側各類運動球場 (`sport_court`) — 區分「露天球場（無頂棚）」與「風雨球場（附鋼棚頂蓋）」
+    if (b.style === "sport_court") {
       const g1 = new THREE.Group();
-      const courtBase = new THREE.Mesh(
-        new THREE.BoxGeometry(b.w, 0.16, b.d),
-        getMat("#4F785A", { polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 })
-      );
-      courtBase.position.y = 0.08;
+      const baseMat = getMat(b.colors.main, {
+        roughness: 0.82,
+        polygonOffset: true,
+        polygonOffsetFactor: -1,
+        polygonOffsetUnits: -1
+      });
+      const courtGreenMat = getMat(b.colors.secondary, {
+        roughness: 0.78,
+        polygonOffset: true,
+        polygonOffsetFactor: -3,
+        polygonOffsetUnits: -3
+      });
+      const lineWhiteMat = getMat("#F5F7FA", {
+        roughness: 0.6,
+        polygonOffset: true,
+        polygonOffsetFactor: -5,
+        polygonOffsetUnits: -5
+      });
+      const netMat = getMat("#262A2E", { roughness: 0.5 });
+      const hoopMat = getMat("#E65C2E", { roughness: 0.4 });
+
+      // 球場底層大色塊鋪面 (紅褐／橘紅／淺灰)
+      const courtBase = new THREE.Mesh(new THREE.BoxGeometry(b.w, 0.18, b.d), baseMat);
+      courtBase.position.y = 0.09;
       courtBase.receiveShadow = true;
       g1.add(courtBase);
 
-      for (let i = -1; i <= 1; i += 2) {
-        const innerCourt = new THREE.Mesh(
-          new THREE.BoxGeometry(b.w * 0.42, 0.26, b.d * 0.82),
-          getMat(b.courtType === "basketball" ? "#4B77A3" : "#5D8BB0", { polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 })
-        );
-        innerCourt.position.set(i * b.w * 0.24, 0.13, 0);
-        innerCourt.receiveShadow = true;
-        g1.add(innerCourt);
+      // 工具函式：建立一面東西向標準綠色球場 (含白色外框線、中線、球網或籃球架)
+      function addEWGreenCourt(cx, cz, cw, cd, kind) {
+        const pad = new THREE.Mesh(new THREE.BoxGeometry(cw, 0.24, cd), courtGreenMat);
+        pad.position.set(cx, 0.12, cz);
+        pad.receiveShadow = true;
+        g1.add(pad);
+
+        // 四周白色邊線與中央分界線
+        const lw = 0.22;
+        const nLine = new THREE.Mesh(new THREE.BoxGeometry(cw, 0.27, lw), lineWhiteMat);
+        nLine.position.set(cx, 0.135, cz - cd / 2 + lw / 2);
+        const sLine = new THREE.Mesh(new THREE.BoxGeometry(cw, 0.27, lw), lineWhiteMat);
+        sLine.position.set(cx, 0.135, cz + cd / 2 - lw / 2);
+        const wLine = new THREE.Mesh(new THREE.BoxGeometry(lw, 0.27, cd), lineWhiteMat);
+        wLine.position.set(cx - cw / 2 + lw / 2, 0.135, cz);
+        const eLine = new THREE.Mesh(new THREE.BoxGeometry(lw, 0.27, cd), lineWhiteMat);
+        eLine.position.set(cx + cw / 2 - lw / 2, 0.135, cz);
+        const midLine = new THREE.Mesh(new THREE.BoxGeometry(lw, 0.27, cd), lineWhiteMat);
+        midLine.position.set(cx, 0.135, cz);
+        g1.add(nLine, sLine, wLine, eLine, midLine);
+
+        if (kind === "tennis") {
+          // 網球雙打邊線、發球線與中線 + 3D 球網
+          [-cd * 0.34, cd * 0.34].forEach(sz => {
+            const singleLine = new THREE.Mesh(new THREE.BoxGeometry(cw, 0.27, 0.16), lineWhiteMat);
+            singleLine.position.set(cx, 0.135, cz + sz);
+            g1.add(singleLine);
+          });
+          [-cw * 0.27, cw * 0.27].forEach(sx => {
+            const servLine = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.27, cd * 0.68), lineWhiteMat);
+            servLine.position.set(cx + sx, 0.135, cz);
+            g1.add(servLine);
+          });
+          const centerServ = new THREE.Mesh(new THREE.BoxGeometry(cw * 0.54, 0.27, 0.16), lineWhiteMat);
+          centerServ.position.set(cx, 0.135, cz);
+          g1.add(centerServ);
+
+          // 網球球網與網柱
+          const net = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.95, cd + 0.6), netMat);
+          net.position.set(cx, 0.68, cz);
+          const netTopBand = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.12, cd + 0.6), lineWhiteMat);
+          netTopBand.position.set(cx, 1.15, cz);
+          g1.add(net, netTopBand);
+        } else if (kind === "volleyball") {
+          // 排球三米攻擊線 + 排球高網
+          [-cw * 0.18, cw * 0.18].forEach(ax => {
+            const atkLine = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.27, cd), lineWhiteMat);
+            atkLine.position.set(cx + ax, 0.135, cz);
+            g1.add(atkLine);
+          });
+          const vNet = new THREE.Mesh(new THREE.BoxGeometry(0.10, 1.0, cd + 0.6), netMat);
+          vNet.position.set(cx, 1.85, cz);
+          const vTop = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, cd + 0.6), lineWhiteMat);
+          vTop.position.set(cx, 2.35, cz);
+          [-cd / 2 - 0.3, cd / 2 + 0.3].forEach(pz => {
+            const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 2.45, 8), netMat);
+            pole.position.set(cx, 1.22, cz + pz);
+            g1.add(pole);
+          });
+          g1.add(vNet, vTop);
+        } else if (kind === "basketball") {
+          // 籃球禁區線、中圈與東西兩端籃球架
+          const centerCircle = new THREE.Mesh(new THREE.RingGeometry(1.5, 1.72, 24), lineWhiteMat);
+          centerCircle.rotation.x = -Math.PI / 2;
+          centerCircle.position.set(cx, 0.28, cz);
+          g1.add(centerCircle);
+
+          [-1, 1].forEach(dir => {
+            const keyBox = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.26, 3.6), baseMat);
+            keyBox.position.set(cx + dir * (cw / 2 - 2.2), 0.133, cz);
+            g1.add(keyBox);
+
+            // 籃球柱、籃板與橘色籃框
+            const postX = cx + dir * (cw / 2 + 0.6);
+            const post = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.16, 3.2, 10), netMat);
+            post.position.set(postX, 1.6, cz);
+            const arm = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.15, 0.15), netMat);
+            arm.position.set(postX - dir * 0.5, 3.05, cz);
+            const board = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.15, 1.8), lineWhiteMat);
+            board.position.set(postX - dir * 1.0, 3.05, cz);
+            const rim = new THREE.Mesh(new THREE.TorusGeometry(0.26, 0.04, 8, 16), hoopMat);
+            rim.rotation.x = Math.PI / 2;
+            rim.position.set(postX - dir * 1.3, 2.85, cz);
+            g1.add(post, arm, board, rim);
+          });
+        }
       }
 
-      // 深炭灰 H 型鋼柱 + 亮蘋果綠安全防撞柱墊 (`#78BE75`)
-      const colMat = getMat("#2F353B", { metalness: 0.5, roughness: 0.4 });
-      const padMat = getMat("#78BE75", { roughness: 0.6 });
-      const colsX = [-b.w / 2 + 1.2, 0, b.w / 2 - 1.2];
-      const colsZ = [-b.d / 2 + 1.5, -b.d / 6, b.d / 6, b.d / 2 - 1.5];
-      colsX.forEach(cx => {
-        colsZ.forEach(cz => {
-          const post = new THREE.Mesh(new THREE.BoxGeometry(0.45, b.floorHeight, 0.45), colMat);
-          post.position.set(cx, b.floorHeight / 2, cz);
-          post.castShadow = true;
-          g1.add(post);
-
-          const safetyPad = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 2.3, 12), padMat);
-          safetyPad.position.set(cx, 1.15, cz);
-          g1.add(safetyPad);
+      // 依據不同球場配置繪製場地面
+      if (b.courtLayout === "tennis_3") {
+        // 3 面東西向露天網球場 + 西側白色練習牆／看台
+        [-14.2, 0, 14.2].forEach(cz => addEWGreenCourt(1.2, cz, 24.5, 11.2, "tennis"));
+        [-9.5, -1.5].forEach(wz => {
+          const whiteWall = new THREE.Mesh(new THREE.BoxGeometry(4.5, 2.8, 7.2), lineWhiteMat);
+          whiteWall.position.set(-b.w / 2 + 2.5, 1.4, wz);
+          whiteWall.castShadow = true;
+          g1.add(whiteWall);
         });
-      });
-
-      // 南座球場專屬：綠色水泥網球練習牆 (`160937.jpg`)
-      if (b.courtType === "volley_tennis") {
-        const practiceWall = new THREE.Mesh(new THREE.BoxGeometry(0.6, 4.2, b.d * 0.65), getMat("#466645"));
-        practiceWall.position.set(b.w * 0.46, 2.1, 0);
-        practiceWall.castShadow = true;
-        g1.add(practiceWall);
+      } else if (b.courtLayout === "basketball_3") {
+        // 3 面東西向風雨籃球場
+        [-14.2, 0, 14.2].forEach(cz => addEWGreenCourt(0, cz, 25.5, 11.6, "basketball"));
+      } else if (b.courtLayout === "basketball_1") {
+        // 1 面東西向露天標準籃球場
+        addEWGreenCourt(0, 0, 22.0, 12.6, "basketball");
+      } else if (b.courtLayout === "volleyball_2") {
+        // 北區 2 面東西向風雨排球場
+        [-7.2, 7.2].forEach(cz => addEWGreenCourt(0, cz, 22.5, 10.6, "volleyball"));
+      } else if (b.courtLayout === "volleyball_4") {
+        // 南區 2×2 共 4 面東西向風雨排球場 + 中央南北向黑線分隔
+        const midDiv = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.25, b.d), netMat);
+        midDiv.position.set(0, 0.13, 0);
+        g1.add(midDiv);
+        [-18.0, 18.0].forEach(cx => {
+          [-7.2, 7.2].forEach(cz => addEWGreenCourt(cx, cz, 24.5, 10.6, "volleyball"));
+        });
+      } else if (b.courtLayout === "pickleball_1") {
+        // 南北向淺灰風雨匹克球場
+        const pCourt = new THREE.Mesh(new THREE.BoxGeometry(8.2, 0.24, 18.8), courtGreenMat);
+        pCourt.position.set(0, 0.12, 0);
+        g1.add(pCourt);
+        const pNet = new THREE.Mesh(new THREE.BoxGeometry(8.6, 0.88, 0.12), netMat);
+        pNet.position.set(0, 0.56, 0);
+        const pTop = new THREE.Mesh(new THREE.BoxGeometry(8.6, 0.10, 0.14), lineWhiteMat);
+        pTop.position.set(0, 0.98, 0);
+        g1.add(pNet, pTop);
       }
-
-      // 挑高太陽能光電雙斜大屋頂
-      const roofGroup = new THREE.Group();
-      roofGroup.position.y = b.floorHeight;
-      const roofDeck = new THREE.Mesh(new THREE.BoxGeometry(b.w + 2.5, 0.45, b.d + 2.5), getMat("#A8B0B5", { metalness: 0.4 }));
-      roofDeck.rotation.z = 0.06;
-      roofDeck.castShadow = true;
-      roofGroup.add(roofDeck);
-
-      const solarTop = new THREE.Mesh(new THREE.BoxGeometry(b.w + 2.0, 0.2, b.d + 2.0), getMat("#26313E", { roughness: 0.25, metalness: 0.65 }));
-      solarTop.position.y = 0.28;
-      solarTop.rotation.z = 0.06;
-      roofGroup.add(solarTop);
-      g1.add(roofGroup);
 
       root.add(g1);
       root.userData.floorGroups[1] = g1;
+      root.userData.pickMesh = courtBase;
+
+      // 若為「風雨球場」(b.covered === true)，建立鋼構立柱與半透光太陽能風雨鋼棚頂蓋
+      if (b.covered) {
+        const canopyGroup = new THREE.Group();
+        const colMat = getMat("#2F353B", { metalness: 0.5, roughness: 0.4 });
+        const padMat = getMat("#78BE75", { roughness: 0.6 });
+        const colsX = b.w > 45 ? [-b.w / 2 + 1.2, 0, b.w / 2 - 1.2] : [-b.w / 2 + 0.8, b.w / 2 - 0.8];
+        const colsZ = [-b.d / 2 + 1.2, 0, b.d / 2 - 1.2];
+
+        colsX.forEach(cx => {
+          colsZ.forEach(cz => {
+            const post = new THREE.Mesh(new THREE.BoxGeometry(0.42, b.floorHeight, 0.42), colMat);
+            post.position.set(cx, b.floorHeight / 2, cz);
+            post.castShadow = true;
+            canopyGroup.add(post);
+
+            const safetyPad = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 2.2, 10), padMat);
+            safetyPad.position.set(cx, 1.1, cz);
+            canopyGroup.add(safetyPad);
+          });
+        });
+
+        // 風雨鋼棚頂蓋（採用微透光深藍灰太陽能光電板材質，讓鳥瞰時既能清楚辨識「風雨頂棚」，又能隱約透視下方球場配置；切換至 1F 時可隱藏頂棚）
+        const roofFrame = new THREE.Mesh(
+          new THREE.BoxGeometry(b.w + 1.6, 0.36, b.d + 1.6),
+          getMat("#39424C", { roughness: 0.35, metalness: 0.55, transparent: true, opacity: 0.62 })
+        );
+        roofFrame.position.y = b.floorHeight;
+        roofFrame.castShadow = true;
+        canopyGroup.add(roofFrame);
+
+        // 屋頂四周實心金屬邊框樑，強化風雨球場立體結構感
+        const beamH = 0.52;
+        const nBeam = new THREE.Mesh(new THREE.BoxGeometry(b.w + 1.8, beamH, 0.55), colMat);
+        nBeam.position.set(0, b.floorHeight, -b.d / 2 - 0.6);
+        const sBeam = new THREE.Mesh(new THREE.BoxGeometry(b.w + 1.8, beamH, 0.55), colMat);
+        sBeam.position.set(0, b.floorHeight, b.d / 2 + 0.6);
+        const wBeam = new THREE.Mesh(new THREE.BoxGeometry(0.55, beamH, b.d + 1.8), colMat);
+        wBeam.position.set(-b.w / 2 - 0.6, b.floorHeight, 0);
+        const eBeam = new THREE.Mesh(new THREE.BoxGeometry(0.55, beamH, b.d + 1.8), colMat);
+        eBeam.position.set(b.w / 2 + 0.6, b.floorHeight, 0);
+        canopyGroup.add(nBeam, sBeam, wBeam, eBeam);
+
+        root.add(canopyGroup);
+        root.userData.floorGroups[2] = canopyGroup;
+      }
+
       return root;
     }
 
@@ -924,20 +1097,17 @@ window.CampusBuilder3D = (function () {
       addSolarPanels(topGroup, b.w, b.d, fh, 3);
     }
 
-    // 14. 合作社大樓 (`coop_art`) — 入口右側高聳圓柱形塔樓 + 北側 1F 洗手台與器材平房 (`161014.jpg`, `161031.jpg`, `161059.jpg`)
+    // 14. 合作社大樓 (`coop_art`) — 入口右側高聳圓柱形塔樓 + 南側圓角咖啡褐附屬門廊（對照平面圖）
     if (b.style === "coop_art") {
       const rotunda = new THREE.Mesh(new THREE.CylinderGeometry(3.0, 3.0, totalH + 2.4, 20), mainMat);
-      rotunda.position.set(b.w * 0.22, (totalH + 2.4) / 2, -b.d / 2 - 1.0);
+      rotunda.position.set(b.w * 0.22, (totalH + 2.4) / 2, -b.d / 2 - 0.8);
       rotunda.castShadow = true;
       root.add(rotunda);
 
-      const washHouse = new THREE.Mesh(new THREE.BoxGeometry(11, 3.2, 7.0), getMat("#DFDDD4"));
-      washHouse.position.set(-2, 1.6, -b.d / 2 - 7.0);
-      washHouse.castShadow = true;
-      root.add(washHouse);
-      const washRoof = new THREE.Mesh(new THREE.BoxGeometry(11.8, 0.45, 7.8), getMat("#506E5B"));
-      washRoof.position.set(-2, 3.3, -b.d / 2 - 7.0);
-      root.add(washRoof);
+      const southPorch = new THREE.Mesh(new THREE.BoxGeometry(b.w * 0.72, 3.4, 4.2), getMat("#8C6239"));
+      southPorch.position.set(b.w * 0.12, 1.7, b.d / 2 + 2.1);
+      southPorch.castShadow = true;
+      root.add(southPorch);
     }
 
     // 15. 游泳館 (`swimming`) — 中央挑高塔樓與 4×4 水泥方格遮陽花格窗 (`160848.jpg`)
