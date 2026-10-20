@@ -270,14 +270,46 @@ window.CampusBuilder3D = (function () {
     eastBasketballDeck.receiveShadow = true;
     envGroup.add(eastBasketballDeck);
 
-    // 6. 植栽與樹木群 (依據圖一平面圖深綠色區塊全面強化：高大桃花心木、樟樹、大葉欖仁與椰林大道)
+    // 6. 植栽與樹木群 (依據最新指示：操場外圍一圈樹木、中庭僅樂耕樓與正德樓前排單排樹、利用樓與厚生樓前不種樹、嚴格避讓黑色道路)
     const trunkMat = getMat("#543D2B", { roughness: 0.9 });
     const leafMatDark = getMat("#274D24", { roughness: 0.85 }); // 深綠色桃花心木／樟樹葉色
     const leafMat1 = getMat("#35632E", { roughness: 0.82 });
     const leafMat2 = getMat("#467A3B", { roughness: 0.8 });
     const palmLeafMat = getMat("#4A7C36", { roughness: 0.75 });
 
+    // 嚴格道路避讓檢查函數：確保任何樹木絕不擋到或蓋住校內黑色道路 (internalRoads)
+    function isPositionOnRoad(x, z) {
+      // 1. 中央迎賓大道 (x = -6.2 .. +6.2, z = -215 .. -64)
+      if (Math.abs(x) < 6.2 && z >= -215 && z <= -64) return true;
+      // 2. 校門口圓環 (圓心 0, -162，半徑 15.8m 範圍)
+      if (Math.hypot(x - 0, z - (-162)) < 15.8) return true;
+      // 3. 圓環往西聯絡道 (z = -160 .. -152, x = -85 .. 0)
+      if (z >= -160.0 && z <= -152.0 && x >= -85.0 && x <= 0) return true;
+      // 4. 西側南北向主幹道 (x = -85.0 .. -75.0, z = -250 .. 200)
+      if (x >= -85.0 && x <= -75.0 && z >= -250 && z <= 200) return true;
+      // 5. 敬業樓/行政大樓南側東西向道路 (z = -79.5 .. -70.5, x = -85 .. 78)
+      if (z >= -79.5 && z <= -70.5 && x >= -85.0 && x <= 78.0) return true;
+      // 6. 東側南北向主幹道 (x = 69.5 .. 78.5, z = -80 .. 200)
+      if (x >= 69.5 && x <= 78.5 && z >= -80 && z <= 200) return true;
+      // 7. 餐飲館前方東西向道路 (z = -70.0 .. -62.0, x = 74 .. 138)
+      if (z >= -70.0 && z <= -62.0 && x >= 74.0 && x <= 138.0) return true;
+      // 8. 烹飪/樂揚北側東西向道路 (z = -40.5 .. -33.5, x = 74 .. 138)
+      if (z >= -40.5 && z <= -33.5 && x >= 74.0 && x <= 138.0) return true;
+      // 9. 圖書館北側東西向道路 (z = -8.5 .. -1.5, x = 74 .. 138)
+      if (z >= -8.5 && z <= -1.5 && x >= 74.0 && x <= 138.0) return true;
+      // 10. 最東側南北向道路 (x = 131.5 .. 140.5, z = -70 .. 190)
+      if (x >= 131.5 && x <= 140.5 && z >= -70 && z <= 190) return true;
+      // 11. 圖書館與加工廠間橫向道 (z = 48.5 .. 55.5, x = 74 .. 138)
+      if (z >= 48.5 && z <= 55.5 && x >= 74.0 && x <= 138.0) return true;
+      // 12. 正德樓南側雙平行車道 (z = 57.5 .. 66.5 與 z = 81.5 .. 90.5)
+      if ((z >= 57.5 && z <= 66.5) || (z >= 81.5 && z <= 90.5)) return true;
+      return false;
+    }
+
     function addTree(x, z, scale = 1.0, style = "mahogany") {
+      // 道路防呆安全檢查：若座標落於黑色道路上則自動跳過，絕不種在馬路上
+      if (isPositionOnRoad(x, z)) return;
+
       const g = new THREE.Group();
       g.position.set(x, 0, z);
 
@@ -326,126 +358,113 @@ window.CampusBuilder3D = (function () {
       envGroup.add(g);
     }
 
-    // (1) 中央迎賓大道兩側高聳椰林 (中山南路大門直通行政/敬業)
-    for (let z = -148; z <= -106; z += 8.0) {
-      addTree(-3.5, z, 1.1, "palm");
-      addTree(3.5, z, 1.1, "palm");
+    // (1) 中央迎賓大道兩側高聳椰林 (中山南路進門道路兩側草坪，x = ±8.5m 位於路外，不遮擋 11m 黑色大道)
+    for (let z = -148; z <= -106; z += 8.5) {
+      addTree(-8.5, z, 1.15, "palm");
+      addTree(8.5, z, 1.15, "palm");
     }
 
-    // (2) 中庭教學區雙大深綠森林群 (圖一平面圖中庭草坪左右兩大巨型深綠森林樹叢)
-    // 西北側大森林 (樂耕樓南側西半部、中庭十字步道西側)
-    [
-      [-30, -26, 1.35], [-24, -28, 1.45], [-18, -26, 1.3], [-13, -27, 1.4],
-      [-32, -20, 1.4], [-26, -21, 1.5], [-20, -19, 1.55], [-14, -20, 1.35],
-      [-29, -14, 1.35], [-23, -15, 1.4], [-17, -13, 1.3], [-12, -14, 1.25]
-    ].forEach(([x, z, s]) => addTree(x, z, s, "mahogany"));
+    // (2) 中庭教學區樹木 (依最新指示：只有樂耕樓與正德樓前排各一排樹，利用樓與厚生樓前排不種樹，中庭草坪十字步道開闊)
+    // 樂耕樓南側前排 (z = -28.0，避開中央 x = -9..9 之穿堂中軸步道)
+    [-34, -26, -18, -10].forEach(x => addTree(x, -28.0, 1.25, "mahogany"));
+    [10, 18, 26, 34].forEach(x => addTree(x, -28.0, 1.25, "mahogany"));
 
-    // 東北側大森林 (樂耕樓南側東半部、中庭十字步道東側)
-    [
-      [13, -27, 1.4], [18, -26, 1.35], [24, -28, 1.45], [30, -26, 1.35],
-      [14, -20, 1.35], [20, -19, 1.55], [26, -21, 1.5], [32, -20, 1.4],
-      [12, -14, 1.25], [17, -13, 1.3], [23, -15, 1.4], [29, -14, 1.35]
-    ].forEach(([x, z, s]) => addTree(x, z, s, "mahogany"));
+    // 正德樓北側前排 (z = 24.0，避開中央 x = -9..9 之中軸步道)
+    [-34, -26, -18, -10].forEach(x => addTree(x, 24.0, 1.25, "mahogany"));
+    [10, 18, 26, 34].forEach(x => addTree(x, 24.0, 1.25, "mahogany"));
 
-    // 中庭內圍步道樹列 (沿利用樓東側、厚生樓西側、正德樓北側)
-    for (let z = -6; z <= 22; z += 7.0) {
-      addTree(-36.5, z, 1.2, "mahogany");
-      addTree(36.5, z, 1.2, "mahogany");
+    // (3) 田徑操場外圍一圈高大樹木 (圍繞著操場跑道外圍環狀種植，絕不壓在跑道上)
+    // 操場中心 (-128.0, -170.0)，直道範圍 z = -200 .. -140，跑道外緣半徑 29m，植樹圈半徑 33.5m
+    // (a) 東側直道樹列 (跑道與西主幹道之間綠帶, x = -93.0)
+    for (let z = -200; z <= -140; z += 10.0) {
+      addTree(-93.0, z, 1.3, "mahogany");
     }
-    for (let x = -30; x <= 30; x += 8.5) {
-      addTree(x, 22.0, 1.2, "mahogany");
+    // (b) 西側直道樹列 (跑道與永興路之間綠帶, x = -163.0)
+    for (let z = -200; z <= -140; z += 10.0) {
+      addTree(-163.0, z, 1.3, "mahogany");
+    }
+    // (c) 北側半圓外環樹弧 (圓心 -128.0, -200.0, 半徑 33.5m)
+    for (let i = 0; i <= 8; i++) {
+      const a = (i / 8) * Math.PI; // 0 (東) -> PI (西)
+      const tx = -128.0 + 33.5 * Math.cos(a);
+      const tz = -200.0 - 33.5 * Math.sin(a);
+      addTree(tx, tz, 1.35, "mahogany");
+    }
+    // (d) 南側半圓外環樹弧 (圓心 -128.0, -140.0, 半徑 33.5m)
+    for (let i = 0; i <= 8; i++) {
+      const a = Math.PI + (i / 8) * Math.PI; // PI (西) -> 2PI (東)
+      const tx = -128.0 + 33.5 * Math.cos(a);
+      const tz = -140.0 - 33.5 * Math.sin(a);
+      addTree(tx, tz, 1.35, "mahogany");
     }
 
-    // (3) 園藝館周邊深綠大森林區 (圖一平面圖園藝館四周密佈之深綠高大林帶)
+    // (4) 園藝館周邊深綠大森林區 (圖一平面圖園藝館四周密佈之深綠高大林帶，均在路外草坪)
     [
-      // 園藝館西側森林帶 (x = 10..22, z = 74..120)
-      [12, 76, 1.35], [18, 75, 1.4], [13, 84, 1.45], [19, 83, 1.5],
-      [12, 92, 1.4], [18, 91, 1.5], [13, 100, 1.35], [19, 99, 1.4],
-      [14, 108, 1.3], [18, 107, 1.35], [13, 116, 1.35], [19, 115, 1.4],
-      // 園藝館東側森林帶 (x = 54..66, z = 74..120)
-      [55, 76, 1.35], [62, 75, 1.4], [56, 84, 1.45], [63, 83, 1.4],
-      [55, 92, 1.4], [62, 91, 1.5], [56, 100, 1.35], [63, 99, 1.4],
-      [55, 108, 1.3], [62, 107, 1.35], [56, 116, 1.35], [63, 115, 1.4],
-      // 園藝館南側與農經館周邊林木 (z = 118..145)
+      // 園藝館西側森林帶 (x = 12..20, z = 76..116)
+      [13, 76, 1.35], [19, 75, 1.4], [13, 84, 1.45], [19, 83, 1.5],
+      [13, 92, 1.4], [19, 91, 1.5], [13, 100, 1.35], [19, 99, 1.4],
+      [13, 108, 1.3], [19, 107, 1.35], [13, 116, 1.35], [19, 115, 1.4],
+      // 園藝館東側森林帶 (x = 55..63, z = 76..116)
+      [56, 76, 1.35], [62, 75, 1.4], [56, 84, 1.45], [62, 83, 1.4],
+      [56, 92, 1.4], [62, 91, 1.5], [56, 100, 1.35], [62, 99, 1.4],
+      [56, 108, 1.3], [62, 107, 1.35], [56, 116, 1.35], [62, 115, 1.4],
+      // 園藝館南側與農經館周邊林木 (z = 122..145)
       [26, 122, 1.35], [34, 123, 1.4], [42, 121, 1.45], [50, 123, 1.35],
       [24, 134, 1.3], [32, 135, 1.4], [40, 133, 1.35], [48, 135, 1.3],
       [36, 145, 1.3], [44, 144, 1.35], [52, 146, 1.25]
     ].forEach(([x, z, s]) => addTree(x, z, s, "mahogany"));
 
-    // (4) 土木館與畜產館北側半圓森林群、西側與中夾林帶 (圖一平面圖深綠區塊)
-    // 北側半圓拱形林帶 (x = -62..-14, z = 66..82)
+    // (5) 土木館與畜產館北側半圓森林群、西側與中夾林帶 (路外綠地)
     [
       [-58, 68, 1.35], [-50, 67, 1.4], [-42, 69, 1.45], [-34, 68, 1.4], [-26, 67, 1.35], [-18, 69, 1.3],
       [-56, 76, 1.3], [-48, 77, 1.4], [-40, 75, 1.45], [-32, 76, 1.4], [-24, 77, 1.35], [-16, 75, 1.3]
     ].forEach(([x, z, s]) => addTree(x, z, s, "mahogany"));
 
-    // 土木館西側沿校牆林帶 (x = -70..-74, z = 92..175)
-    for (let z = 92; z <= 175; z += 11.5) {
+    // 土木館西側沿校牆林帶 (x = -72.0, z = 92..175)
+    for (let z = 92; z <= 175; z += 12.0) {
       addTree(-72.0, z, 1.25, "mahogany");
     }
 
-    // 畜產館與園藝館之間的深綠林帶 (x = 0..8, z = 92..165)
-    for (let z = 92; z <= 165; z += 11.5) {
-      addTree(2.0, z, 1.3, "mahogany");
+    // 畜產館與園藝館之間的深綠林帶 (x = 3.0, z = 92..165)
+    for (let z = 92; z <= 165; z += 12.0) {
+      addTree(3.0, z, 1.3, "mahogany");
     }
 
-    // (5) 正德樓南側花圃區高大行道樹 (z = 62 與 z = 86 兩條道路間的長條綠帶)
-    [-54, -42, -30, -18].forEach(x => addTree(x, 74.0, 1.15, "mahogany"));
-    [18, 30, 42, 54].forEach(x => addTree(x, 74.0, 1.15, "mahogany"));
+    // (6) 正德樓南側中央花圃區高大行道樹 (位於 z = 62 與 z = 86 兩條道路間的長條綠帶中央 z = 74.0)
+    [-54, -42, -30, -18].forEach(x => addTree(x, 74.0, 1.2, "mahogany"));
+    [18, 30, 42, 54].forEach(x => addTree(x, 74.0, 1.2, "mahogany"));
 
-    // (6) 操場周邊深綠大森林區 (圖一平面圖操場北端與東側深綠森林)
-    // 操場北端大森林 (x = -160..-105, z = -238..-185)
+    // (7) 北校門與活動中心周邊林地 (均在道路外側草坪)
     [
-      [-155, -232, 1.4], [-145, -235, 1.5], [-135, -233, 1.45], [-125, -236, 1.4], [-115, -232, 1.35],
-      [-152, -222, 1.35], [-142, -224, 1.5], [-132, -221, 1.55], [-122, -225, 1.45], [-112, -220, 1.35],
-      [-150, -210, 1.35], [-140, -212, 1.45], [-130, -209, 1.5], [-120, -213, 1.4], [-110, -208, 1.3],
-      [-148, -198, 1.3], [-138, -200, 1.4], [-128, -197, 1.45], [-118, -201, 1.35]
+      [-58, -150, 1.3], [-50, -148, 1.35], [-42, -147, 1.4], [-34, -148, 1.45], [-26, -147, 1.35],
+      [-54, -140, 1.3], [-46, -142, 1.35], [-38, -140, 1.4], [-30, -142, 1.4], [-22, -140, 1.35]
     ].forEach(([x, z, s]) => addTree(x, z, s, "mahogany"));
 
-    // 操場與活動中心／車棚之間的行道樹列 (x = -96, z = -215..-125)
-    for (let z = -215; z <= -125; z += 10.0) {
-      addTree(-96.0, z, 1.25, "mahogany");
-    }
-
-    // (7) 西側主幹道行道樹 (球場與利用樓／正德樓之間, x = -86)
-    for (let z = -120; z <= 175; z += 12.0) {
-      addTree(-86.0, z, 1.2, "mahogany");
-    }
-
-    // (8) 北校門與行政大樓周邊森林
-    // 活動中心北側與迎賓車道弧形林地 (x = -62..-15, z = -162..-145)
+    // 校門東北圓環外側弧形林帶 (x = 22..58, z = -150..-136)
     [
-      [-58, -158, 1.3], [-50, -160, 1.35], [-42, -157, 1.4], [-34, -159, 1.45], [-26, -157, 1.35], [-18, -158, 1.3],
-      [-54, -150, 1.3], [-46, -152, 1.35], [-38, -149, 1.4], [-30, -151, 1.4], [-22, -149, 1.35]
-    ].forEach(([x, z, s]) => addTree(x, z, s, "mahogany"));
-
-    // 校門圓環東北弧形林帶與行政大樓周邊 (x = 18..65, z = -158..-135)
-    [
-      [22, -155, 1.35], [30, -157, 1.4], [38, -154, 1.45], [46, -156, 1.4], [54, -153, 1.35],
-      [26, -145, 1.3], [34, -147, 1.4], [42, -144, 1.45], [50, -146, 1.4], [58, -143, 1.35],
+      [24, -148, 1.35], [32, -150, 1.4], [40, -146, 1.45], [48, -148, 1.4], [56, -145, 1.35],
+      [28, -138, 1.3], [36, -140, 1.4], [44, -136, 1.45], [52, -138, 1.4], [60, -135, 1.35],
       // 行政大樓東側與學生車棚旁 (x = 66..82, z = -115..-85)
-      [68, -112, 1.3], [75, -110, 1.35], [69, -100, 1.35], [76, -98, 1.4], [70, -88, 1.3], [77, -86, 1.35]
+      [66, -112, 1.3], [66, -100, 1.35], [66, -88, 1.3]
     ].forEach(([x, z, s]) => addTree(x, z, s, "mahogany"));
 
-    // (9) 東側各專科館舍間深綠樹林帶 (厚生樓、烹飪教室、樂揚樓、圖書館、書庫、機械館)
-    // 厚生樓與烹飪教室／樂揚樓之間的綠廊 (x = 60..72, z = -35..25)
-    for (let z = -32; z <= 24; z += 9.5) {
+    // (8) 東側各專科館舍間深綠樹林帶 (厚生樓東側、烹飪教室、樂揚樓、圖書館、書庫、機械館)
+    for (let z = -32; z <= 24; z += 10.0) {
       addTree(64.0, z, 1.25, "mahogany");
-      addTree(70.0, z, 1.2, "mahogany");
     }
 
-    // 圖書館周邊綠蔭林木 (x = 88..106, z = 0..45)
+    // 圖書館周邊綠蔭林木 (x = 88..106, z = 5..42)
     [
-      [88, 5, 1.3], [96, 4, 1.35], [104, 6, 1.3],
+      [88, 6, 1.3], [96, 5, 1.35], [104, 7, 1.3],
       [89, 16, 1.35], [97, 15, 1.4], [105, 17, 1.35],
       [88, 28, 1.3], [96, 27, 1.35], [104, 29, 1.3],
       [89, 40, 1.35], [97, 39, 1.4], [105, 41, 1.3]
     ].forEach(([x, z, s]) => addTree(x, z, s, "mahogany"));
 
-    // 書庫（原學生宿舍）西側筆直樹林步道 (`160532.jpg`)
-    for (let z = 108; z <= 146; z += 6.5) {
-      addTree(92, z, 1.15, "tall_grove");
-      addTree(98, z, 1.2, "tall_grove");
+    // 書庫西側筆直樹林步道
+    for (let z = 108; z <= 146; z += 7.0) {
+      addTree(92.0, z, 1.15, "tall_grove");
+      addTree(98.0, z, 1.2, "tall_grove");
     }
 
     // 加工工廠與書庫周邊深綠林帶 (x = 88..104, z = 78..104)
@@ -454,7 +473,7 @@ window.CampusBuilder3D = (function () {
       [88, 94, 1.35], [96, 92, 1.4], [104, 95, 1.3]
     ].forEach(([x, z, s]) => addTree(x, z, s, "mahogany"));
 
-    // 樂揚樓、資源室以東果園／林地 (x = 145..172, z = -35..45)
+    // 樂揚樓、資源室以東果園／林地 (x = 146..168, z = -32..32)
     [
       [148, -30, 1.25], [158, -32, 1.3], [168, -29, 1.25],
       [146, -15, 1.3], [156, -16, 1.35], [166, -14, 1.3],
@@ -463,28 +482,27 @@ window.CampusBuilder3D = (function () {
       [148, 30, 1.25], [158, 28, 1.3], [168, 31, 1.25]
     ].forEach(([x, z, s]) => addTree(x, z, s, "mahogany"));
 
-    // 東側校界（永平街側）筆直綠蔭防風林 (x = 176..188, z = 15..155)
+    // 東側校界（永平街側）筆直綠蔭防風林 (x = 180..186, z = 15..155)
     for (let z = 15; z <= 155; z += 14.0) {
       addTree(180.0, z, 1.25, "mahogany");
       addTree(186.0, z, 1.2, "mahogany");
     }
 
-    // (10) 餐飲館正門口前方道路左右兩個獨立綠地區域 (對照平面圖)
+    // (9) 餐飲館正門口前方道路左右兩個獨立綠地區域 (對照平面圖)
     [
-      // 左側綠地樹群 (x = 83..105, z = -58..-45)
+      // 左側綠地樹群 (x = 84..104, z = -58..-44)
       [84, -57, 1.15], [91, -56, 1.25], [98, -57, 1.1], [104, -55, 1.2],
       [85, -49, 1.2], [93, -48, 1.3], [101, -49, 1.15],
       [88, -44, 1.05], [96, -44, 1.15], [104, -45, 1.1],
-      // 右側綠地樹群 (x = 122..128, z = -58..-45)
+      // 右側綠地樹群 (x = 122..128, z = -58..-44)
       [123, -57, 1.1], [127, -54, 1.15], [123, -49, 1.2], [127, -45, 1.1]
     ].forEach(([x, z, s]) => addTree(x, z, s, "mahogany"));
 
-    // (11) 游泳館南側大草坪樹林 (x = -155..-95, z = 172..188)
+    // (10) 游泳館南側大草坪樹林 (x = -155..-95, z = 178..188)
     for (let x = -155; x <= -95; x += 15.0) {
       addTree(x, 178.0, 1.3, "mahogany");
       addTree(x + 7.5, 186.0, 1.25, "mahogany");
     }
-
     return envGroup;
   }
 
@@ -565,45 +583,109 @@ window.CampusBuilder3D = (function () {
     const glassMat = getMat("#2B3D4F", { roughness: 0.2, metalness: 0.7 });
     const whiteMat = getMat("#F4F4F0");
 
-    // 特殊場域 1：田徑操場 (還原 20261020_124957.jpg ~ 125032.jpg 實景：標準紅褐 PU 跑道、外緣天藍排水邊溝與東側司令台看台)
+    // 特殊場域 1：田徑操場 (標準長條橢圓形體育田徑操場跑道 + 外圍天藍排水溝 + 紅褐 PU 跑道 + 6 道白色分道標線 + 中央草皮足球場 + 東側司令台看台)
     if (b.style === "track") {
       const g1 = new THREE.Group();
-      // 1. 外緣天藍色排水邊溝
+
+      // 標準田徑場長條橢圓 (Stadium / Capsule) Shape 生成函數
+      // 兩端為半徑 r = width / 2 的半圓，中間為直道長度 2s (depth - width)
+      function makeStadiumShape(w, d) {
+        const shape = new THREE.Shape();
+        const r = w / 2;
+        const s = Math.max(0, d / 2 - r);
+        shape.moveTo(r, -s);
+        shape.lineTo(r, s);
+        shape.absarc(0, s, r, 0, Math.PI, false);
+        shape.lineTo(-r, -s);
+        shape.absarc(0, -s, r, Math.PI, Math.PI * 2, false);
+        return shape;
+      }
+
+      // 1. 外緣天藍色洗石子排水邊溝 (長條橢圓形)
       const curbMat = getMat("#4A92C8", { roughness: 0.7, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
-      const blueCurb = new THREE.Mesh(new THREE.BoxGeometry(b.w, 0.14, b.d), curbMat);
-      blueCurb.position.y = 0.07;
+      const curbShape = makeStadiumShape(b.w, b.d);
+      const curbGeo = new THREE.ExtrudeGeometry(curbShape, { depth: 0.12, bevelEnabled: false });
+      const blueCurb = new THREE.Mesh(curbGeo, curbMat);
+      blueCurb.rotation.x = -Math.PI / 2;
+      blueCurb.position.y = 0.02;
       blueCurb.receiveShadow = true;
       g1.add(blueCurb);
 
-      // 2. 標準紅褐色 PU 跑道鋪面
+      // 2. 標準紅褐色 PU 跑道鋪面 (長條橢圓形)
       const trackMat = getMat("#9D3528", { roughness: 0.82, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
-      const puTrack = new THREE.Mesh(new THREE.BoxGeometry(b.w - 1.8, 0.20, b.d - 1.8), trackMat);
-      puTrack.position.y = 0.10;
+      const trackShape = makeStadiumShape(b.w - 1.8, b.d - 1.8);
+      const trackGeo = new THREE.ExtrudeGeometry(trackShape, { depth: 0.16, bevelEnabled: false });
+      const puTrack = new THREE.Mesh(trackGeo, trackMat);
+      puTrack.rotation.x = -Math.PI / 2;
+      puTrack.position.y = 0.04;
       puTrack.receiveShadow = true;
       g1.add(puTrack);
 
-      // 3. 跑道白色分道標線 (6 道標準線)
-      const lineMat = getMat("#F5F7FA", { roughness: 0.6, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
-      for (let i = 1; i <= 6; i++) {
-        const span = i * 1.55;
-        const laneLine = new THREE.Mesh(new THREE.BoxGeometry(b.w - 1.8 - span * 2, 0.23, b.d - 1.8 - span * 2), lineMat);
-        laneLine.position.y = 0.115;
-        g1.add(laneLine);
-        const laneInner = new THREE.Mesh(new THREE.BoxGeometry(b.w - 1.8 - span * 2 - 0.24, 0.26, b.d - 1.8 - span * 2 - 0.24), trackMat);
-        laneInner.position.y = 0.13;
-        g1.add(laneInner);
+      // 3. 跑道 6 道標準白色分道標線 (長條橢圓同心環線)
+      const laneLineMat = new THREE.LineBasicMaterial({ color: 0xF5F7FA, linewidth: 2 });
+      const numLanes = 6;
+      const laneWidth = 1.45;
+      for (let i = 1; i <= numLanes; i++) {
+        const lw = (b.w - 1.8) - i * (laneWidth * 2);
+        const ld = (b.d - 1.8) - i * (laneWidth * 2);
+        if (lw <= 6 || ld <= 6) break;
+        const lShape = makeStadiumShape(lw, ld);
+        const pts2d = lShape.getPoints(96);
+        const pts3d = pts2d.map(p => new THREE.Vector3(p.x, 0.22, -p.y));
+        const laneGeo = new THREE.BufferGeometry().setFromPoints(pts3d);
+        const laneLoop = new THREE.LineLoop(laneGeo, laneLineMat);
+        g1.add(laneLoop);
       }
 
-      // 4. 中央天然草皮足球／田徑場
-      const infieldMat = getMat("#558C45", { roughness: 0.88, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 });
-      const infield = new THREE.Mesh(new THREE.BoxGeometry(b.w - 22, 0.36, b.d - 26), infieldMat);
-      infield.position.y = 0.18;
+      // 4. 中央天然綠草皮足球／田徑場 (長條橢圓形內場)
+      const infieldMat = getMat("#558C45", { roughness: 0.88, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
+      const infieldW = b.w - 1.8 - numLanes * (laneWidth * 2) - 1.2;
+      const infieldD = b.d - 1.8 - numLanes * (laneWidth * 2) - 1.2;
+      const infieldShape = makeStadiumShape(infieldW, infieldD);
+      const infieldGeo = new THREE.ExtrudeGeometry(infieldShape, { depth: 0.20, bevelEnabled: false });
+      const infield = new THREE.Mesh(infieldGeo, infieldMat);
+      infield.rotation.x = -Math.PI / 2;
+      infield.position.y = 0.06;
       infield.receiveShadow = true;
       g1.add(infield);
 
-      // 5. 東側司令台 (還原 20261020_125032.jpg 實景：白色平頂雨遮、藍色看台階梯、正中國旗與前方球門)
+      // 4b. 足球場白色邊線與球門
+      const pitchLineMat = new THREE.LineBasicMaterial({ color: 0xFFFFFF, linewidth: 2 });
+      const pW = infieldW * 0.72;
+      const pD = infieldD * 0.65;
+      const pitchPts = [
+        new THREE.Vector3(-pW / 2, 0.27, -pD / 2),
+        new THREE.Vector3(pW / 2, 0.27, -pD / 2),
+        new THREE.Vector3(pW / 2, 0.27, pD / 2),
+        new THREE.Vector3(-pW / 2, 0.27, pD / 2),
+        new THREE.Vector3(-pW / 2, 0.27, -pD / 2)
+      ];
+      g1.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pitchPts), pitchLineMat));
+      const midLinePts = [
+        new THREE.Vector3(-pW / 2, 0.27, 0),
+        new THREE.Vector3(pW / 2, 0.27, 0)
+      ];
+      g1.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(midLinePts), pitchLineMat));
+      const centerCirclePts = [];
+      for (let a = 0; a <= Math.PI * 2 + 0.1; a += Math.PI / 16) {
+        centerCirclePts.push(new THREE.Vector3(Math.cos(a) * 5.0, 0.27, Math.sin(a) * 5.0));
+      }
+      g1.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(centerCirclePts), pitchLineMat));
+
+      const goalMat = getMat("#FFFFFF");
+      [-pD / 2, pD / 2].forEach(gz => {
+        const goalBar = new THREE.Mesh(new THREE.BoxGeometry(4.8, 0.16, 0.16), goalMat);
+        goalBar.position.set(0, 1.8, gz);
+        const postL = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.8, 0.16), goalMat);
+        postL.position.set(-2.4, 0.9, gz);
+        const postR = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.8, 0.16), goalMat);
+        postR.position.set(2.4, 0.9, gz);
+        g1.add(goalBar, postL, postR);
+      });
+
+      // 5. 東側司令台 (還原 20261020_125032.jpg 實景：白色平頂雨遮、藍色看台階梯、正中國旗)
       const stageGroup = new THREE.Group();
-      stageGroup.position.set(b.w / 2 - 3.2, 0, 0);
+      stageGroup.position.set(b.w / 2 - 2.8, 0, 0);
 
       const stageBase = new THREE.Mesh(new THREE.BoxGeometry(6.2, 3.2, 18.0), whiteMat);
       stageBase.position.y = 1.6;
@@ -629,15 +711,6 @@ window.CampusBuilder3D = (function () {
         ramp.position.set(-2.8, 0.9, dir * 5.2);
         stageGroup.add(ramp);
       });
-
-      const goalMat = getMat("#FFFFFF");
-      const goalBar = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.18, 5.5), goalMat);
-      goalBar.position.set(-4.8, 2.2, 0);
-      const goalPost1 = new THREE.Mesh(new THREE.BoxGeometry(0.18, 2.2, 0.18), goalMat);
-      goalPost1.position.set(-4.8, 1.1, -2.75);
-      const goalPost2 = new THREE.Mesh(new THREE.BoxGeometry(0.18, 2.2, 0.18), goalMat);
-      goalPost2.position.set(-4.8, 1.1, 2.75);
-      stageGroup.add(goalBar, goalPost1, goalPost2);
 
       g1.add(stageGroup);
 
@@ -956,38 +1029,88 @@ window.CampusBuilder3D = (function () {
       const yBase = (f - 1) * fh;
       const fg = buildFloorInterior(b, f, yBase, fh);
 
-      const wallShell = new THREE.Mesh(new THREE.BoxGeometry(b.w, fh - 0.18, b.d), mainMat);
-      wallShell.position.y = fh / 2;
-      wallShell.castShadow = true;
-      wallShell.receiveShadow = true;
-      fg.add(wallShell);
+      if (b.style === "legeng" && f === 1) {
+        // 樂耕樓 1F：中央穿堂玄關通道 (寬 12.0m 貫穿南北，行人可直接穿堂進出中庭，絕非實體牆壁)
+        const hallCenter = -b.x; // 對齊世界座標 x = 0 中軸線
+        const hallHalfW = 6.0;
 
-      const isEW = b.w >= b.d;
-      const winBand = new THREE.Mesh(
-        new THREE.BoxGeometry(isEW ? b.w - 1.4 : b.w + 0.14, fh * 0.38, isEW ? b.d + 0.14 : b.d - 1.4),
-        glassMat
-      );
-      winBand.position.y = fh * 0.56;
-      fg.add(winBand);
+        // 西翼實體建築外殼
+        const wLeft = (hallCenter - hallHalfW) - (-b.w / 2);
+        const xLeft = -b.w / 2 + wLeft / 2;
+        const leftShell = new THREE.Mesh(new THREE.BoxGeometry(wLeft, fh - 0.18, b.d), mainMat);
+        leftShell.position.set(xLeft, fh / 2, 0);
+        leftShell.castShadow = true;
+        leftShell.receiveShadow = true;
+        fg.add(leftShell);
 
-      let railMat = secMat;
-      if (b.style === "liyong") railMat = getMat("#689F4E");     // 利用樓招牌蘋果綠腰帶 (`161523.jpg`)
-      if (b.style === "book_depot") railMat = getMat("#B8CF78"); // 書庫萊姆綠窗台線 (`160532.jpg`)
-      if (b.style === "library") railMat = getMat("#DEC0B8");    // 圖書館粉褐腰帶 (`160422.jpg`)
-      if (b.style === "farm_mgmt") railMat = getMat("#9CC2D6");  // 農經館冰藍拱廊 (`160514.jpg`)
+        // 東翼實體建築外殼
+        const wRight = (b.w / 2) - (hallCenter + hallHalfW);
+        const xRight = (hallCenter + hallHalfW) + wRight / 2;
+        const rightShell = new THREE.Mesh(new THREE.BoxGeometry(wRight, fh - 0.18, b.d), mainMat);
+        rightShell.position.set(xRight, fh / 2, 0);
+        rightShell.castShadow = true;
+        rightShell.receiveShadow = true;
+        fg.add(rightShell);
 
-      const ledge = new THREE.Mesh(
-        new THREE.BoxGeometry(b.w + 0.36, fh * 0.28, b.d + 0.36),
-        railMat
-      );
-      ledge.position.y = fh * 0.22;
-      ledge.castShadow = true;
-      fg.add(ledge);
+        // 穿堂貫通通道花崗石地坪與挑高天花板
+        const hallFloor = new THREE.Mesh(new THREE.BoxGeometry(hallHalfW * 2, 0.22, b.d + 1.2), getMat("#D4D0C8"));
+        hallFloor.position.set(hallCenter, 0.11, 0);
+        hallFloor.receiveShadow = true;
+        fg.add(hallFloor);
+
+        const hallCeiling = new THREE.Mesh(new THREE.BoxGeometry(hallHalfW * 2, 0.24, b.d), mainMat);
+        hallCeiling.position.set(hallCenter, fh - 0.12, 0);
+        fg.add(hallCeiling);
+
+        // 穿堂兩側門面構造柱
+        [-hallHalfW, hallHalfW].forEach(px => {
+          const pCol = new THREE.Mesh(new THREE.BoxGeometry(0.8, fh - 0.18, b.d), secMat);
+          pCol.position.set(hallCenter + px, fh / 2, 0);
+          fg.add(pCol);
+        });
+
+        // 東西兩翼玻璃窗帶與窗台 (穿堂區完全挑空開放)
+        [ [wLeft, xLeft], [wRight, xRight] ].forEach(([w, x]) => {
+          const win = new THREE.Mesh(new THREE.BoxGeometry(w - 1.2, fh * 0.38, b.d + 0.14), glassMat);
+          win.position.set(x, fh * 0.56, 0);
+          fg.add(win);
+          const ledge = new THREE.Mesh(new THREE.BoxGeometry(w + 0.3, fh * 0.28, b.d + 0.36), secMat);
+          ledge.position.set(x, fh * 0.22, 0);
+          fg.add(ledge);
+        });
+      } else {
+        const wallShell = new THREE.Mesh(new THREE.BoxGeometry(b.w, fh - 0.18, b.d), mainMat);
+        wallShell.position.y = fh / 2;
+        wallShell.castShadow = true;
+        wallShell.receiveShadow = true;
+        fg.add(wallShell);
+
+        const isEW = b.w >= b.d;
+        const winBand = new THREE.Mesh(
+          new THREE.BoxGeometry(isEW ? b.w - 1.4 : b.w + 0.14, fh * 0.38, isEW ? b.d + 0.14 : b.d - 1.4),
+          glassMat
+        );
+        winBand.position.y = fh * 0.56;
+        fg.add(winBand);
+
+        let railMat = secMat;
+        if (b.style === "liyong") railMat = getMat("#689F4E");     // 利用樓招牌蘋果綠腰帶 (`161523.jpg`)
+        if (b.style === "book_depot") railMat = getMat("#B8CF78"); // 書庫萊姆綠窗台線 (`160532.jpg`)
+        if (b.style === "library") railMat = getMat("#DEC0B8");    // 圖書館粉褐腰帶 (`160422.jpg`)
+        if (b.style === "farm_mgmt") railMat = getMat("#9CC2D6");  // 農經館冰藍拱廊 (`160514.jpg`)
+
+        const ledge = new THREE.Mesh(
+          new THREE.BoxGeometry(b.w + 0.36, fh * 0.28, b.d + 0.36),
+          railMat
+        );
+        ledge.position.y = fh * 0.22;
+        ledge.castShadow = true;
+        fg.add(ledge);
+      }
 
       root.add(fg);
       root.userData.floorGroups[f] = fg;
     }
-
     // ================= 各棟大樓專屬地標造型細節 (從 43 張實景照片提取) =================
     const topGroup = root.userData.floorGroups[b.floors];
 
@@ -1068,37 +1191,67 @@ window.CampusBuilder3D = (function () {
       root.add(redStair);
     }
 
-    // 3. 樂耕樓 (`legeng`) — 北向正面「樂耕樓」金色牌匾 + 三層圓弧露台門廊 + 西端 1–2F 轉角連通利用樓 + 南向雙高塔 (還原 20261020_125222.jpg)
+    // 3. 樂耕樓 (`legeng`) — 北向正面玄關入口穿堂門廊 + 金色「樂 耕 樓」大字 + 西端 1–2F 轉角連通利用樓 + 南向雙梯塔 (還原 20261020_125222.jpg)
     if (b.style === "legeng") {
       const centerOffsetX = -b.x; // 對齊世界座標 x = 0 中軸線
-      const goldMat = getMat("#C59B27", { metalness: 0.4, roughness: 0.3 });
+      const goldMat = getMat("#C59B27", { metalness: 0.5, roughness: 0.25 });
 
-      // 北立面中央懸挑三層樓門廊與陽台 (1F 門廊、2F 與 3F 白色橫條露台)
-      const porticoW = 15.0;
-      const porticoD = 4.2;
-      const northPortico = new THREE.Mesh(new THREE.BoxGeometry(porticoW, totalH * 0.92, porticoD), mainMat);
-      northPortico.position.set(centerOffsetX, totalH * 0.46, -b.d / 2 - porticoD / 2 + 0.5);
-      northPortico.castShadow = true;
-      root.add(northPortico);
+      // (a) 北立面 1F 門廊雨庇 (寬 14m，懸挑 3.6m，中央 8m 寬闊玄關通道入口完全暢通)
+      const canopyW = 14.2;
+      const canopyD = 3.6;
+      const canopyY = fh;
+      const northCanopy = new THREE.Mesh(new THREE.BoxGeometry(canopyW, 0.45, canopyD), mainMat);
+      northCanopy.position.set(centerOffsetX, canopyY, -b.d / 2 - canopyD / 2);
+      northCanopy.castShadow = true;
+      root.add(northCanopy);
 
-      // 屋頂女兒牆正面金色大字「樂 耕 樓」標誌板
-      const nameSign = new THREE.Mesh(new THREE.BoxGeometry(10.5, 1.2, 0.4), goldMat);
-      nameSign.position.set(centerOffsetX, totalH + 0.45, -b.d / 2 - 0.2);
-      root.add(nameSign);
+      // 門廊支撐柱 (左側 2 柱、右側 2 柱，中間完全留空為通暢走道)
+      [-5.6, -3.8, 3.8, 5.6].forEach(px => {
+        const col = new THREE.Mesh(new THREE.BoxGeometry(0.55, canopyY, 0.55), whiteMat);
+        col.position.set(centerOffsetX + px, canopyY / 2, -b.d / 2 - canopyD + 0.35);
+        col.castShadow = true;
+        root.add(col);
+      });
 
-      // 1F 正門前方圓形花台
-      const frontRoundBed = new THREE.Mesh(new THREE.CylinderGeometry(3.5, 3.6, 0.65, 24), getMat("#4E8240"));
-      frontRoundBed.position.set(centerOffsetX, 0.32, -b.d / 2 - porticoD - 3.2);
-      frontRoundBed.receiveShadow = true;
-      root.add(frontRoundBed);
+      // 1F 正門入口石階地坪 (通往穿堂通道)
+      const stepsBase = new THREE.Mesh(new THREE.BoxGeometry(canopyW - 0.8, 0.24, canopyD), getMat("#DCD8D0"));
+      stepsBase.position.set(centerOffsetX, 0.12, -b.d / 2 - canopyD / 2);
+      stepsBase.receiveShadow = true;
+      root.add(stepsBase);
 
-      [-6.0, 6.0].forEach(tx => {
+      // (b) 2F 與 3F 中央立面露台與景觀深色窗帶 (立體通透，絕非封閉白牆)
+      [2, 3].forEach(f => {
+        const fg = root.userData.floorGroups[f];
+        if (!fg) return;
+        const balcony = new THREE.Mesh(new THREE.BoxGeometry(13.6, fh * 0.32, 1.4), whiteMat);
+        balcony.position.set(centerOffsetX, fh * 0.22, -b.d / 2 - 0.7);
+        balcony.castShadow = true;
+        fg.add(balcony);
+
+        const win = new THREE.Mesh(new THREE.BoxGeometry(12.8, fh * 0.52, 0.2), glassMat);
+        win.position.set(centerOffsetX, fh * 0.58, -b.d / 2 + 0.05);
+        fg.add(win);
+      });
+
+      // (c) 屋頂女兒牆正面立體金色大字「樂」「耕」「樓」三字獨立招牌
+      const signBase = new THREE.Mesh(new THREE.BoxGeometry(12.0, 1.35, 0.32), mainMat);
+      signBase.position.set(centerOffsetX, totalH + 0.65, -b.d / 2 - 0.16);
+      root.add(signBase);
+
+      [-3.8, 0, 3.8].forEach(sx => {
+        const charPlaque = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.95, 0.42), goldMat);
+        charPlaque.position.set(centerOffsetX + sx, totalH + 0.65, -b.d / 2 - 0.22);
+        charPlaque.castShadow = true;
+        root.add(charPlaque);
+      });
+
+      // (d) 南向中庭兩側樓梯高塔
+      [-6.5, 6.5].forEach(tx => {
         const greyTower = new THREE.Mesh(new THREE.BoxGeometry(3.6, totalH + 1.2, 2.5), getMat("#8E96A0"));
         greyTower.position.set(centerOffsetX + tx, (totalH + 1.2) / 2, b.d / 2 + 0.9);
         greyTower.castShadow = true;
         root.add(greyTower);
       });
-
       // 西北角 1F & 2F 轉角連通建築體：將樂耕樓 1F、2F (315 教室端) 往西延伸 14.5m 與利用樓北端 (215 教室端) 無縫連通
       const connW = 14.5;
       const connX = -b.w / 2 - connW / 2;
