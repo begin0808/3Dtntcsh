@@ -15,7 +15,7 @@ window.CAMPUS_DATA = {
 
   // 分區快速視角 (移除南校區農場，聚焦主要教學區與周邊道路)
   zones: [
-    { id: "all", name: "全校與周邊道路總覽", icon: "🏫", target: [0, 0, -10], camPos: [0, 260, 250] },
+    { id: "all", name: "全校與周邊道路總覽", icon: "🏫", target: [8, 0, 35], camPos: [8, 304, 360] },
     { id: "north", name: "校門口與行政集會區", icon: "🏛️", target: [0, 4, -125], camPos: [25, 85, -30] },
     { id: "quad", name: "中庭教學區", icon: "🌳", target: [0, 5, -5], camPos: [0, 75, 85] },
     { id: "east", name: "圖書・資訊・餐飲・食品", icon: "📚", target: [112, 5, 18], camPos: [35, 80, 55] },

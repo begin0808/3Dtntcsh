@@ -40,7 +40,7 @@
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("#CFE5F5");
-  scene.fog = new THREE.FogExp2("#CFE5F5", 0.0011);
+  scene.fog = new THREE.FogExp2("#CFE5F5", 0.00065);
 
   const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 2.0, 1300);
 
@@ -213,11 +213,18 @@
   scene.add(walkerMesh);
 
   // ================= 軌道與平滑相機控制器 =================
+  const DEFAULT_OVERVIEW = {
+    target: [8, 0, 35],
+    radius: 445,
+    phi: 0.82,
+    theta: 0.0
+  };
+
   const camControl = {
-    target: new THREE.Vector3(0, 0, -10),
-    spherical: { radius: 280, phi: 0.85, theta: 0.0 },
-    targetGoal: new THREE.Vector3(0, 0, -10),
-    sphericalGoal: { radius: 280, phi: 0.85, theta: 0.0 },
+    target: new THREE.Vector3(...DEFAULT_OVERVIEW.target),
+    spherical: { radius: DEFAULT_OVERVIEW.radius, phi: DEFAULT_OVERVIEW.phi, theta: DEFAULT_OVERVIEW.theta },
+    targetGoal: new THREE.Vector3(...DEFAULT_OVERVIEW.target),
+    sphericalGoal: { radius: DEFAULT_OVERVIEW.radius, phi: DEFAULT_OVERVIEW.phi, theta: DEFAULT_OVERVIEW.theta },
     isDragging: false,
     leftMouseAction: "pan", // 預設左鍵按住拖曳＝前後左右平移 ('pan' | 'rotate')
     dragMode: "pan",        // 'rotate' | 'pan'
@@ -234,7 +241,7 @@
     const dy = camPosArr[1] - targetArr[1];
     const dz = camPosArr[2] - targetArr[2];
     const r = Math.sqrt(dx * dx + dy * dy + dz * dz);
-    camControl.sphericalGoal.radius = Math.max(18, Math.min(540, r));
+    camControl.sphericalGoal.radius = Math.max(18, Math.min(700, r));
     camControl.sphericalGoal.phi = Math.max(0.18, Math.min(Math.PI / 2 - 0.06, Math.acos(dy / r)));
     camControl.sphericalGoal.theta = Math.atan2(dx, dz);
   }
@@ -254,10 +261,10 @@
       b.classList.toggle("active", idx === 0);
     });
 
-    camControl.targetGoal.set(0, 0, -10);
-    camControl.sphericalGoal.radius = 280;
-    camControl.sphericalGoal.phi = 0.85;
-    camControl.sphericalGoal.theta = 0.0;
+    camControl.targetGoal.set(...DEFAULT_OVERVIEW.target);
+    camControl.sphericalGoal.radius = DEFAULT_OVERVIEW.radius;
+    camControl.sphericalGoal.phi = DEFAULT_OVERVIEW.phi;
+    camControl.sphericalGoal.theta = DEFAULT_OVERVIEW.theta;
     showToast("🏠 已回到預設全校最佳全覽畫面（按住滑鼠左鍵可直接前後左右平移）");
   }
 
@@ -320,7 +327,7 @@
   canvas.addEventListener("wheel", e => {
     e.preventDefault();
     if (state.walkMode) return;
-    camControl.sphericalGoal.radius = Math.max(18, Math.min(560, camControl.sphericalGoal.radius * (1 + Math.sign(e.deltaY) * 0.1)));
+    camControl.sphericalGoal.radius = Math.max(18, Math.min(700, camControl.sphericalGoal.radius * (1 + Math.sign(e.deltaY) * 0.1)));
   }, { passive: false });
 
   window.addEventListener("keydown", e => {
@@ -1328,7 +1335,7 @@
         camControl.sphericalGoal.radius = Math.max(18, camControl.sphericalGoal.radius * 0.975);
       }
       if (camControl.panHold.zoomOut) {
-        camControl.sphericalGoal.radius = Math.min(560, camControl.sphericalGoal.radius * 1.025);
+        camControl.sphericalGoal.radius = Math.min(700, camControl.sphericalGoal.radius * 1.025);
       }
 
       if (state.navWalking && state.navCurve) {
