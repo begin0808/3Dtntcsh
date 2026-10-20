@@ -133,6 +133,79 @@ window.CampusBuilder3D = (function () {
       campusMesh.position.y = -0.26; // 底面 -0.26，頂面 -0.06
       campusMesh.receiveShadow = true;
       envGroup.add(campusMesh);
+
+      // 2b. 全校四周圍牆 (依使用者需求：四周加上一人高度約 1.85m 圍牆，含水泥基座、米白抿石牆體與頂部壓頂線板)
+      const wallBaseMat = getMat("#9A958C", { roughness: 0.86 });
+      const wallMainMat = getMat("#EAE6DC", { roughness: 0.78 });
+      const wallCapMat = getMat("#78726A", { roughness: 0.75 });
+      const wallThickness = 0.38;
+      const wallH = 1.85;
+
+      const pts = DATA.campusBoundary;
+      for (let i = 0; i < pts.length; i++) {
+        const p1 = pts[i];
+        const p2 = pts[(i + 1) % pts.length];
+
+        // 判斷是否為校門口出入車道範圍 (中山南路大門口 x 介於 -14 至 14，保留進出大門淨空，絕不以圍牆封堵校門)
+        const isMainGateArea = (p1[0] >= -14 && p1[0] <= 14 && p2[0] >= -14 && p2[0] <= 14 && p1[1] < -170 && p2[1] < -170);
+        if (isMainGateArea) {
+          continue; // 大門口車道完全暢通通透
+        }
+
+        const dx = p2[0] - p1[0];
+        const dz = p2[1] - p1[1];
+        const segLen = Math.hypot(dx, dz);
+        if (segLen < 0.5) continue;
+
+        const midX = (p1[0] + p2[0]) / 2;
+        const midZ = (p1[1] + p2[1]) / 2;
+        const rotY = -Math.atan2(dz, dx);
+
+        // 永二街側南門車道出入口淨空 (x 介於 0 至 12，z > 185)
+        const isSouthGate = (midZ > 185 && midX > -2 && midX < 14);
+        if (isSouthGate) {
+          continue;
+        }
+
+        const segGroup = new THREE.Group();
+        segGroup.position.set(midX, 0, midZ);
+        segGroup.rotation.y = rotY;
+
+        // 水泥基礎基座 (高 0.45m)
+        const baseMesh = new THREE.Mesh(new THREE.BoxGeometry(segLen, 0.45, wallThickness), wallBaseMat);
+        baseMesh.position.y = 0.225;
+        baseMesh.castShadow = true;
+        baseMesh.receiveShadow = true;
+        segGroup.add(baseMesh);
+
+        // 米白立面牆體 (高 1.25m)
+        const mainWall = new THREE.Mesh(new THREE.BoxGeometry(segLen, 1.25, wallThickness * 0.82), wallMainMat);
+        mainWall.position.y = 0.45 + 0.625;
+        mainWall.castShadow = true;
+        mainWall.receiveShadow = true;
+        segGroup.add(mainWall);
+
+        // 頂部壓頂防水分水線板 (高 0.15m)
+        const capMesh = new THREE.Mesh(new THREE.BoxGeometry(segLen + 0.1, 0.15, wallThickness + 0.08), wallCapMat);
+        capMesh.position.y = 1.70 + 0.075;
+        capMesh.castShadow = true;
+        segGroup.add(capMesh);
+
+        // 每隔約 14m 設立圍牆構造方柱
+        const pillarStep = 14.0;
+        const pillarCount = Math.floor(segLen / pillarStep);
+        if (pillarCount > 0) {
+          for (let pi = 0; pi <= pillarCount; pi++) {
+            const px = -segLen / 2 + pi * (segLen / pillarCount);
+            const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.52, 2.02, 0.52), wallCapMat);
+            pillar.position.set(px, 1.01, 0);
+            pillar.castShadow = true;
+            segGroup.add(pillar);
+          }
+        }
+
+        envGroup.add(segGroup);
+      }
     }
 
     // 3. 周邊 OpenStreetMap 街道網 (中山南路、正強街、永平街、永二街、永興路、永勝街及各巷道)
@@ -671,9 +744,18 @@ window.CampusBuilder3D = (function () {
     [-54, -42, -30, -18].forEach(x => addTree(x, 74.0, 1.2, "mahogany"));
     [18, 30, 42, 54].forEach(x => addTree(x, 74.0, 1.2, "mahogany"));
 
-    // ================= 9. 活動中心周邊綠帶 (位於車棚南側草坪，避開活動中心屋頂) =================
+    // ================= 9. 活動中心周邊綠帶 (已依需求移除紅色圈圈之樹木 [-58, -156]) =================
     [
-      [-58, -156, 1.25], [-50, -156, 1.3], [-42, -156, 1.3], [-34, -156, 1.25], [-26, -156, 1.25]
+      [-50, -156, 1.3], [-42, -156, 1.3], [-34, -156, 1.25], [-26, -156, 1.25]
+    ].forEach(([x, z, s]) => addTree(x, z, s, "mahogany"));
+
+    // ================= 9b. 操場東北側三角草坪樹列 (依使用者圖二藍色圈圈標示：種植一排翠綠茂盛景觀樹) =================
+    [
+      [-74.0, -212.0, 1.25],
+      [-64.0, -208.0, 1.3],
+      [-54.0, -204.0, 1.3],
+      [-44.0, -200.0, 1.25],
+      [-34.0, -196.0, 1.2]
     ].forEach(([x, z, s]) => addTree(x, z, s, "mahogany"));
 
     // ================= 10. 東側各專科館舍路旁綠帶 (徹底避開原美術教室、資源室、食品加工館等建築) =================
@@ -1835,15 +1917,16 @@ window.CampusBuilder3D = (function () {
       entranceBox.position.set(-b.w / 2 - 0.8, totalH / 2, 0);
       root.add(entranceBox);
 
-      // 土木館與畜產館南端 1F～3F 連通走廊廊橋 (跨距 12m、深 5.5m，由土木館向東銜接畜產館)
+      // 土木館與畜產館中央 1F～3F 連通走廊廊橋 (依 20261020_125439.jpg 實景：位於兩棟大樓正中央 connZ = 0.0，跨距 12m、深 7.2m，1F 設有挑高拱門通道供行人穿過草坪)
       if (b.id === "civil_eng") {
         const connSpanX = 12.0;
-        const connD = 5.6;
-        const connZ = b.d / 2 - connD / 2 - 3.0;
+        const connD = 7.2;
+        const connZ = 0.0; // 位於兩棟大樓正中間！
         const connH = fh * 3;
         const bridgeGroup = new THREE.Group();
         bridgeGroup.position.set(b.w / 2 + connSpanX / 2, 0, connZ);
 
+        // 1F～3F 樓板與雙側紅磚外牆
         for (let cf = 1; cf <= 3; cf++) {
           const cyBase = (cf - 1) * fh;
           const cFloor = new THREE.Mesh(new THREE.BoxGeometry(connSpanX, 0.35, connD), getMat("#D8D4CA"));
@@ -1851,14 +1934,41 @@ window.CampusBuilder3D = (function () {
           cFloor.receiveShadow = true;
           bridgeGroup.add(cFloor);
 
-          [-connD / 2 + 0.35, connD / 2 - 0.35].forEach(wz => {
-            const lowWall = new THREE.Mesh(new THREE.BoxGeometry(connSpanX, 1.25, 0.45), mainMat);
-            lowWall.position.set(0, cyBase + 0.65, wz);
-            lowWall.castShadow = true;
-            bridgeGroup.add(lowWall);
-          });
+          if (cf === 1) {
+            // 1F 地面層：中央留有寬闊挑高穿堂通道，行人與視線可由南北向草坪直接穿透 (還原 125439.jpg 實景)
+            [-connD / 2 + 0.45, connD / 2 - 0.45].forEach(wz => {
+              // 兩側門柱
+              [-connSpanX / 2 + 1.2, connSpanX / 2 - 1.2].forEach(wx => {
+                const col = new THREE.Mesh(new THREE.BoxGeometry(2.2, fh - 0.2, 0.65), mainMat);
+                col.position.set(wx, cyBase + fh / 2, wz);
+                col.castShadow = true;
+                bridgeGroup.add(col);
+              });
+              // 門樑
+              const lintel = new THREE.Mesh(new THREE.BoxGeometry(connSpanX, 1.1, 0.65), mainMat);
+              lintel.position.set(0, cyBase + fh - 0.55, wz);
+              bridgeGroup.add(lintel);
+            });
+          } else {
+            // 2F & 3F 廊橋封閉式紅磚外立面與景觀採光連窗
+            [-connD / 2 + 0.45, connD / 2 - 0.45].forEach(wz => {
+              const lowWall = new THREE.Mesh(new THREE.BoxGeometry(connSpanX, 1.25, 0.55), mainMat);
+              lowWall.position.set(0, cyBase + 0.65, wz);
+              lowWall.castShadow = true;
+              bridgeGroup.add(lowWall);
+
+              const winBand = new THREE.Mesh(new THREE.BoxGeometry(connSpanX - 1.2, fh * 0.42, 0.3), glassMat);
+              winBand.position.set(0, cyBase + fh * 0.58, wz);
+              bridgeGroup.add(winBand);
+
+              const topWall = new THREE.Mesh(new THREE.BoxGeometry(connSpanX, 0.85, 0.55), mainMat);
+              topWall.position.set(0, cyBase + fh - 0.42, wz);
+              bridgeGroup.add(topWall);
+            });
+          }
         }
 
+        // 4F 頂部平斜連通金屬鋼構頂棚 (還原 125439.jpg)
         const bridgeRoof = new THREE.Mesh(new THREE.BoxGeometry(connSpanX + 0.8, 0.45, connD + 0.8), roofMat);
         bridgeRoof.position.y = connH + 0.22;
         bridgeRoof.castShadow = true;
