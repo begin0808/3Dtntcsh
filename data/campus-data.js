@@ -1143,7 +1143,7 @@ window.CAMPUS_DATA = {
       englishName: "Farm Management Building (Student Clubs)",
       category: "teaching",
       zone: "south_tech",
-      x: 42.0, z: 158.0, w: 30.0, d: 26.0, rotY: 0,
+      x: 50.0, z: 158.0, w: 28.0, d: 26.0, rotY: 0,
       floors: 2, floorHeight: 5.5,
       style: "farm_mgmt",
       colors: {
@@ -1385,11 +1385,11 @@ window.CAMPUS_DATA = {
     },
     {
       id: "hort_teach_shed",
-      name: "園藝學程教學區（高架鋼棚）",
-      englishName: "Horticulture Teaching Shed",
+      name: "園藝教學區",
+      englishName: "Horticulture Teaching Area",
       category: "teaching",
       zone: "south_tech",
-      x: -24.0, z: 98.0, w: 19.0, d: 15.0, rotY: 0,
+      x: 19.5, z: 157.0, w: 17.0, d: 24.0, rotY: 0,
       floors: 1, floorHeight: 7.2,
       style: "hort_teach_shed",
       colors: {
@@ -1398,7 +1398,7 @@ window.CAMPUS_DATA = {
         accent: "#C5A059",
         roof: "#4E5A65"
       },
-      summary: "位於畜產館北側前方的園藝學程專用高架鋼構教學大棚架，設有銀灰 H 型鋼骨柱列、X 型交叉斜撐、高架實作平台與雙斜金屬光電頂棚，供園藝植物栽培與農作實務操作使用。",
+      summary: "位於農經館西側草坪之園藝專用高架鋼構教學大棚架，設有銀灰 H 型鋼骨柱列、X 型交叉斜撐、高架實作平台與雙斜金屬光電頂棚，供園藝植物栽培與農作實務操作使用。",
       features: ["挑高雙斜採光鋼構棚架", "銀灰鋼骨結構與 X 型交叉斜撐", "高架教學操作實務平台"],
       floorsData: {
         1: [{ code: "HT1", name: "園藝教學操作場", type: "lab" }]
@@ -1451,7 +1451,8 @@ window.CAMPUS_DATA = {
     "n_hort": { x: 38, z: 86, label: "園藝館前庭廣場" },
     "n_animal": { x: -22, z: 86, label: "畜產館北口廣場" },
     "n_civil": { x: -56, z: 86, label: "土木館北口廣場" },
-    "n_farm_mgmt": { x: 42, z: 132, label: "農經館前道路" }
+    "n_farm_mgmt": { x: 50, z: 132, label: "農經館前道路" },
+    "n_hort_shed": { x: 4, z: 157, label: "園藝教學區前道路" }
   },
 
   navEdges: [
@@ -1506,7 +1507,8 @@ window.CAMPUS_DATA = {
     ["n_far_east_m2", "n_far_east_s1"],
     ["n_far_east_s1", "n_far_east_s2"],
     ["n_east_rd_s2", "n_farm_mgmt"],
-    ["n_zhengde_s2", "n_farm_mgmt"],
+    ["n_farm_mgmt", "n_hort_shed"],
+    ["n_zhengde_s2", "n_hort_shed"],
     ["n_west_rd_end", "n_east_rd_end"],
     ["n_east_rd_end", "n_far_east_s2"]
   ],
@@ -1547,6 +1549,6 @@ window.CAMPUS_DATA = {
     covered_pickleball: "n_coop",
     covered_volleyball_s: "n_scourts",
     track_field: "n_track",
-    hort_teach_shed: "n_animal"
+    hort_teach_shed: "n_hort_shed"
   }
 };
