@@ -1368,7 +1368,7 @@ window.CAMPUS_DATA = {
       englishName: "Athletics Track & Field",
       category: "sport",
       zone: "west_sport",
-      x: -128.0, z: -170.0, w: 58.0, d: 118.0, rotY: -0.471,
+      x: -128.0, z: -170.0, w: 58.0, d: 118.0, rotY: 0,
       floors: 1, floorHeight: 1.0,
       style: "track",
       colors: {
