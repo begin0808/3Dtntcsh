@@ -2156,7 +2156,7 @@ window.CampusBuilder3D = (function () {
 
     // 特殊場域 4：室內標準游泳館 (`swimming`) — 依實景照片真實還原
     // 1. 正面朝東（面向校園中央聯絡道）：全部結構完整連結，中央挑高塔樓、金色「游泳館」牌匾、3×4 水泥遮陽方格花格窗、一樓三道不銹鋼鐵捲門、二樓左右延伸之圓柱深挑外廊與貫通結構橫樑
-    // 2. 北側面朝北（面向風雨排球場）：完全為平整平面紅磚色牆面（絕無多餘灰色區塊），設有體育組辦公室採光窗、門牌與空調室外機
+    // 2. 北側面與南側面（面向排球場與南側草坪）：依使用者指示完全採用相同造型與顏色，皆為平整紅磚色牆面（1F 深紅褐磚、2F 粉褐磚＋長條氣窗帶），絕無灰色外凸構造
     if (b.style === "swimming") {
       const g1 = new THREE.Group();
       const g2 = new THREE.Group();
@@ -2213,60 +2213,7 @@ window.CampusBuilder3D = (function () {
         ctx.fillRect(w / 2 - 22, h - 35, 44, 6);
       });
 
-      // (3) 北側面一樓「體育組辦公室」招牌貼圖
-      const peSignTex = makeTextCanvas(256, 64, (ctx, w, h) => {
-        ctx.fillStyle = "#FFFFFF";
-        ctx.fillRect(0, 0, w, h);
-        ctx.fillStyle = "#125EA8";
-        ctx.fillRect(0, 0, w, 12);
-        ctx.fillRect(0, h - 8, w, 8);
-        ctx.strokeStyle = "#4A5568";
-        ctx.lineWidth = 3;
-        ctx.strokeRect(2, 2, w - 4, h - 4);
 
-        ctx.font = "bold 28px 'Microsoft JhengHei', 'Noto Sans TC', sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillStyle = "#0A2540";
-        ctx.fillText("體育組辦公室", w / 2, h / 2 + 3);
-      });
-
-      // (4) 辦公室採光氣密防盜窗貼圖
-      const officeWindowTex = makeTextCanvas(256, 256, (ctx, w, h) => {
-        ctx.fillStyle = "#1E2A38";
-        ctx.fillRect(0, 0, w, h);
-        ctx.strokeStyle = "#CBD5E1";
-        ctx.lineWidth = 8;
-        ctx.strokeRect(4, 4, w - 8, h - 8);
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(w / 2, 0); ctx.lineTo(w / 2, h);
-        ctx.moveTo(0, h / 2); ctx.lineTo(w, h / 2);
-        ctx.stroke();
-        ctx.strokeStyle = "rgba(226, 232, 240, 0.65)";
-        ctx.lineWidth = 2;
-        for (let x = 20; x < w; x += 30) {
-          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
-        }
-      });
-
-      // (5) 分離式冷氣室外機貼圖
-      const acUnitTex = makeTextCanvas(128, 128, (ctx, w, h) => {
-        ctx.fillStyle = "#EAECEF";
-        ctx.fillRect(0, 0, w, h);
-        ctx.strokeStyle = "#A0AEC0";
-        ctx.lineWidth = 4;
-        ctx.strokeRect(2, 2, w - 4, h - 4);
-        ctx.fillStyle = "#2D3748";
-        ctx.beginPath();
-        ctx.arc(w * 0.6, h * 0.5, 38, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = "#CBD5E0";
-        ctx.lineWidth = 3;
-        ctx.stroke();
-        ctx.fillStyle = "#1A365D";
-        ctx.fillRect(14, 22, 28, 10);
-      });
 
       // =========================== 【一樓 1F 配置】 ===========================
       // (A) 1F 完整紅磚主體基底 (深紅褐磚，高 6.8m，涵蓋室內池體與北面平整紅磚牆)
@@ -2330,47 +2277,7 @@ window.CampusBuilder3D = (function () {
       step1.receiveShadow = true;
       g1.add(step1);
 
-      // (D) 北側面一樓：【平整紅磚牆面】上的【體育組辦公室】 (絕無多餘灰色塊，依照片真實呈現)
-      const peGroup = new THREE.Group();
-      let winMat = glassMat;
-      if (officeWindowTex) {
-        winMat = new THREE.MeshStandardMaterial({ map: officeWindowTex, roughness: 0.3 });
-      }
-      // 窗戶平整內嵌於北側紅磚牆面上 (z = -17.06)
-      [14.2, 9.8, 5.4, 1.0].forEach(wx => {
-        const oWin = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.6, 0.12), winMat);
-        oWin.position.set(wx, 2.4, -17.06);
-        peGroup.add(oWin);
-      });
 
-      // 體育組辦公室出入门
-      const peDoor = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2.6, 0.12), getMat("#2C3A47", { metalness: 0.5 }));
-      peDoor.position.set(16.5, 1.3, -17.06);
-      peGroup.add(peDoor);
-
-      // 體育組辦公室門牌
-      if (peSignTex) {
-        const peSignMesh = new THREE.Mesh(
-          new THREE.PlaneGeometry(2.4, 0.65),
-          new THREE.MeshBasicMaterial({ map: peSignTex })
-        );
-        peSignMesh.rotation.y = Math.PI; // 面向北方 -Z
-        peSignMesh.position.set(16.5, 3.1, -17.12);
-        peGroup.add(peSignMesh);
-      }
-
-      // 分離式冷氣室外機群 (照片實景特色：直接固定於北面紅磚牆上)
-      let acMat = getMat("#EAECEF", { metalness: 0.4, roughness: 0.5 });
-      if (acUnitTex) {
-        acMat = new THREE.MeshStandardMaterial({ map: acUnitTex, roughness: 0.5 });
-      }
-      [12.8, 11.2, 8.4, 3.8].forEach((acX, i) => {
-        const acBox = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.72, 0.48), acMat);
-        acBox.position.set(acX, 1.05 + (i % 2) * 0.4, -17.26);
-        acBox.castShadow = true;
-        peGroup.add(acBox);
-      });
-      g1.add(peGroup);
 
       // (E) 1F 室內游泳池標準水面與水道配置
       const poolDeck = new THREE.Mesh(new THREE.BoxGeometry(poolHallW - 4.0, 0.18, poolHallD - 4.0), getMat("#E4EEF2"));
