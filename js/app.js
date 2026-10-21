@@ -124,8 +124,8 @@
         const span = (isEW ? b.w - 1.2 : b.d - 1.2) / Math.max(count, 1);
 
         rooms.forEach((rm, idx) => {
-          const rx = isEW ? (-b.w / 2 + 0.6 + span * (idx + 0.5)) : 0;
-          const rz = isEW ? 0 : (-b.d / 2 + 0.6 + span * (idx + 0.5));
+          const rx = rm.relX !== undefined ? rm.relX : (isEW ? (-b.w / 2 + 0.6 + span * (idx + 0.5)) : 0);
+          const rz = rm.relZ !== undefined ? rm.relZ : (isEW ? 0 : (-b.d / 2 + 0.6 + span * (idx + 0.5)));
           const fh = b.floorHeight || 5.4;
           const wy = (fl - 1) * fh + fh * 0.62;
           roomEntries.push({

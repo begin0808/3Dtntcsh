@@ -2154,14 +2154,16 @@ window.CampusBuilder3D = (function () {
       return root;
     }
 
-    // 特殊場域 4：室內標準游泳館 (`swimming`) — 依實景照片真實還原
+    // 特殊場域 4：室內標準游泳館 (`swimming`) — 依使用者指示與實景照片真實還原
     // 1. 正面朝東（面向校園中央聯絡道）：全部結構完整連結，中央挑高塔樓、金色「游泳館」牌匾、3×4 水泥遮陽方格花格窗、一樓三道不銹鋼鐵捲門、二樓左右延伸之圓柱深挑外廊與貫通結構橫樑
-    // 2. 北側面與南側面（面向排球場與南側草坪）：依使用者指示完全採用相同造型與顏色，皆為平整紅磚色牆面（1F 深紅褐磚、2F 粉褐磚＋長條氣窗帶），絕無灰色外凸構造
+    // 2. 北側面與南側面（面向排球場與南側草坪）：南北兩面 100% 鏡像對稱，皆為平整紅磚色立體牆面（下層 6.8m 深紅褐丁掛磚、上層 6.8m 粉褐丁掛磚＋暗色橫向氣窗帶），完全移除凸出外側的深灰色弧頂構造，頂部平整
+    // 3. 空間配置：挑高單層室內標準游泳池（無二樓看台）；從北面牆面看過去，一樓左邊為體育組辦公室，一樓中間為體育器材室，右邊為室內標準游泳池水道與更衣淋浴區
     if (b.style === "swimming") {
       const g1 = new THREE.Group();
       const g2 = new THREE.Group();
 
-      const totalH = b.floors * fh; // 13.6m
+      const totalH = 13.6;          // 挑高總高度 13.6m
+      const halfH = totalH / 2;     // 一樓主基底高度 6.8m
       const poolHallW = 34.0;       // 池體東西總長 (從 x = -22.0 到 x = +12.0)
       const poolHallD = 34.0;       // 池體南北跨距 (從 z = -17.0 到 z = +17.0)
       const poolHallCenterX = -5.0;
@@ -2173,7 +2175,6 @@ window.CampusBuilder3D = (function () {
       const concreteMat = getMat("#C8C2B8", { roughness: 0.85 });      // 水泥樑柱、格子窗外框
       const columnWhiteMat = getMat("#EAECEF", { roughness: 0.6 });    // 二樓圓形挑廊立柱
       const diamondMat = getMat("#F0EDE6", { roughness: 0.6 });        // 柱頭菱形 ◇ 裝飾浮雕
-      const poolRoofMat = getMat("#48505B", { roughness: 0.65 });      // 池體深石板金屬拱頂
 
       // --- 動態生成高解析看板與設備貼圖 ---
       // (1) 正面貫通橫樑金色「游泳館」牌匾貼圖
@@ -2213,28 +2214,26 @@ window.CampusBuilder3D = (function () {
         ctx.fillRect(w / 2 - 22, h - 35, 44, 6);
       });
 
-
-
       // =========================== 【一樓 1F 配置】 ===========================
-      // (A) 1F 完整紅磚主體基底 (深紅褐磚，高 6.8m，涵蓋室內池體與北面平整紅磚牆)
-      // 北面完全為平整之紅磚面 (z = -17.0)，絕無多餘灰色塊
-      const base1F = new THREE.Mesh(new THREE.BoxGeometry(poolHallW, fh, poolHallD), redBrickLowerMat);
-      base1F.position.set(poolHallCenterX, fh / 2, 0);
+      // (A) 1F 完整紅磚主體基底 (深紅褐磚，高 6.8m，涵蓋室內池體與北面、南面平整紅磚牆)
+      // 北面與南面完全平整對稱 (z = -17.0 與 z = +17.0)，絕無灰色或外凸構造
+      const base1F = new THREE.Mesh(new THREE.BoxGeometry(poolHallW, halfH, poolHallD), redBrickLowerMat);
+      base1F.position.set(poolHallCenterX, halfH / 2, 0);
       base1F.castShadow = true;
       base1F.receiveShadow = true;
       g1.add(base1F);
 
       // (B) 1F 正門中央塔樓與兩翼向前完全連結 (從 x = 12.0 連接至 x = 21.8)
       // 中央塔樓向前延伸出入口基座
-      const towerBase1F = new THREE.Mesh(new THREE.BoxGeometry(9.8, fh, 11.2), redBrickLowerMat);
-      towerBase1F.position.set(16.9, fh / 2, 0);
+      const towerBase1F = new THREE.Mesh(new THREE.BoxGeometry(9.8, halfH, 11.2), redBrickLowerMat);
+      towerBase1F.position.set(16.9, halfH / 2, 0);
       towerBase1F.castShadow = true;
       g1.add(towerBase1F);
 
       // 左右兩翼 1F 前端完全連通結構 (折角延伸，與中央塔樓和後方主體無縫連接)
       [-1, 1].forEach(side => {
-        const wingConnect1F = new THREE.Mesh(new THREE.BoxGeometry(8.2, fh, 6.4), redBrickLowerMat);
-        wingConnect1F.position.set(15.2, fh / 2, side * 11.2);
+        const wingConnect1F = new THREE.Mesh(new THREE.BoxGeometry(8.2, halfH, 6.4), redBrickLowerMat);
+        wingConnect1F.position.set(15.2, halfH / 2, side * 11.2);
         wingConnect1F.rotation.y = -side * 0.35;
         wingConnect1F.castShadow = true;
         g1.add(wingConnect1F);
@@ -2277,11 +2276,35 @@ window.CampusBuilder3D = (function () {
       step1.receiveShadow = true;
       g1.add(step1);
 
+      // (D) 1F 北面外牆立體採光窗與冷氣室外機 (完全貼合紅磚牆，絕無突出之灰色拱頂)
+      // 依照片 3：體育組辦公室外牆鋁窗與冷氣室外機（左側 x = 7.0 ~ 12.0）、體育器材室窗戶（中間 x = -1.0 ~ 3.0）
+      const winFrameMat = getMat("#4A4E53", { roughness: 0.6 });
+      const winGlassMat = getMat("#2C3A47", { roughness: 0.2, metalness: 0.4 });
+      const acBodyMat = getMat("#E2DFD8", { roughness: 0.5 });
+      // 體育組辦公室北向窗 (左側)
+      const peWinFrame = new THREE.Mesh(new THREE.BoxGeometry(4.8, 1.6, 0.16), winFrameMat);
+      peWinFrame.position.set(9.2, 3.0, -17.06);
+      g1.add(peWinFrame);
+      const peWinGlass = new THREE.Mesh(new THREE.BoxGeometry(4.6, 1.4, 0.18), winGlassMat);
+      peWinGlass.position.set(9.2, 3.0, -17.06);
+      g1.add(peWinGlass);
+      // 體育組辦公室冷氣室外機 (照片 3 經典實景特徵，懸掛於一樓磚牆外)
+      const acUnit = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.82, 0.52), acBodyMat);
+      acUnit.position.set(5.8, 3.0, -17.32);
+      acUnit.castShadow = true;
+      g1.add(acUnit);
 
+      // 體育器材室北向窗 (中間)
+      const eqWinFrame = new THREE.Mesh(new THREE.BoxGeometry(4.2, 1.6, 0.16), winFrameMat);
+      eqWinFrame.position.set(0.5, 3.0, -17.06);
+      g1.add(eqWinFrame);
+      const eqWinGlass = new THREE.Mesh(new THREE.BoxGeometry(4.0, 1.4, 0.18), winGlassMat);
+      eqWinGlass.position.set(0.5, 3.0, -17.06);
+      g1.add(eqWinGlass);
 
-      // (E) 1F 室內游泳池標準水面與水道配置
-      const poolDeck = new THREE.Mesh(new THREE.BoxGeometry(poolHallW - 4.0, 0.18, poolHallD - 4.0), getMat("#E4EEF2"));
-      poolDeck.position.set(poolHallCenterX, 0.09, 0);
+      // (E) 1F 室內游泳池標準水面與水道配置 (面向北看時在右側，西側池體)
+      const poolDeck = new THREE.Mesh(new THREE.BoxGeometry(22.0, 0.18, poolHallD - 4.0), getMat("#E4EEF2"));
+      poolDeck.position.set(-11.0, 0.09, 0);
       g1.add(poolDeck);
 
       const waterMat = new THREE.MeshStandardMaterial({
@@ -2291,43 +2314,109 @@ window.CampusBuilder3D = (function () {
         transparent: true,
         opacity: 0.82
       });
-      const waterSurface = new THREE.Mesh(new THREE.BoxGeometry(25.0, 0.12, 14.5), waterMat);
-      waterSurface.position.set(poolHallCenterX, 0.15, 0);
+      const waterSurface = new THREE.Mesh(new THREE.BoxGeometry(18.0, 0.12, 14.5), waterMat);
+      waterSurface.position.set(-11.0, 0.15, 0);
       g1.add(waterSurface);
 
       const ropeMatRed = getMat("#E53935");
       [-6.0, -3.6, -1.2, 1.2, 3.6, 6.0].forEach(rz => {
-        const laneRope = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 25.0, 6), ropeMatRed);
+        const laneRope = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 18.0, 6), ropeMatRed);
         laneRope.rotation.z = Math.PI / 2;
-        laneRope.position.set(poolHallCenterX, 0.22, rz);
+        laneRope.position.set(-11.0, 0.22, rz);
         g1.add(laneRope);
       });
 
+      // (F) 1F 室內隔間與機能配置 (依北面視角：左邊體育組辦公室、中間體育器材室、右邊標準泳池)
+      const partMat = getMat("#E0DAD0", { roughness: 0.85 });
+      const officeFloorMat = getMat("#D0C8BD", { roughness: 0.7 });
+
+      // 辦公室與器材室地坪
+      const officeFloor = new THREE.Mesh(new THREE.BoxGeometry(15.0, 0.2, 11.0), officeFloorMat);
+      officeFloor.position.set(4.5, 0.1, -11.0);
+      officeFloor.receiveShadow = true;
+      g1.add(officeFloor);
+
+      // 南北隔間主牆 (分開北側辦公/器材區與南側泳池)
+      const dividerWallSN = new THREE.Mesh(new THREE.BoxGeometry(15.0, halfH - 0.2, 0.28), partMat);
+      dividerWallSN.position.set(4.5, halfH / 2, -5.5);
+      dividerWallSN.castShadow = true;
+      g1.add(dividerWallSN);
+
+      // 東西隔間牆 (分開體育組辦公室與體育器材室，界線在 x = 5.0)
+      const dividerWallEW = new THREE.Mesh(new THREE.BoxGeometry(0.28, halfH - 0.2, 11.0), partMat);
+      dividerWallEW.position.set(5.0, halfH / 2, -11.0);
+      dividerWallEW.castShadow = true;
+      g1.add(dividerWallEW);
+
+      // 西側隔間牆 (器材室與泳池大廳分界，界線在 x = -3.0)
+      const dividerWallWest = new THREE.Mesh(new THREE.BoxGeometry(0.28, halfH - 0.2, 11.0), partMat);
+      dividerWallWest.position.set(-3.0, halfH / 2, -11.0);
+      dividerWallWest.castShadow = true;
+      g1.add(dividerWallWest);
+
+      // 體育組辦公室內部傢俱 (面向北看時在左邊，x = 5.0 ~ 12.0)
+      const deskMat = getMat("#6D4C41");
+      const chairMat = getMat("#37474F");
+      const cabinetMat = getMat("#90A4AE");
+      [7.5, 10.5].forEach(dx => {
+        const desk = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.75, 0.9), deskMat);
+        desk.position.set(dx, 0.47, -9.5);
+        desk.castShadow = true;
+        g1.add(desk);
+
+        const chair = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.9, 0.55), chairMat);
+        chair.position.set(dx, 0.55, -8.6);
+        g1.add(chair);
+      });
+      const cabinet = new THREE.Mesh(new THREE.BoxGeometry(0.6, 2.0, 3.2), cabinetMat);
+      cabinet.position.set(11.6, 1.1, -10.5);
+      cabinet.castShadow = true;
+      g1.add(cabinet);
+
+      // 體育器材室內部設備 (面向北看時在中間，x = -3.0 ~ 5.0)
+      const shelfMat = getMat("#546E7A");
+      [-1.2, 1.8].forEach(sx => {
+        const shelf = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.2, 0.8), shelfMat);
+        shelf.position.set(sx, 1.2, -10.5);
+        shelf.castShadow = true;
+        g1.add(shelf);
+      });
+      const ballCageMat = getMat("#78909C", { wireframe: true });
+      const ballCage = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.0, 1.2), ballCageMat);
+      ballCage.position.set(0.3, 0.6, -7.8);
+      g1.add(ballCage);
+      const bBall = new THREE.Mesh(new THREE.SphereGeometry(0.24, 8, 8), getMat("#FF6F00"));
+      bBall.position.set(0.1, 0.45, -7.8);
+      g1.add(bBall);
+      const vBall = new THREE.Mesh(new THREE.SphereGeometry(0.24, 8, 8), getMat("#1E88E5"));
+      vBall.position.set(0.5, 0.45, -7.8);
+      g1.add(vBall);
+
       // =========================== 【二樓 2F ＋ 屋頂配置】 ===========================
-      // (A) 2F 完整紅磚主體外牆 (上層粉褐磚，高 6.8m，北面為平整之紅磚面)
-      const base2F = new THREE.Mesh(new THREE.BoxGeometry(poolHallW, fh, poolHallD), redBrickUpperMat);
-      base2F.position.set(poolHallCenterX, fh + fh / 2, 0);
+      // (A) 2F 完整紅磚主體外牆 (上層粉褐磚，高 6.8m，北面與南面完全對稱平整)
+      const base2F = new THREE.Mesh(new THREE.BoxGeometry(poolHallW, halfH, poolHallD), redBrickUpperMat);
+      base2F.position.set(poolHallCenterX, halfH + halfH / 2, 0);
       base2F.castShadow = true;
       g2.add(base2F);
 
-      // 2F 南北兩側排氣採光窗帶 (依照片平整嵌入紅磚牆上端，不凸起)
+      // 2F 南北兩側排氣採光窗帶 (依實景平整嵌入紅磚牆上端，南北兩側完全相同)
       [-1, 1].forEach(side => {
         const clerestory = new THREE.Mesh(new THREE.BoxGeometry(poolHallW - 4.0, 1.3, 0.12), glassMat);
-        clerestory.position.set(poolHallCenterX, fh + 4.6, side * (poolHallD / 2 + 0.04));
+        clerestory.position.set(poolHallCenterX, halfH + 4.6, side * (poolHallD / 2 + 0.04));
         g2.add(clerestory);
       });
 
       // (B) 正面貫穿連結之「橫向結構大樑」 (貫通左翼、中央塔樓與右翼，全部連結為一體)
       // 中央大樑段 (寬 11.6m，高 1.6m)
       const centerBeam = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.6, 11.6), beamMat);
-      centerBeam.position.set(21.75, fh + 0.6, 0);
+      centerBeam.position.set(21.75, halfH + 0.6, 0);
       centerBeam.castShadow = true;
       g2.add(centerBeam);
 
       // 左右兩翼大樑段 (折角向兩側延伸，完美閉合，與中央大樑零縫隙銜接)
       [-1, 1].forEach(side => {
         const wingBeam = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.6, 12.2), beamMat);
-        wingBeam.position.set(17.8, fh + 0.6, side * 11.2);
+        wingBeam.position.set(17.8, halfH + 0.6, side * 11.2);
         wingBeam.rotation.y = -side * 0.35;
         wingBeam.castShadow = true;
         g2.add(wingBeam);
@@ -2335,7 +2424,7 @@ window.CampusBuilder3D = (function () {
         // 柱頭菱形 ◇ 水泥浮雕裝飾 (照片經典特色，飾於大樑外側)
         const diamondMesh = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.65, 0.65), diamondMat);
         diamondMesh.rotation.x = Math.PI / 4;
-        diamondMesh.position.set(22.18, fh + 0.6, side * 5.6);
+        diamondMesh.position.set(22.18, halfH + 0.6, side * 5.6);
         g2.add(diamondMesh);
       });
 
@@ -2346,24 +2435,24 @@ window.CampusBuilder3D = (function () {
           new THREE.MeshBasicMaterial({ map: swimPlaqueTex })
         );
         plaqueMesh.rotation.y = Math.PI / 2; // 面向東方 +X
-        plaqueMesh.position.set(22.20, fh + 0.6, 0);
+        plaqueMesh.position.set(22.20, halfH + 0.6, 0);
         g2.add(plaqueMesh);
       }
 
       // (C) 2F 東面中央挑高迎賓塔樓 (高達 15.2m，完全與兩翼和後方池體無縫連結)
-      const tower2F = new THREE.Mesh(new THREE.BoxGeometry(9.8, fh + 2.2, 11.2), redBrickUpperMat);
-      tower2F.position.set(16.9, fh + (fh + 2.2) / 2, 0);
+      const tower2F = new THREE.Mesh(new THREE.BoxGeometry(9.8, halfH + 2.2, 11.2), redBrickUpperMat);
+      tower2F.position.set(16.9, halfH + (halfH + 2.2) / 2, 0);
       tower2F.castShadow = true;
       g2.add(tower2F);
 
-      // 2F 正面核心特色：【3×4 水泥方格遮陽花格窗】 (實景照片 Photo 2 靈魂特徵，直接嵌入塔樓正面)
+      // 2F 正面核心特色：【3×4 水泥方格遮陽花格窗】 (實景照片靈魂特徵，直接嵌入塔樓正面)
       const latticeGroup = new THREE.Group();
       const frameOuter = new THREE.Mesh(new THREE.BoxGeometry(0.85, 5.0, 5.6), concreteMat);
-      frameOuter.position.set(21.75, fh + 4.2, 0);
+      frameOuter.position.set(21.75, halfH + 4.2, 0);
       latticeGroup.add(frameOuter);
 
       const frameHollow = new THREE.Mesh(new THREE.BoxGeometry(0.9, 4.6, 5.2), getMat("#1D252E"));
-      frameHollow.position.set(21.78, fh + 4.2, 0);
+      frameHollow.position.set(21.78, halfH + 4.2, 0);
       latticeGroup.add(frameHollow);
 
       // 3 欄 × 4 列 水泥方格格柵
@@ -2373,7 +2462,7 @@ window.CampusBuilder3D = (function () {
       const cellH = 4.6 / gridRows; // 1.15m
       for (let r = 0; r < gridRows; r++) {
         for (let c = 0; c < gridCols; c++) {
-          const cy = (fh + 4.2 - 2.3 + cellH / 2) + r * cellH;
+          const cy = (halfH + 4.2 - 2.3 + cellH / 2) + r * cellH;
           const cz = (-2.6 + cellW / 2) + c * cellW;
           const boxFrame = new THREE.Mesh(new THREE.BoxGeometry(0.65, cellH - 0.14, cellW - 0.14), concreteMat);
           boxFrame.position.set(21.82, cy, cz);
@@ -2401,7 +2490,7 @@ window.CampusBuilder3D = (function () {
           const roundCol = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.34, 4.4, 16), columnWhiteMat);
           const colX = 17.2 + Math.sin(side * 0.35) * colOff;
           const colZ = side * 11.2 + Math.cos(side * 0.35) * colOff;
-          roundCol.position.set(colX, fh + 2.2, colZ);
+          roundCol.position.set(colX, halfH + 2.2, colZ);
           roundCol.castShadow = true;
           g2.add(roundCol);
         });
@@ -2410,27 +2499,29 @@ window.CampusBuilder3D = (function () {
         const innerWin = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.8, 5.2), glassMat);
         const winX = 13.8;
         const winZ = side * 11.2;
-        innerWin.position.set(winX, fh + 2.6, winZ);
+        innerWin.position.set(winX, halfH + 2.6, winZ);
         innerWin.rotation.y = -side * 0.35;
         g2.add(innerWin);
       });
 
-      // (E) 大跨距室內泳池金屬大拱頂 (深石板灰，覆蓋後方主要池體空間)
-      const roofRadius = poolHallD * 0.75;
-      const roofPeakH = totalH + 1.5;
-      const mainRoof = new THREE.Mesh(
-        new THREE.CylinderGeometry(roofRadius, roofRadius, poolHallW + 1.0, 24, 1, false, Math.PI * 0.72, Math.PI * 0.56),
-        poolRoofMat
+      // (E) 屋頂平整收邊與女兒牆 (與圖一南面完全一致，徹底移除灰色大弧頂)
+      // 女兒牆矮欄 (高 0.45m，粉褐磚色)
+      const parapetWall = new THREE.Mesh(
+        new THREE.BoxGeometry(poolHallW + 0.3, 0.45, poolHallD + 0.3),
+        redBrickUpperMat
       );
-      mainRoof.rotation.z = Math.PI / 2;
-      mainRoof.position.set(poolHallCenterX, roofPeakH - roofRadius * 0.94, 0);
-      mainRoof.castShadow = true;
-      g2.add(mainRoof);
+      parapetWall.position.set(poolHallCenterX, totalH + 0.22, 0);
+      g2.add(parapetWall);
+      const roofDeckInner = new THREE.Mesh(
+        new THREE.BoxGeometry(poolHallW - 0.8, 0.46, poolHallD - 0.8),
+        getMat("#B2655C")
+      );
+      roofDeckInner.position.set(poolHallCenterX, totalH + 0.22, 0);
+      g2.add(roofDeckInner);
 
       root.add(g1);
       root.add(g2);
-      root.userData.floorGroups[1] = g1;
-      root.userData.floorGroups[2] = g2;
+      root.userData.floorGroups[1] = root;
       root.userData.pickMesh = poolDeck;
       return root;
     }
