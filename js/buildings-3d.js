@@ -616,6 +616,226 @@ window.CampusBuilder3D = (function () {
           vc.castShadow = true;
           varPixel.add(vc);
         });
+      } else if (style === "sterculia") {
+        // 掌葉蘋婆 (Sterculia foetida) — 學校中庭極具代表性之「非常大」地標老樹 (完美還原使用者上傳照片與紅圈位置)
+        // 特色：粗壯挺拔的主幹、大角度橫向平展的輪生粗枝、層次分明且向四周大幅度開展的巨大傘狀廣幅樹冠
+        const trunkH = (7.5 + Math.random() * 0.8) * scale;
+        const trunkRadiusBottom = 0.65 * scale;
+        const trunkRadiusTop = 0.45 * scale;
+
+        // 1. 晴空寫實風格 (Day)
+        // (a) 粗壯主樹幹與根部展開
+        const sterculiaBarkMat = getMat("#4E443A", { roughness: 0.92 });
+        const trunk = new THREE.Mesh(
+          new THREE.CylinderGeometry(trunkRadiusTop, trunkRadiusBottom, trunkH, 12),
+          sterculiaBarkMat
+        );
+        trunk.position.y = trunkH / 2;
+        trunk.castShadow = true;
+        varDay.add(trunk);
+
+        // 根部突起 (板根與樹瘤意象)
+        for (let ri = 0; ri < 4; ri++) {
+          const rAngle = (ri / 4) * Math.PI * 2 + 0.3;
+          const rootFlare = new THREE.Mesh(
+            new THREE.BoxGeometry(0.35 * scale, 0.7 * scale, 1.2 * scale),
+            sterculiaBarkMat
+          );
+          rootFlare.position.set(
+            Math.cos(rAngle) * (trunkRadiusBottom * 0.85),
+            0.35 * scale,
+            Math.sin(rAngle) * (trunkRadiusBottom * 0.85)
+          );
+          rootFlare.rotation.y = rAngle;
+          rootFlare.rotation.x = 0.25;
+          rootFlare.castShadow = true;
+          varDay.add(rootFlare);
+        }
+
+        // (b) 西側樹底經典設施：實景照片中的「白色環樹休閒圓椅」 (white circular tree bench)
+        if (x < -25) {
+          const benchWhiteMat = getMat("#F0F4F8", { roughness: 0.35, metalness: 0.1 });
+          const seatInnerR = 1.05 * scale;
+          const seatOuterR = 1.75 * scale;
+          const seatY = 0.48 * scale;
+
+          // 環形木條/金屬座椅面
+          const seatRing = new THREE.Mesh(
+            new THREE.RingGeometry(seatInnerR, seatOuterR, 28),
+            benchWhiteMat
+          );
+          seatRing.rotation.x = -Math.PI / 2;
+          seatRing.position.y = seatY;
+          seatRing.castShadow = true;
+          varDay.add(seatRing);
+
+          // 座椅外緣圓形扶手金屬框
+          const outerRim = new THREE.Mesh(
+            new THREE.TorusGeometry((seatOuterR + seatInnerR) / 2, (seatOuterR - seatInnerR) / 2, 8, 28),
+            benchWhiteMat
+          );
+          outerRim.rotation.x = Math.PI / 2;
+          outerRim.position.y = seatY;
+          varDay.add(outerRim);
+
+          // 6 根垂直支撐金屬椅腳
+          for (let li = 0; li < 6; li++) {
+            const legAng = (li / 6) * Math.PI * 2;
+            const leg = new THREE.Mesh(
+              new THREE.CylinderGeometry(0.04 * scale, 0.04 * scale, seatY, 8),
+              benchWhiteMat
+            );
+            leg.position.set(
+              Math.cos(legAng) * ((seatInnerR + seatOuterR) / 2),
+              seatY / 2,
+              Math.sin(legAng) * ((seatInnerR + seatOuterR) / 2)
+            );
+            leg.castShadow = true;
+            varDay.add(leg);
+          }
+
+          // 白色環形椅背
+          const backRest = new THREE.Mesh(
+            new THREE.CylinderGeometry(seatOuterR, seatOuterR, 0.4 * scale, 28, 1, true),
+            benchWhiteMat
+          );
+          backRest.position.y = seatY + 0.28 * scale;
+          varDay.add(backRest);
+        }
+
+        // (c) 5 根大角度水平延展之「巨型輪生粗枝」（掌葉蘋婆代表性特徵）
+        const limbMat = sterculiaBarkMat;
+        const branchConfigs = [
+          { ang: 0.2, len: 5.8 * scale, pitch: 0.32, lobeR: 3.8 * scale },
+          { ang: 1.45, len: 5.5 * scale, pitch: 0.28, lobeR: 3.6 * scale },
+          { ang: 2.7, len: 6.2 * scale, pitch: 0.30, lobeR: 4.0 * scale },
+          { ang: 3.95, len: 5.4 * scale, pitch: 0.26, lobeR: 3.6 * scale },
+          { ang: 5.15, len: 6.0 * scale, pitch: 0.34, lobeR: 3.9 * scale }
+        ];
+
+        branchConfigs.forEach(b => {
+          // 橫向大粗枝
+          const limb = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.24 * scale, 0.42 * scale, b.len, 8),
+            limbMat
+          );
+          const midDist = (b.len * Math.cos(b.pitch)) / 2;
+          const startY = trunkH * 0.72;
+          const midY = startY + (b.len * Math.sin(b.pitch)) / 2;
+          limb.position.set(Math.cos(b.ang) * midDist, midY, Math.sin(b.ang) * midDist);
+          limb.rotation.y = -b.ang + Math.PI / 2;
+          limb.rotation.z = Math.PI / 2 - b.pitch;
+          limb.castShadow = true;
+          varDay.add(limb);
+
+          // 枝頭端點支撐之平展葉球群 (微扁廣卵形傘狀)
+          const lobeEndX = Math.cos(b.ang) * (b.len * Math.cos(b.pitch) + 0.5 * scale);
+          const lobeEndY = startY + b.len * Math.sin(b.pitch) + 0.8 * scale;
+          const lobeEndZ = Math.sin(b.ang) * (b.len * Math.cos(b.pitch) + 0.5 * scale);
+
+          const lobeMat = Math.random() > 0.45 ? leafMatDark : leafMat1;
+          const lobe = new THREE.Mesh(
+            new THREE.SphereGeometry(b.lobeR, 8, 7),
+            lobeMat
+          );
+          lobe.scale.set(1.4, 0.7, 1.4); // 扁平傘狀
+          lobe.position.set(lobeEndX, lobeEndY, lobeEndZ);
+          lobe.castShadow = true;
+          varDay.add(lobe);
+
+          // 枝上副葉團 (豐富層次感)
+          const subLobe = new THREE.Mesh(
+            new THREE.DodecahedronGeometry(b.lobeR * 0.65, 1),
+            leafMat1
+          );
+          subLobe.scale.set(1.2, 0.65, 1.2);
+          subLobe.position.set(lobeEndX * 0.62, startY + b.len * Math.sin(b.pitch) * 0.5 + 0.6 * scale, lobeEndZ * 0.62);
+          subLobe.castShadow = true;
+          varDay.add(subLobe);
+        });
+
+        // (d) 中央主頂層巨型傘狀樹冠
+        const centerCrown = new THREE.Mesh(
+          new THREE.SphereGeometry(5.4 * scale, 9, 8),
+          leafMatDark
+        );
+        centerCrown.scale.set(1.45, 0.82, 1.45);
+        centerCrown.position.y = trunkH + 3.2 * scale;
+        centerCrown.castShadow = true;
+        varDay.add(centerCrown);
+
+        const topCanopy = new THREE.Mesh(
+          new THREE.DodecahedronGeometry(3.6 * scale, 1),
+          leafMat1
+        );
+        topCanopy.scale.set(1.3, 0.7, 1.3);
+        topCanopy.position.y = trunkH + 5.2 * scale;
+        topCanopy.castShadow = true;
+        varDay.add(topCanopy);
+
+        // 2. 微縮積木世界風格 (Brick) — 巨大階梯積木圓盤樹
+        const bTrunk = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.55 * scale, 0.75 * scale, trunkH, 14),
+          getMat("#6E4D30", { roughness: 0.16, metalness: 0.15 })
+        );
+        bTrunk.position.y = trunkH / 2;
+        bTrunk.castShadow = true;
+        varBrick.add(bTrunk);
+
+        const bGreenMat = getMat("#1B8738", { roughness: 0.16, metalness: 0.15 });
+        const sterculiaDiscs = [
+          { r: 7.2 * scale, h: 0.8 * scale, studs: 12 },
+          { r: 5.6 * scale, h: 0.8 * scale, studs: 10 },
+          { r: 4.0 * scale, h: 0.75 * scale, studs: 8 },
+          { r: 2.5 * scale, h: 0.65 * scale, studs: 6 }
+        ];
+        let bCurY = trunkH + 0.2 * scale;
+        sterculiaDiscs.forEach((d, idx) => {
+          const disc = new THREE.Mesh(
+            new THREE.CylinderGeometry(d.r * 0.95, d.r, d.h, 18),
+            bGreenMat
+          );
+          disc.position.y = bCurY;
+          disc.castShadow = true;
+          varBrick.add(disc);
+
+          for (let si = 0; si < d.studs; si++) {
+            const sa = (si / d.studs) * Math.PI * 2;
+            const stud = new THREE.Mesh(
+              new THREE.CylinderGeometry(0.24 * scale, 0.24 * scale, 0.20 * scale, 8),
+              bGreenMat
+            );
+            stud.position.set(Math.cos(sa) * (d.r * 0.75), bCurY + d.h * 0.55, Math.sin(sa) * (d.r * 0.75));
+            varBrick.add(stud);
+          }
+          bCurY += d.h;
+        });
+
+        // 3. 復古像素冒險風格 (Pixel) — 巨型體素積木方塊大樹
+        const pTrunk = new THREE.Mesh(
+          new THREE.BoxGeometry(1.0 * scale, trunkH, 1.0 * scale),
+          getMat("#4A3525", { roughness: 0.85, flatShading: true })
+        );
+        pTrunk.position.y = trunkH / 2;
+        pTrunk.castShadow = true;
+        varPixel.add(pTrunk);
+
+        const pGreenMat = getMat("#22B54C", { roughness: 0.8, flatShading: true });
+        const pBoxes = [
+          { w: 12.0 * scale, h: 2.0 * scale, y: trunkH + 1.2 * scale },
+          { w: 9.0 * scale, h: 1.8 * scale, y: trunkH + 2.8 * scale },
+          { w: 6.0 * scale, h: 1.6 * scale, y: trunkH + 4.3 * scale },
+          { w: 3.5 * scale, h: 1.4 * scale, y: trunkH + 5.6 * scale }
+        ];
+        pBoxes.forEach(pb => {
+          const pBox = new THREE.Mesh(
+            new THREE.BoxGeometry(pb.w, pb.h, pb.w),
+            pGreenMat
+          );
+          pBox.position.y = pb.y;
+          pBox.castShadow = true;
+          varPixel.add(pBox);
+        });
       } else {
         const trunkH = (7.5 + Math.random() * 1.5) * scale;
         // 1. Day
@@ -741,6 +961,10 @@ window.CampusBuilder3D = (function () {
     // (B) 樂耕樓南側中庭樹列 (z = -28.0，避開中央穿堂中軸步道)
     [-34, -26, -18, -10].forEach(x => addTree(x, -28.0, 1.25, "mahogany"));
     [10, 18, 26, 34].forEach(x => addTree(x, -28.0, 1.25, "mahogany"));
+
+    // (B2) 中庭西南草坪兩棵巨大「掌葉蘋婆」地標老樹 (還原使用者實景照片及圖二紅圈指示：巨型大傘狀樹冠，西側樹底設白色環樹休閒圓椅)
+    addTree(-33.0, 0.0, 1.35, "sterculia"); // 西側大掌葉蘋婆 (含白色環樹休閒椅)
+    addTree(-18.0, 0.0, 1.35, "sterculia"); // 東側大掌葉蘋婆
 
     // (C) 利用樓西邊樹列 (x = -72.0，位於利用樓西側與西幹道之間長條綠帶，南北貫穿)
     [-22.0, -11.5, -1.0, 9.5, 20.0, 30.5, 41.0].forEach(z => addTree(-72.0, z, 1.25, "mahogany"));
