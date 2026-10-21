@@ -86,7 +86,7 @@ window.CAMPUS_DATA = {
       color: "#F2C94C",
       buildings: ["mechanical"],
       labs: ["機械一場（電腦製圖工場）", "機械二場／三場", "CNC 教室", "創意教室", "電學與測試教室"],
-      summary: "設於乾燥玫瑰粉磚外觀之「機械館」（含新建齒輪圖騰無障礙電梯），配置精密機械加工、CNC 數值控制、電腦輔助製圖（CAD）與機電整合工場。"
+      summary: "設於 4 層樓丁掛紫紅磚外觀之「機械館」（中央懸挑大弧形門廳、中間偏右設有新建齒輪圖騰無障礙電梯），配置精密機械加工、CNC 數值控制、電腦輔助製圖（CAD）與機電整合工場。"
     },
     {
       id: "prog_animal",
@@ -976,39 +976,51 @@ window.CAMPUS_DATA = {
       englishName: "Mechanical Engineering Building",
       category: "tech",
       zone: "south_tech",
-      // 往東方 (+X) 稍微平移至 x = 161.0，前方無樹木遮擋
       x: 161.0, z: 86.0, w: 15.5, d: 62.0, rotY: 0,
-      floors: 3, centerTowerFloors: 4, floorHeight: 5.7,
+      floors: 4, floorHeight: 4.2,
+      badgeText: "4F",
       style: "mechanical",
       colors: {
-        main: "#C98C82",
-        secondary: "#EDAFA4",
-        accent: "#EAE5DC",
+        main: "#9E5456",
+        secondary: "#D47A7E",
+        accent: "#F0EDE6",
         roof: "#8C9298"
       },
-      summary: "機械技術學程核心館舍（兩翼 3 樓、中央與電梯塔 4 樓）。乾燥玫瑰粉磚立面，中央為弧形懸挑門廊，兩翼為半圓形凸出陽台；右側（北端）設有剛建好的淺鮭魚粉色「無障礙電梯」（外牆飾有機械齒輪造型）。",
-      features: ["新建機械齒輪造型「無障礙電梯」高塔", "中央弧形門廊與兩翼半圓陽台", "1F 機械工場、2F CNC／創意／301&201、3F 電學／機械三場"],
-      // 使用者確認機械館方向正確，維持原順序
+      summary: "4 層樓現代技術學程核心館舍（正面朝西）。外觀為優雅丁掛紫紅磚與巨型方柱列，中央為懸挑大弧形門廊（飾有金色「機械館」與英文館名）及 2–4F 弧形外凸陽台；正面中間偏右位置新設有直通頂樓的長條狀珊瑚粉色「無障礙電梯」（外牆繪有標誌性機械齒輪工程圖騰，地面設有無障礙專用坡道與 ♿ 標誌）；兩翼設有半圓弧外凸波浪花台陽台與外廊，北端帶有轉角樓梯間；館內 1–4F 完整配置精密加工、CAD 製圖、CNC 與專題研究實習工場。",
+      features: [
+        "正面朝西：中央挑高懸挑大弧形門廊（金色館名）與 2–4F 弧形大陽台",
+        "正面中間偏右新建垂直長條狀「無障礙電梯塔」（珊瑚粉外牆與機械齒輪圖騰）",
+        "電梯入口配置無障礙專用斜坡扶手與 ♿ 專屬標線",
+        "兩翼巨型磚紅方柱列、菱形 ◇ 裝飾磁磚與半圓弧波浪陽台",
+        "北端轉角立體樓梯間與挑高屋頂梯間機房",
+        "1–4F 完整機械技術實習工場、CNC、電腦教室與專題製作室"
+      ],
       floorsData: {
         1: [
           { code: "ME1", name: "機械二場", type: "lab" },
           { code: "ME2", name: "機械科辦公室", type: "office" },
-          { code: "ST", name: "樓梯／無障礙電梯", type: "stair" },
+          { code: "ELEV", name: "無障礙電梯／中央門廳", type: "stair" },
           { code: "ME3", name: "機械一場（電腦製圖工場）", type: "lab" }
         ],
         2: [
           { code: "ME4", name: "創意教室", type: "lab" },
-          { code: "ME5", name: "CNC教室", type: "lab" },
+          { code: "ME5", name: "CNC 教室", type: "lab" },
           { code: "301", name: "301 教室", type: "class3" },
-          { code: "ST", name: "樓梯／無障礙電梯", type: "stair" },
+          { code: "ELEV", name: "無障礙電梯／2F 弧形陽台", type: "stair" },
           { code: "201", name: "201 教室", type: "class2" },
           { code: "ME6", name: "電腦教室（機械館）", type: "lab" }
         ],
         3: [
           { code: "ME7", name: "機械三場", type: "lab" },
           { code: "ME8", name: "測試教室", type: "lab" },
-          { code: "ST", name: "樓梯／無障礙電梯", type: "stair" },
+          { code: "ELEV", name: "無障礙電梯／3F 弧形陽台", type: "stair" },
           { code: "ME9", name: "電學教室", type: "lab" }
+        ],
+        4: [
+          { code: "ME10", name: "精密量測實驗室", type: "lab" },
+          { code: "ME11", name: "機械多功能專題研習室", type: "lab" },
+          { code: "ELEV", name: "無障礙電梯／4F 弧形陽台", type: "stair" },
+          { code: "ME12", name: "專題製作教室", type: "lab" }
         ]
       }
     },
