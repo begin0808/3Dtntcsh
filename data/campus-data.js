@@ -33,7 +33,7 @@ window.CAMPUS_DATA = {
 
   // 第一人稱「地面實境漫步」快速起點
   walkSpawns: [
-    { id: "gate", name: "📍 校門口迎賓廣場", x: 0, z: -170, yaw: Math.PI },       // 面向南方 (+Z) 往中央大道與樂耕樓看
+    { id: "gate", name: "📍 校門口迎賓廣場", x: 0, z: -200, yaw: Math.PI },       // 面向南方 (+Z) 往校門口招牌、警衛室與大門看
     { id: "quad", name: "📍 中庭教學區中心", x: 0, z: 8, yaw: 0 },               // 面向北方 (-Z) 往樂耕樓看
     { id: "east_lib", name: "📍 圖書館＆資訊學程前", x: 82, z: 18, yaw: -Math.PI / 2 }, // 面向東方 (+X) 往圖書館與日式平房看
     { id: "catering_plaza", name: "📍 餐飲館＆雙綠地車道", x: 114, z: -42, yaw: 0 }, // 面向北方 (-Z) 往餐飲館正門看
