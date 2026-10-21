@@ -762,12 +762,12 @@ window.CampusBuilder3D = (function () {
       // 跑道北弧兩側肩部 (z = -222.0)
       [-156.0, -222.0, 1.25], [-100.0, -222.0, 1.25]
     ].forEach(([x, z, s]) => addTree(x, z, s, "mahogany"));
-    // (d) 南側半圓外環樹弧 (半徑擴大至 38.5m，南頂點達 z = -101.5，徹底遠離南弧跑道)
-    for (let i = 0; i <= 8; i++) {
+    // (d) 南側半圓外環樹弧 (南弧頂段均勻 5 棵樹，排除兩端與東西直道樹列重疊，徹底解決橘色圈圈重疊問題)
+    for (let i = 2; i <= 6; i++) {
       const a = Math.PI + (i / 8) * Math.PI;
       const tx = -128.0 + 38.5 * Math.cos(a);
       const tz = -140.0 - 38.5 * Math.sin(a);
-      addTree(tx, tz, 1.3, "mahogany");
+      addTree(tx, tz, 1.25, "mahogany");
     }
 
     // ================= 6. 園藝館周邊景觀樹列 (依指示：單排均勻排列，徹底解決紅框與紅圈重疊壅擠問題) =================
