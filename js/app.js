@@ -20,7 +20,7 @@
     walkMode: false,       // 地面漫步模式
     walkChar: "boy",       // 'boy' | 'girl'
     walkView: "third_person", // 'third_person' | 'first_person'
-    walkPos: new THREE.Vector3(0, 0, -200),
+    walkPos: new THREE.Vector3(2.0, 0, -200),
     walkYaw: Math.PI,      // 0 = 朝北(-Z), Math.PI = 朝南(+Z), -Math.PI/2 = 朝東(+X), Math.PI/2 = 朝西(-X)
     walkPitch: 0.04,
     walkBobPhase: 0,
