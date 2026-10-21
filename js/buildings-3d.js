@@ -1267,6 +1267,12 @@ window.CampusBuilder3D = (function () {
     // 門口左側大型電子看板，下面就是警衛室
     if (b.style === "gate") {
       const gGate = new THREE.Group();
+      // 轉向 180 度 (Math.PI)：
+      // 從校外 (中山南路) 往校內看時：
+      // 1. 左手邊：警衛室 ＋ 屋頂大型電子看板
+      // 2. 右手邊：疊石題字門柱 ＋ 造型景觀牆（「國立 臺南大學附中」大字）
+      // 3. 所有正面設施（LED 螢幕、校名牌匾、值勤觀景窗、綠白遮陽棚）均面朝校外道路，迎接入校師生與訪客
+      gGate.rotation.y = Math.PI;
 
       // --- 動態生成高解析看板與校名貼圖 ---
       // (1) 右側斜面景觀牆立體大字貼圖「國立 臺南大學附中」與英文校名
@@ -1278,20 +1284,20 @@ window.CampusBuilder3D = (function () {
         ctx.strokeStyle = "#FFFFFF";
         ctx.lineWidth = 14;
         ctx.strokeText("國    立", 120, 110);
-        ctx.fillStyle = "#125EA8";
+        ctx.fillStyle = "#0D837D";
         ctx.fillText("國    立", 120, 110);
 
         ctx.font = "bold 98px 'Noto Sans TC', 'Microsoft JhengHei', sans-serif";
         ctx.lineWidth = 16;
         ctx.strokeText("臺南大學附中", 120, 235);
-        ctx.fillStyle = "#125EA8";
+        ctx.fillStyle = "#0D837D";
         ctx.fillText("臺南大學附中", 120, 235);
 
         ctx.font = "bold 32px 'Arial', 'Helvetica', sans-serif";
         ctx.lineWidth = 6;
         ctx.strokeStyle = "#FFFFFF";
         ctx.strokeText("THE AFFILIATED SENIOR HIGH SCHOOL", 122, 325);
-        ctx.fillStyle = "#1E72BD";
+        ctx.fillStyle = "#109B90";
         ctx.fillText("THE AFFILIATED SENIOR HIGH SCHOOL", 122, 325);
         ctx.strokeText("OF NATIONAL UNIVERSITY OF TAINAN", 122, 370);
         ctx.fillText("OF NATIONAL UNIVERSITY OF TAINAN", 122, 370);
@@ -1431,9 +1437,57 @@ window.CampusBuilder3D = (function () {
         hazardTex.wrapT = THREE.RepeatWrapping;
       }
 
+      // (6) 警衛室正面值勤窗綠白相間條紋斜面遮陽棚貼圖 (還原照片實景)
+      const awningTex = makeTextCanvas(256, 128, (ctx, w, h) => {
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = "#1D7F4B";
+        const sw = 28;
+        for (let x = 0; x < w; x += sw * 2) {
+          ctx.fillRect(x, 0, sw, h);
+        }
+      });
+
+      // (7) 門柱粗獷疊石紋理貼圖 (還原照片方圓石塔)
+      const pylonTex = makeTextCanvas(256, 512, (ctx, w, h) => {
+        ctx.fillStyle = "#524436";
+        ctx.fillRect(0, 0, w, h);
+        const pColors = ["#685442", "#47382B", "#755F4B", "#4D3D2F", "#826B55", "#5C4A3A"];
+        for (let y = 0; y < h; y += 22) {
+          ctx.strokeStyle = "rgba(20, 15, 10, 0.4)";
+          ctx.lineWidth = 2;
+          ctx.strokeRect(0, y, w, 22);
+          for (let x = 0; x < w; x += 40) {
+            ctx.fillStyle = pColors[(x + y) % pColors.length];
+            ctx.fillRect(x + 1, y + 1, 38, 20);
+          }
+        }
+      });
+
+      // (8) 造型景觀牆天然暖色砂岩拼貼紋理貼圖
+      const wallTileTex = makeTextCanvas(512, 512, (ctx, w, h) => {
+        ctx.fillStyle = "#E4D4C5";
+        ctx.fillRect(0, 0, w, h);
+        const tileColors = ["#E8D9CB", "#DFCABA", "#EADCCE", "#D8BFA9", "#ECC9B3", "#DEC4AF"];
+        for (let i = 0; i < 35; i++) {
+          const rx = (i * 73) % (w - 60);
+          const ry = (i * 97) % (h - 50);
+          const rw = 65 + (i * 17) % 55;
+          const rh = 40 + (i * 23) % 45;
+          ctx.fillStyle = tileColors[i % tileColors.length];
+          ctx.fillRect(rx, ry, rw, rh);
+          ctx.strokeStyle = "rgba(130, 110, 95, 0.22)";
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(rx, ry, rw, rh);
+        }
+      });
+
       // ================= 1. 門口右側 (東側)：校名石塔碑體 ＋ 漸降造型景觀牆 =================
       // (a) 粗獷疊石方圓門柱 (高 7.6m，寬 2.4m，深 2.2m)
-      const pylonMat = getMat("#443A30", { roughness: 0.9 });
+      let pylonMat = getMat("#443A30", { roughness: 0.9 });
+      if (pylonTex) {
+        pylonMat = new THREE.MeshStandardMaterial({ map: pylonTex, roughness: 0.88 });
+      }
       const pylonCrownMat = getMat("#362E26", { roughness: 0.85 });
       const pylon = new THREE.Mesh(new THREE.BoxGeometry(2.4, 7.4, 2.2), pylonMat);
       pylon.position.set(4.2, 3.7, 0);
@@ -1477,7 +1531,10 @@ window.CampusBuilder3D = (function () {
         bevelSize: 0.05,
         bevelThickness: 0.05
       });
-      const wallStoneMat = getMat("#D8CEBE", { roughness: 0.82 });
+      let wallStoneMat = getMat("#D8CEBE", { roughness: 0.82 });
+      if (wallTileTex) {
+        wallStoneMat = new THREE.MeshStandardMaterial({ map: wallTileTex, roughness: 0.82 });
+      }
       const rightFeatureWall = new THREE.Mesh(wallGeo, wallStoneMat);
       rightFeatureWall.position.set(5.2, 0, -0.425);
       rightFeatureWall.castShadow = true;
@@ -1551,6 +1608,17 @@ window.CampusBuilder3D = (function () {
       const winGlass = new THREE.Mesh(new THREE.BoxGeometry(2.5, 1.35, 0.08), winGlassMat);
       winGlass.position.set(-7.5, 1.8, 2.45);
       gGate.add(winGlass);
+
+      // 警衛室正面綠白條紋斜面遮陽棚
+      let awningMat = getMat("#1D7F4B");
+      if (awningTex) {
+        awningMat = new THREE.MeshStandardMaterial({ map: awningTex, roughness: 0.55 });
+      }
+      const awningMesh = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.08, 0.95), awningMat);
+      awningMesh.rotation.x = 0.28;
+      awningMesh.position.set(-7.5, 2.65, 2.82);
+      awningMesh.castShadow = true;
+      gGate.add(awningMesh);
 
       // 警衛室公佈欄 (榮譽榜海報牆)
       if (bulletinTex) {
@@ -1648,6 +1716,7 @@ window.CampusBuilder3D = (function () {
       gGate.add(redGate);
 
       root.add(gGate);
+      root.userData.pickMesh = guardBody;
       root.userData.floorGroups[1] = root;
       return root;
     }
