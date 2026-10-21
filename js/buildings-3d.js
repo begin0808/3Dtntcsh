@@ -39,6 +39,23 @@ window.CampusBuilder3D = (function () {
     return mat;
   }
 
+  // 建立動態 Canvas 2D 紋理貼圖工具 (用於真實再現校門校名牌匾、LED電子看板、警衛室公佈欄)
+  function makeTextCanvas(w, h, drawFn) {
+    if (typeof document === "undefined") return null;
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (ctx) drawFn(ctx, w, h);
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.anisotropy = 4;
+      return tex;
+    } catch (e) {
+      return null;
+    }
+  }
+
   // 建立頂樓太陽能光電板陣列
   function addSolarPanels(parent, w, d, y, count = 3) {
     const solarGroup = new THREE.Group();
@@ -1245,45 +1262,395 @@ window.CampusBuilder3D = (function () {
       return root;
     }
 
-    // 特殊場域 2：校門口與警衛室 (`gate`) — 還原 `161337.jpg` & `161347.jpg`
+    // 特殊場域 2：校門口與警衛室 (`gate`) — 完美還原使用者上傳之正門三張實景照片
+    // 門口右側是一面漸降景觀牆，寫著學校名稱「國立臺南大學附中」與石柱題字
+    // 門口左側大型電子看板，下面就是警衛室
     if (b.style === "gate") {
-      // 1. 東側深褐疊石大圓柱門柱 (高 6.8m)
-      const pillar = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.25, 6.8, 20), secMat);
-      pillar.position.set(5.5, 3.4, 0);
-      pillar.castShadow = true;
-      root.add(pillar);
+      const gGate = new THREE.Group();
 
-      // 2. 東側斜坡三角亂石牆 + 圓形月門鏤空 ○
-      const wallRight = new THREE.Mesh(new THREE.BoxGeometry(11, 3.2, 0.85), mainMat);
-      wallRight.position.set(11.5, 1.6, 0);
-      wallRight.castShadow = true;
-      root.add(wallRight);
-      const moonHole = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 0.92, 24), getMat("#2C82C9"));
-      moonHole.rotation.x = Math.PI / 2;
-      moonHole.position.set(9.2, 1.7, 0);
-      root.add(moonHole);
+      // --- 動態生成高解析看板與校名貼圖 ---
+      // (1) 右側斜面景觀牆立體大字貼圖「國立 臺南大學附中」與英文校名
+      const wallNameTex = makeTextCanvas(1024, 512, (ctx, w, h) => {
+        ctx.clearRect(0, 0, w, h);
+        ctx.font = "bold 82px 'Noto Sans TC', 'Microsoft JhengHei', sans-serif";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+        ctx.strokeStyle = "#FFFFFF";
+        ctx.lineWidth = 14;
+        ctx.strokeText("國    立", 120, 110);
+        ctx.fillStyle = "#125EA8";
+        ctx.fillText("國    立", 120, 110);
 
-      // 3. 西側圓角警衛室 + 屋頂黑色 LED 跑馬燈看板 (`161347.jpg`)
-      const guard = new THREE.Mesh(new THREE.BoxGeometry(5.5, 3.6, 4.8), mainMat);
-      guard.position.set(-8.5, 1.8, 0);
-      guard.castShadow = true;
-      root.add(guard);
-      const guardCanopy = new THREE.Mesh(new THREE.BoxGeometry(6.8, 0.35, 5.8), roofMat);
-      guardCanopy.position.set(-8.2, 3.7, 0);
-      root.add(guardCanopy);
-      const ledBoard = new THREE.Mesh(new THREE.BoxGeometry(4.6, 1.1, 0.45), getMat("#22252A"));
-      ledBoard.position.set(-8.0, 4.45, 1.6);
-      root.add(ledBoard);
+        ctx.font = "bold 98px 'Noto Sans TC', 'Microsoft JhengHei', sans-serif";
+        ctx.lineWidth = 16;
+        ctx.strokeText("臺南大學附中", 120, 235);
+        ctx.fillStyle = "#125EA8";
+        ctx.fillText("臺南大學附中", 120, 235);
 
-      // 4. 中央分隔島與黃黑警示柱
-      const island = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.9, 5.5), getMat("#EBC137"));
-      island.position.set(-1.5, 0.45, 0);
-      root.add(island);
+        ctx.font = "bold 32px 'Arial', 'Helvetica', sans-serif";
+        ctx.lineWidth = 6;
+        ctx.strokeStyle = "#FFFFFF";
+        ctx.strokeText("THE AFFILIATED SENIOR HIGH SCHOOL", 122, 325);
+        ctx.fillStyle = "#1E72BD";
+        ctx.fillText("THE AFFILIATED SENIOR HIGH SCHOOL", 122, 325);
+        ctx.strokeText("OF NATIONAL UNIVERSITY OF TAINAN", 122, 370);
+        ctx.fillText("OF NATIONAL UNIVERSITY OF TAINAN", 122, 370);
+      });
 
+      // (2) 東側粗獷疊石門柱直刻校名「國立臺南大學附屬高級中學」
+      const pillarNameTex = makeTextCanvas(256, 1024, (ctx, w, h) => {
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = "#2D2620";
+        ctx.fillRect(16, 16, w - 32, h - 32);
+        ctx.strokeStyle = "#8A744A";
+        ctx.lineWidth = 6;
+        ctx.strokeRect(16, 16, w - 32, h - 32);
+
+        const chars = ["國", "立", "臺", "南", "大", "學", "附", "屬", "高", "級", "中", "學"];
+        ctx.font = "bold 56px 'Noto Serif TC', 'DFKai-SB', 'Microsoft JhengHei', serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        const startY = 80;
+        const stepY = 74;
+        chars.forEach((ch, idx) => {
+          const cy = startY + idx * stepY;
+          ctx.fillStyle = "#4A3A1A";
+          ctx.fillText(ch, w / 2 + 3, cy + 3);
+          ctx.fillStyle = "#F5D472";
+          ctx.fillText(ch, w / 2, cy);
+        });
+      });
+
+      // (3) 左側警衛室屋頂「大型電子看板」LED 戶外全彩電視牆顯示畫面
+      const ledScreenTex = makeTextCanvas(1024, 768, (ctx, w, h) => {
+        ctx.fillStyle = "#111418";
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.fillStyle = "#181D24";
+        for (let y = 8; y < h; y += 16) ctx.fillRect(0, y, w, 2);
+        for (let x = 8; x < w; x += 16) ctx.fillRect(x, 0, 2, h);
+
+        ctx.strokeStyle = "#38424E";
+        ctx.lineWidth = 12;
+        ctx.strokeRect(10, 10, w - 20, h - 20);
+
+        ctx.fillStyle = "#1E2228";
+        ctx.fillRect(30, 30, w - 60, 110);
+        ctx.strokeStyle = "#E8A824";
+        ctx.lineWidth = 4;
+        ctx.strokeRect(30, 30, w - 60, 110);
+
+        ctx.font = "bold 60px 'Microsoft JhengHei', 'Noto Sans TC', sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = "#FFC425";
+        ctx.fillText("【 國立南大附中 歡迎您 】", w / 2, 85);
+
+        ctx.font = "bold 66px 'Microsoft JhengHei', 'Noto Sans TC', sans-serif";
+        ctx.fillStyle = "#4DEEEA";
+        ctx.fillText("卓越附中・築夢啟航", w / 2, 230);
+
+        ctx.font = "bold 44px 'Microsoft JhengHei', 'Noto Sans TC', sans-serif";
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillText("115 學年度升學繁星成果輝煌", w / 2, 325);
+
+        ctx.strokeStyle = "#2D3848";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(60, 400);
+        ctx.lineTo(w - 60, 400);
+        ctx.stroke();
+
+        ctx.font = "bold 38px 'Consolas', 'Microsoft JhengHei', sans-serif";
+        ctx.fillStyle = "#46E882";
+        ctx.fillText("校園即時資訊 ｜ 氣溫 26°C ｜ 空氣品質 [優]", w / 2, 470);
+
+        ctx.fillStyle = "#1A202A";
+        ctx.fillRect(40, 550, w - 80, 140);
+        ctx.strokeStyle = "#00A8FF";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(40, 550, w - 80, 140);
+
+        ctx.font = "bold 42px 'Microsoft JhengHei', sans-serif";
+        ctx.fillStyle = "#FFDD55";
+        ctx.fillText("● 培育多元專長・實踐全人教育 ●", w / 2, 620);
+      });
+
+      // (4) 警衛室公佈欄 (榮譽榜公告海報)
+      const bulletinTex = makeTextCanvas(512, 256, (ctx, w, h) => {
+        ctx.fillStyle = "#F5F2EB";
+        ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = "#B82228";
+        ctx.fillRect(0, 0, w, 56);
+        ctx.font = "bold 32px 'Microsoft JhengHei', sans-serif";
+        ctx.fillStyle = "#FFFFFF";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("南大附中 榮譽榜", w / 2, 28);
+
+        ctx.strokeStyle = "#4A4D52";
+        ctx.lineWidth = 6;
+        ctx.strokeRect(3, 3, w - 6, h - 6);
+
+        ctx.fillStyle = "#FFFFFF";
+        ctx.strokeStyle = "#CBD2D9";
+        ctx.lineWidth = 2;
+        ctx.fillRect(30, 80, 120, 140);
+        ctx.strokeRect(30, 80, 120, 140);
+        ctx.fillRect(170, 80, 160, 140);
+        ctx.strokeRect(170, 80, 160, 140);
+        ctx.fillRect(350, 80, 130, 140);
+        ctx.strokeRect(350, 80, 130, 140);
+
+        ctx.fillStyle = "#9AA5B1";
+        for (let y = 100; y <= 200; y += 18) {
+          ctx.fillRect(40, y, 100, 5);
+          ctx.fillRect(180, y, 140, 5);
+          ctx.fillRect(360, y, 110, 5);
+        }
+      });
+
+      // (5) 安全島防撞斜紋貼圖
+      const hazardTex = makeTextCanvas(256, 256, (ctx, w, h) => {
+        ctx.fillStyle = "#F5BA24";
+        ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = "#1E2024";
+        ctx.beginPath();
+        const stripeW = 48;
+        for (let x = -h; x < w + h; x += stripeW * 2) {
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x + stripeW, 0);
+          ctx.lineTo(x + stripeW - h, h);
+          ctx.lineTo(x - h, h);
+          ctx.closePath();
+        }
+        ctx.fill();
+      });
+      if (hazardTex) {
+        hazardTex.wrapS = THREE.RepeatWrapping;
+        hazardTex.wrapT = THREE.RepeatWrapping;
+      }
+
+      // ================= 1. 門口右側 (東側)：校名石塔碑體 ＋ 漸降造型景觀牆 =================
+      // (a) 粗獷疊石方圓門柱 (高 7.6m，寬 2.4m，深 2.2m)
+      const pylonMat = getMat("#443A30", { roughness: 0.9 });
+      const pylonCrownMat = getMat("#362E26", { roughness: 0.85 });
+      const pylon = new THREE.Mesh(new THREE.BoxGeometry(2.4, 7.4, 2.2), pylonMat);
+      pylon.position.set(4.2, 3.7, 0);
+      pylon.castShadow = true;
+      pylon.receiveShadow = true;
+      gGate.add(pylon);
+
+      const pylonCap = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.4, 2.4), pylonCrownMat);
+      pylonCap.position.set(4.2, 7.5, 0);
+      gGate.add(pylonCap);
+
+      // 門柱正面「國立臺南大學附屬高級中學」直刻牌匾
+      if (pillarNameTex) {
+        const pillarSignMat = new THREE.MeshBasicMaterial({
+          map: pillarNameTex,
+          transparent: true
+        });
+        const pillarSign = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 6.2), pillarSignMat);
+        pillarSign.position.set(4.2, 3.7, 1.12);
+        gGate.add(pillarSign);
+      }
+
+      // (b) 漸降造型景觀牆 (從石塔高 5.0m 向東向漸降至 2.0m，長 14.0m，帶圓形月門鏤空孔)
+      const wallShape = new THREE.Shape();
+      wallShape.moveTo(0, 0);
+      wallShape.lineTo(0, 5.0);
+      wallShape.lineTo(14.0, 2.0);
+      wallShape.lineTo(14.0, 0);
+      wallShape.closePath();
+
+      // 圓形鏤空孔 (月門觀景窗)
+      const holePath = new THREE.Path();
+      holePath.absarc(3.6, 1.85, 0.92, 0, Math.PI * 2, true);
+      wallShape.holes.push(holePath);
+
+      const wallGeo = new THREE.ExtrudeGeometry(wallShape, {
+        depth: 0.85,
+        bevelEnabled: true,
+        bevelSegments: 2,
+        steps: 1,
+        bevelSize: 0.05,
+        bevelThickness: 0.05
+      });
+      const wallStoneMat = getMat("#D8CEBE", { roughness: 0.82 });
+      const rightFeatureWall = new THREE.Mesh(wallGeo, wallStoneMat);
+      rightFeatureWall.position.set(5.2, 0, -0.425);
+      rightFeatureWall.castShadow = true;
+      rightFeatureWall.receiveShadow = true;
+      gGate.add(rightFeatureWall);
+
+      // 圓形孔洞外圍裝飾邊框
+      const holeRimMat = getMat("#EAE6DF", { roughness: 0.7 });
+      const holeRim = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.05, 0.95, 24, 1, true), holeRimMat);
+      holeRim.rotation.x = Math.PI / 2;
+      holeRim.position.set(8.8, 1.85, 0);
+      gGate.add(holeRim);
+
+      // 斜牆頂部深色石材壓頂壓條 (沿著 (5.2, 5.0) 至 (19.2, 2.0) 斜坡延伸)
+      const dxWall = 14.0;
+      const dyWall = -3.0;
+      const slopeLen = Math.hypot(dxWall, dyWall);
+      const slopeAngle = Math.atan2(dyWall, dxWall);
+      const wallCoping = new THREE.Mesh(new THREE.BoxGeometry(slopeLen + 0.2, 0.16, 0.96), getMat("#564F46"));
+      wallCoping.rotation.z = slopeAngle;
+      wallCoping.position.set(5.2 + dxWall / 2, 5.0 + dyWall / 2 + 0.08, 0);
+      gGate.add(wallCoping);
+
+      // (c) 牆面藍色大字「國立 臺南大學附中」立體校名標誌
+      if (wallNameTex) {
+        const wallSignMat = new THREE.MeshBasicMaterial({
+          map: wallNameTex,
+          transparent: true
+        });
+        const wallSignMesh = new THREE.Mesh(new THREE.PlaneGeometry(10.5, 3.2), wallSignMat);
+        wallSignMesh.position.set(11.2, 2.5, 0.48);
+        gGate.add(wallSignMesh);
+      }
+
+      // (d) 景觀牆前方矮灌木綠雕花台 (沿著牆基長度延伸)
+      const hedgeBase = new THREE.Mesh(new THREE.BoxGeometry(13.2, 0.65, 0.9), getMat("#426E30"));
+      hedgeBase.position.set(12.0, 0.325, 0.85);
+      hedgeBase.castShadow = true;
+      gGate.add(hedgeBase);
+      const curb = new THREE.Mesh(new THREE.BoxGeometry(13.6, 0.25, 0.18), getMat("#8C877E"));
+      curb.position.set(12.0, 0.125, 1.35);
+      gGate.add(curb);
+
+      // ================= 2. 門口左側 (西側)：大型電子看板 ＋ 警衛室 =================
+      // (a) 單層警衛室本體 (寬 7.2m，深 5.6m，高 3.4m)
+      const guardWallMat = getMat("#DDD2C0", { roughness: 0.8 });
+      const guardBody = new THREE.Mesh(new THREE.BoxGeometry(7.2, 3.4, 5.6), guardWallMat);
+      guardBody.position.set(-9.5, 1.7, -0.4);
+      guardBody.castShadow = true;
+      guardBody.receiveShadow = true;
+      gGate.add(guardBody);
+
+      // 警衛室平屋頂延伸雨庇雨棚
+      const guardRoofMat = getMat("#52565B", { roughness: 0.75 });
+      const guardRoof = new THREE.Mesh(new THREE.BoxGeometry(8.2, 0.35, 6.8), guardRoofMat);
+      guardRoof.position.set(-9.3, 3.45, 0.2);
+      guardRoof.castShadow = true;
+      gGate.add(guardRoof);
+
+      // 雨庇前緣深色收邊條
+      const canopyTrim = new THREE.Mesh(new THREE.BoxGeometry(8.25, 0.15, 0.15), getMat("#2D3136"));
+      canopyTrim.position.set(-9.3, 3.55, 3.58);
+      gGate.add(canopyTrim);
+
+      // 警衛室正向大片值勤觀景窗 (鋁合金白框 + 藍黑透光玻璃)
+      const winFrameMat = getMat("#EAECEF", { roughness: 0.6 });
+      const winGlassMat = getMat("#1C2C3A", { roughness: 0.3, metalness: 0.4 });
+      const winFrame = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.6, 0.12), winFrameMat);
+      winFrame.position.set(-7.5, 1.8, 2.42);
+      gGate.add(winFrame);
+      const winGlass = new THREE.Mesh(new THREE.BoxGeometry(2.5, 1.35, 0.08), winGlassMat);
+      winGlass.position.set(-7.5, 1.8, 2.45);
+      gGate.add(winGlass);
+
+      // 警衛室公佈欄 (榮譽榜海報牆)
+      if (bulletinTex) {
+        const bulletinMat = new THREE.MeshBasicMaterial({ map: bulletinTex });
+        const bulletinMesh = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.4), bulletinMat);
+        bulletinMesh.position.set(-11.0, 1.8, 2.42);
+        gGate.add(bulletinMesh);
+      }
+
+      // 西側銜接弧形石材翼牆 (帶圓形月門孔)
+      const westWallShape = new THREE.Shape();
+      westWallShape.moveTo(0, 0);
+      westWallShape.lineTo(0, 3.2);
+      westWallShape.lineTo(-5.0, 1.6);
+      westWallShape.lineTo(-5.0, 0);
+      westWallShape.closePath();
+      const westHole = new THREE.Path();
+      westHole.absarc(-2.2, 1.5, 0.75, 0, Math.PI * 2, true);
+      westWallShape.holes.push(westHole);
+      const westWallGeo = new THREE.ExtrudeGeometry(westWallShape, {
+        depth: 0.75,
+        bevelEnabled: true,
+        bevelSegments: 2,
+        steps: 1,
+        bevelSize: 0.04,
+        bevelThickness: 0.04
+      });
+      const westWingWall = new THREE.Mesh(westWallGeo, wallStoneMat);
+      westWingWall.position.set(-13.1, 0, -0.4);
+      westWingWall.castShadow = true;
+      gGate.add(westWingWall);
+
+      // (b) 屋頂「大型電子看板 / LED 戶外全彩電視牆」 (寬 5.8m，高 4.2m，厚 0.65m，立於屋頂上方)
+      // 鋼結構支撐立柱 (兩根深黑鋼柱立於屋頂上)
+      const steelMat = getMat("#2B2E33", { metalness: 0.7, roughness: 0.4 });
+      [-11.2, -7.4].forEach(sx => {
+        const pylonLeg = new THREE.Mesh(new THREE.BoxGeometry(0.42, 1.4, 0.42), steelMat);
+        pylonLeg.position.set(sx, 4.1, 0.6);
+        pylonLeg.castShadow = true;
+        gGate.add(pylonLeg);
+      });
+
+      // 大型電子看板金屬箱體
+      const billboardBox = new THREE.Mesh(new THREE.BoxGeometry(5.8, 4.2, 0.65), getMat("#1D2024", { roughness: 0.6 }));
+      billboardBox.position.set(-9.3, 5.9, 0.6);
+      billboardBox.castShadow = true;
+      gGate.add(billboardBox);
+
+      // 看板黑色金屬窄邊框
+      const billboardBezel = new THREE.Mesh(new THREE.BoxGeometry(5.9, 4.3, 0.1), getMat("#121417"));
+      billboardBezel.position.set(-9.3, 5.9, 0.92);
+      gGate.add(billboardBezel);
+
+      // LED 螢幕正面全彩動態顯示畫面
+      if (ledScreenTex) {
+        const ledScreenMat = new THREE.MeshStandardMaterial({
+          map: ledScreenTex,
+          emissive: new THREE.Color("#1A2026"),
+          emissiveIntensity: 0.4,
+          roughness: 0.4
+        });
+        const screenMesh = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 4.0), ledScreenMat);
+        screenMesh.position.set(-9.3, 5.9, 0.98);
+        gGate.add(screenMesh);
+      }
+
+      // ================= 3. 中央出入設施 (車道、黃黑警示柱、紅色伸縮大門) =================
+      // (a) 車道中央安全島 (防撞島)
+      const islandBase = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.35, 5.2), getMat("#88827A"));
+      islandBase.position.set(-2.4, 0.175, 0.6);
+      islandBase.castShadow = true;
+      gGate.add(islandBase);
+
+      // (b) 黃黑斜斑馬紋安全警示柱 (頂端帶紅色警示燈)
+      let hazardMat = getMat("#F5BA24");
+      if (hazardTex) {
+        hazardMat = new THREE.MeshStandardMaterial({ map: hazardTex, roughness: 0.5 });
+      }
+      const bollard = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 1.45, 18), hazardMat);
+      bollard.position.set(-2.4, 1.05, 2.5);
+      bollard.castShadow = true;
+      gGate.add(bollard);
+
+      // 頂部紅色警示閃光燈
+      const beaconMat = getMat("#E02424", { roughness: 0.3 });
+      const beacon = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 0.32, 16), beaconMat);
+      beacon.position.set(-2.4, 1.9, 2.5);
+      gGate.add(beacon);
+
+      // (c) 紅色電動伸縮鐵捲門 (停靠於車道旁)
+      const gateLatticeMat = getMat("#A82226", { metalness: 0.3, roughness: 0.5 });
+      const redGate = new THREE.Mesh(new THREE.BoxGeometry(0.32, 1.35, 4.6), gateLatticeMat);
+      redGate.position.set(2.8, 0.68, 0.6);
+      redGate.castShadow = true;
+      gGate.add(redGate);
+
+      root.add(gGate);
       root.userData.floorGroups[1] = root;
       return root;
     }
-
     // 特殊場域 3：西側各類運動球場 (`sport_court`) — 區分「露天球場（無頂棚）」與「風雨球場（附鋼棚頂蓋）」
     if (b.style === "sport_court") {
       const g1 = new THREE.Group();
