@@ -641,14 +641,19 @@
       const blade = add(body, new THREE.BoxGeometry(0.038, 0.24, 0.012), tieMat, 0, 1.24, 0.114, false);
       blade.rotation.x = -0.06;
     }
-    const badge = add(body, new THREE.CylinderGeometry(0.02, 0.02, 0.008, 12), tieMat, -0.075, 1.29, 0.11, false);
+    const badge = add(body, new THREE.CylinderGeometry(0.02, 0.02, 0.008, 12), tieMat, 0.075, 1.29, 0.11, false); // 人偶面向 +Z，其左側為 +X
     badge.rotation.x = Math.PI / 2;
 
-    // 側背書包 (左腰側) 與斜背帶 (右肩斜過胸前，不擋左胸校徽)
-    const bag = add(body, new THREE.BoxGeometry(0.075, 0.22, 0.28), bagMat, -0.2, 0.9, 0);
-    bag.rotation.z = -0.06;
-    const strap = add(body, new THREE.BoxGeometry(0.035, 0.6, 0.015), bagMat, -0.02, 1.18, 0.1, false);
-    strap.rotation.z = -0.62;
+    // 斜背書包：背帶從右肩繞過胸前與背後，書包掛在左後腰 (不擋左胸校徽、也不會像拿在手上)
+    // (人偶面向 +Z：右側為 -X、左側為 +X)
+    const bag = add(body, new THREE.BoxGeometry(0.08, 0.22, 0.27), bagMat, 0.165, 0.94, -0.075);
+    bag.rotation.y = -0.55;
+    [0.113, -0.116].forEach(z => {
+      const strap = add(body, new THREE.BoxGeometry(0.035, 0.52, 0.012), bagMat, 0.01, 1.16, z, false);
+      strap.rotation.z = 0.58;
+    });
+    const strapTop = add(body, new THREE.BoxGeometry(0.04, 0.016, 0.235), bagMat, -0.125, 1.366, 0, false);
+    strapTop.rotation.z = 0.35;
 
     // 2. 頭頸
     add(body, new THREE.CylinderGeometry(0.042, 0.048, 0.1, 12), skinMat, 0, 1.475, 0);
