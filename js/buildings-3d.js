@@ -56,25 +56,9 @@ window.CampusBuilder3D = (function () {
     }
   }
 
-  // 建立頂樓太陽能光電板陣列
+  // 建立頂樓太陽能光電板陣列（依使用者指示，全校各大樓樓頂太陽能板已全面移除）
   function addSolarPanels(parent, w, d, y, count = 3) {
-    const solarGroup = new THREE.Group();
-    const panelMat = getMat("#26313F", { roughness: 0.25, metalness: 0.6 });
-    const frameMat = getMat("#9BA4AE", { roughness: 0.5, metalness: 0.5 });
-    const spanW = (w * 0.72) / count;
-    for (let i = 0; i < count; i++) {
-      const px = -w * 0.36 + spanW * (i + 0.5);
-      const panel = new THREE.Mesh(new THREE.BoxGeometry(spanW * 0.82, 0.12, d * 0.45), panelMat);
-      panel.position.set(px, y + 0.65, 0);
-      panel.rotation.x = 0.22;
-      panel.castShadow = true;
-      solarGroup.add(panel);
-
-      const leg = new THREE.Mesh(new THREE.BoxGeometry(spanW * 0.76, 0.5, 0.15), frameMat);
-      leg.position.set(px, y + 0.28, -d * 0.14);
-      solarGroup.add(leg);
-    }
-    parent.add(solarGroup);
+    return;
   }
 
   // 工具函式：依據折線頂點建立平滑連接的 3D 道路帶與轉角圓盤
@@ -2525,27 +2509,31 @@ window.CampusBuilder3D = (function () {
       root.userData.pickMesh = poolDeck;
       return root;
     }
-    // 特殊場域 5：機械館 (`mechanical`) — 依使用者指示全新打造為實體厚實完整建築（無中空剖面、全棟一體成形）
-    // 1. 建築體量：實心厚重 4 層樓建築（總高 16.8m，南北長 62.0m、東西寬 15.5m，屋頂梯間 19.3m），正面朝西（面向加工工廠側車道）
-    // 2. 實體結構：全棟四面皆為實心封閉磚牆（北牆、南牆、東背牆與西正面），徹底消除任何中空穿透或剖面切片感
-    // 3. 正面中央核心（z = 0）：
-    //    - 1F 懸挑大弧形雨庇門廊（深挑 4.5m），前弧樑飾有金色「機  械  館」與「Mechanical Engineering Building」雙語牌匾，前方兩根承重圓柱
-    //    - 2F、3F、4F 懸挑大圓弧陽台，形成連續外凸的中央弧形陽台立面
-    //    - 屋頂中央挑高樓梯機房塔樓（帶階梯斜面線腳女兒牆）
-    // 4. 正面中間偏右（z = +8.5，位於中央門廊右側／南側柱跨）：
-    //    - 垂直貫穿 1F～4F 直達頂樓之長條狀珊瑚粉色實體「無障礙電梯塔」（#D47A7E）
-    //    - 電梯正面外牆精繪「機械工程大型齒輪咬合線條圖騰」
-    //    - 1F 電梯前方配置無障礙專用緩坡道、雙層不銹鋼防跌扶手，地面繪有無障礙藍底白色 ♿ 車位標線與立牌
-    // 5. 兩側翼樓（北翼與南翼）：
-    //    - 北翼（左側，z = -6.5 到 -27.5）：3 開間柱列，每開間 2F、3F、4F 均設置半圓弧外凸波浪陽台與深色金屬防跌欄杆
-    //    - 北端轉角（z = -27.5 到 -31.0）：轉角樓梯間實體外包角（對齊平面圖北側 L 型轉折）
-    //    - 南翼（右側，z = +11.0 到 +31.0）：多開間柱列與半圓弧外凸陽台
-    // 6. 整合綁定（root.userData.floorGroups[1] = root），杜絕任何樓層中空剖面切削，維持全棟實體完整呈現
+    // 特殊場域 5：機械館 (`mechanical`) — 依 2026/10/22 實勘照片打造為【對稱式主要外型實體建築】
+    // 1. 建築體量：寬 15.0m、長 44.0m、高 16.8m（4 層樓，每層 4.2m），正面朝西
+    // 2. 對稱結構本質：
+    //    - 中央核心 (z = 0，寬 12.0m)：
+    //      * 1F 懸挑大圓弧雨庇門廊，飾有金色「機  械  館」與「Mechanical Engineering Building」雙語牌匾，前方兩根圓立柱
+    //      * 2F～4F 連續三層懸挑大圓弧陽台，形成連續雄偉弧形立面
+    //      * 屋頂中央挑高樓梯機房塔樓（z = 0）
+    //    - 左翼（北側，z = -6.0 ～ -22.0，長 16m）：
+    //      * 恰好 2 個開間（內開間 z = -10.0、外開間 z = -17.5）
+    //      * 3 根垂直實體紫紅磚方柱（z = -6.0, -13.8, -21.4），每層嵌鑲白金菱形磁磚
+    //      * 2F～4F 每開間皆設有半圓弧外凸波浪陽台（磚紅矮牆＋深色金屬扶手）
+    //    - 右翼（南側，z = +6.0 ～ +22.0，長 16m）：
+    //      * 與左翼完全對稱！恰好 2 個開間（內開間 z = +10.5、外開間 z = +18.0）
+    //      * 3 根垂直實體紫紅磚方柱（z = +6.0, +13.8, +21.4），每層嵌鑲白金菱形磁磚
+    //      * 2F～4F 每開間皆設有半圓弧外凸波浪陽台（磚紅矮牆＋深色金屬扶手）
+    // 3. 唯一現代增設非對稱外觀（正面中間偏右無障礙電梯塔）：
+    //    - 位於正面中間偏右（z = +7.8，緊鄰中央大雨庇右側）
+    //    - 珊瑚粉色長條狀實體電梯塔（#D47A7E，高 18.2m 直達頂樓），外牆繪有機械工程大型齒輪咬合圖騰
+    //    - 1F 簡潔電梯門與無障礙專用斜坡道（依使用者指示簡化主要外型，移除路面停車位標線與多餘立牌雜物）
+    // 4. 全棟實體一體化綁定（root.userData.floorGroups[1] = root），杜絕中空切片剖面感
     if (b.style === "mechanical") {
       const bldGroup = new THREE.Group();
 
-      const bw = b.w || 15.5;      // 東西寬度 (X 方向，從 x = -7.75 到 +7.75)
-      const bd = b.d || 62.0;      // 南北長度 (Z 方向，從 z = -31.0 到 +31.0)
+      const bw = b.w || 15.0;      // 東西寬度 (X 方向，從 x = -7.5 到 +7.5)
+      const bd = b.d || 44.0;      // 南北長度 (Z 方向，從 z = -22.0 到 +22.0)
       const numFl = b.floors || 4; // 4 層樓
       const fh = b.floorHeight || 4.2;
       const totalH = numFl * fh;   // 16.8m
@@ -2553,7 +2541,6 @@ window.CampusBuilder3D = (function () {
       // --- 專屬材質定義 ---
       const brickMat = getMat("#9E5456", { roughness: 0.78 });       // 丁掛紫紅磚 (實體主牆與立柱)
       const brickDarkMat = getMat("#823D3F", { roughness: 0.8 });     // 橫向大樑與女兒牆深色收邊
-      const wallWhiteMat = getMat("#F0EDE6", { roughness: 0.85 });    // 走廊內牆象牙白
       const floorMat = getMat("#DDD6CC", { roughness: 0.7 });         // 走廊地坪
       const elevMat = getMat("#D47A7E", { roughness: 0.75 });         // 無障礙電梯珊瑚粉
       const railingMat = getMat("#2C3138", { metalness: 0.7, roughness: 0.3 }); // 深色金屬欄杆
@@ -2562,6 +2549,7 @@ window.CampusBuilder3D = (function () {
       const diamondGoldMat = getMat("#E8B948", { metalness: 0.4, roughness: 0.5 }); // 菱形磁磚金黃芯
       const diamondWhiteMat = getMat("#F5F3ED", { roughness: 0.6 }); // 菱形磁磚白外框
       const roofMat = getMat(b.colors.roof || "#8C9298", { roughness: 0.8 });
+      const shutterMat = getMat("#8E96A0", { roughness: 0.5 });
 
       // --- 動態生成貼圖 ---
       // (1) 正面中央大雨庇金色「機 械 館」牌匾貼圖
@@ -2634,59 +2622,9 @@ window.CampusBuilder3D = (function () {
         ctx.stroke();
       });
 
-      // (3) 地面無障礙專用停車位標線貼圖
-      const handicapTex = makeTextCanvas(256, 256, (ctx, w, h) => {
-        ctx.fillStyle = "#1976D2";
-        ctx.fillRect(0, 0, w, h);
-        ctx.strokeStyle = "#FFFFFF";
-        ctx.lineWidth = 12;
-        ctx.strokeRect(8, 8, w - 16, h - 16);
-
-        ctx.fillStyle = "#FFFFFF";
-        ctx.strokeStyle = "#FFFFFF";
-        ctx.lineWidth = 14;
-        ctx.lineCap = "round";
-
-        ctx.beginPath();
-        ctx.arc(140, 65, 14, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.arc(115, 155, 42, Math.PI * 0.25, Math.PI * 1.85);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(135, 95);
-        ctx.lineTo(135, 145);
-        ctx.lineTo(170, 145);
-        ctx.lineTo(190, 190);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(135, 115);
-        ctx.lineTo(165, 130);
-        ctx.lineTo(145, 155);
-        ctx.stroke();
-      });
-
-      // 1F 正門捲門紋理
-      const rollShutterTex = makeTextCanvas(256, 256, (ctx, w, h) => {
-        ctx.fillStyle = "#9DA4AD";
-        ctx.fillRect(0, 0, w, h);
-        for (let y = 0; y < h; y += 12) {
-          ctx.fillStyle = "#777E87";
-          ctx.fillRect(0, y, w, 2);
-          ctx.fillStyle = "#BDC4CC";
-          ctx.fillRect(0, y + 2, w, 2);
-        }
-      });
-      const shutterMat = rollShutterTex
-        ? new THREE.MeshStandardMaterial({ map: rollShutterTex, roughness: 0.5 })
-        : getMat("#8E96A0");
-
       // =========================== 【一體成形實體主建築量體】 ===========================
-      // (1) 完整實心主體建築量體 (覆蓋全寬 bw = 15.5m、全長 bd = 62.0m、全高 16.8m)
-      // 確保北牆 (z = -31)、南牆 (z = +31)、東背牆 (x = +7.75) 均為 100% 紮實之丁掛磚牆，絕無中空感
+      // (1) 完整實心主體建築量體 (覆蓋全寬 bw = 15.0m、全長 bd = 44.0m、全高 16.8m)
+      // 確保北牆 (z = -22)、南牆 (z = +22)、東背牆 (x = +7.5) 均為 100% 紮實之丁掛磚牆，絕無中空感
       const mainSolidBody = new THREE.Mesh(new THREE.BoxGeometry(bw, totalH, bd), brickMat);
       mainSolidBody.position.set(0, totalH / 2, 0);
       mainSolidBody.castShadow = true;
@@ -2696,305 +2634,217 @@ window.CampusBuilder3D = (function () {
       // (2) 東面後牆窗戶 (採光通風鋁窗陣列)
       for (let f = 1; f <= numFl; f++) {
         const wy = (f - 0.5) * fh;
-        for (let wz = -26.0; wz <= 26.0; wz += 6.5) {
-          const rearWin = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.8, 3.8), glassMat);
+        [-17.5, -10.0, 0, 10.0, 17.5].forEach(wz => {
+          const rearWin = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.8, 3.6), glassMat);
           rearWin.position.set(bw / 2 + 0.05, wy, wz);
           bldGroup.add(rearWin);
-        }
+        });
       }
 
       // =========================== 【西向正面外觀立體雕琢】 ===========================
-      // (3) 西向巨型方柱列 (10 根方柱，自地面垂直貫通至頂樓，0.85m x 0.85m，立體突出 0.25m)
-      const colZList = [-28.0, -21.0, -14.0, -7.0, -6.5, 6.0, 6.2, 10.8, 14.0, 21.0, 28.0];
+      // (3) 西向對稱巨型方柱列 (左翼 3 根、右翼 3 根，0.85m x 0.85m，立體突出 0.22m)
+      const colZList = [-21.4, -13.8, -6.0, 6.0, 13.8, 21.4];
       colZList.forEach(cz => {
         const col = new THREE.Mesh(new THREE.BoxGeometry(0.85, totalH, 0.85), brickMat);
         col.position.set(-bw / 2 - 0.22, totalH / 2, cz);
         col.castShadow = true;
         bldGroup.add(col);
 
-        // 柱面每層交界處嵌鑲斜置白金雙色菱形 ◇ 裝飾磁磚 (照片 1、照片 2 經典特徵)
+        // 柱面每層交界處嵌鑲斜置白金雙色菱形 ◇ 裝飾磁磚
         [fh, fh * 2, fh * 3].forEach(dy => {
-          const diamondFrame = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.55, 0.55), diamondWhiteMat);
+          const diamondFrame = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.52, 0.52), diamondWhiteMat);
           diamondFrame.rotation.x = Math.PI / 4;
-          diamondFrame.position.set(-bw / 2 - 0.68, dy + 0.35, cz);
+          diamondFrame.position.set(-bw / 2 - 0.66, dy + 0.35, cz);
           bldGroup.add(diamondFrame);
 
-          const diamondInner = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.36, 0.36), diamondGoldMat);
+          const diamondInner = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.34, 0.34), diamondGoldMat);
           diamondInner.rotation.x = Math.PI / 4;
-          diamondInner.position.set(-bw / 2 - 0.69, dy + 0.35, cz);
+          diamondInner.position.set(-bw / 2 - 0.67, dy + 0.35, cz);
           bldGroup.add(diamondInner);
         });
       });
 
-      // (4) 正面層間深樑與窗帶 (厚實水平樑帶，層次分明)
+      // (4) 正面層間深樑與各開間立體窗帶
       for (let f = 1; f <= numFl; f++) {
         const yBase = (f - 1) * fh;
 
         // 層間水平結構橫樑 (深紅褐色收邊)
-        const beam = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.7, bd + 0.2), brickDarkMat);
-        beam.position.set(-bw / 2 - 0.1, yBase + fh - 0.35, 0);
+        const beam = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.65, bd + 0.1), brickDarkMat);
+        beam.position.set(-bw / 2 - 0.08, yBase + fh - 0.325, 0);
         beam.castShadow = true;
         bldGroup.add(beam);
 
-        // 走廊內側象牙白內凹襯底
-        const corridorBack = new THREE.Mesh(new THREE.BoxGeometry(0.12, fh - 1.0, bd - 0.6), wallWhiteMat);
-        corridorBack.position.set(-bw / 2 + 0.8, yBase + (fh - 1.0) / 2 + 0.3, 0);
-        bldGroup.add(corridorBack);
+        // 4 個對稱開間 (左翼 2 開間：-17.5, -10.0；右翼 2 開間：+10.5, +18.0)
+        [-17.5, -10.0, 10.5, 18.0].forEach(bz => {
+          const winMesh = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.8, 3.6), glassMat);
+          winMesh.position.set(-bw / 2 + 0.05, yBase + fh * 0.52, bz);
+          bldGroup.add(winMesh);
 
-        // 各開間立體深色採光鋁窗與門
-        for (let wz = -26.0; wz <= 26.0; wz += 6.5) {
-          if (Math.abs(wz) > 4.0 && Math.abs(wz - 8.5) > 3.0) {
-            const winMesh = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.8, 3.8), glassMat);
-            winMesh.position.set(-bw / 2 + 0.72, yBase + fh * 0.52, wz);
-            bldGroup.add(winMesh);
-
-            const frameMesh = new THREE.Mesh(new THREE.BoxGeometry(0.22, 1.9, 3.9), frameMat);
-            frameMesh.position.set(-bw / 2 + 0.72, yBase + fh * 0.52, wz);
-            bldGroup.add(frameMesh);
-          }
-        }
+          const frameMesh = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.9, 3.7), frameMat);
+          frameMesh.position.set(-bw / 2 + 0.05, yBase + fh * 0.52, bz);
+          bldGroup.add(frameMesh);
+        });
       }
 
-      // (5) 兩翼半圓弧波浪外凸陽台 (2F、3F、4F，各開間均配置實體厚重女兒牆與扶手)
+      // (5) 兩翼半圓弧波浪外凸陽台 (2F、3F、4F，左翼 2 開間、右翼 2 開間高度對稱)
+      function addBowBalcony(bz, yBase) {
+        const bSlab = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.28, 4.8), floorMat);
+        bSlab.position.set(-bw / 2 - 0.55, yBase + 0.14, bz);
+        bldGroup.add(bSlab);
+
+        const bowParapet = new THREE.Mesh(
+          new THREE.CylinderGeometry(2.5, 2.5, 1.05, 16, 1, false, Math.PI * 0.72, Math.PI * 0.56),
+          brickMat
+        );
+        bowParapet.position.set(-bw / 2 + 1.6, yBase + 0.55, bz);
+        bldGroup.add(bowParapet);
+
+        const bowRail = new THREE.Mesh(
+          new THREE.CylinderGeometry(2.52, 2.52, 0.16, 16, 1, false, Math.PI * 0.72, Math.PI * 0.56),
+          railingMat
+        );
+        bowRail.position.set(-bw / 2 + 1.6, yBase + 1.15, bz);
+        bldGroup.add(bowRail);
+      }
+
       [2, 3, 4].forEach(f => {
         const yBase = (f - 1) * fh;
+        // 左翼 (北翼) 2 開間半圓弧波浪陽台
+        addBowBalcony(-17.5, yBase);
+        addBowBalcony(-10.0, yBase);
 
-        // 北翼 3 開間半圓弧波浪陽台
-        [-10.5, -17.5, -24.5].forEach(bz => {
-          // 實心陽台基座地坪
-          const bSlab = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.28, 5.4), floorMat);
-          bSlab.position.set(-bw / 2 - 0.65, yBase + 0.14, bz);
-          bldGroup.add(bSlab);
-
-          // 前凸半圓弧女兒牆 (紫紅磚，高 1.05m，厚實立體)
-          const bowParapet = new THREE.Mesh(
-            new THREE.CylinderGeometry(2.7, 2.7, 1.05, 16, 1, false, Math.PI * 0.72, Math.PI * 0.56),
-            brickMat
-          );
-          bowParapet.position.set(-bw / 2 + 1.6, yBase + 0.55, bz);
-          bldGroup.add(bowParapet);
-
-          // 金屬防跌安全扶手
-          const bowRail = new THREE.Mesh(
-            new THREE.CylinderGeometry(2.72, 2.72, 0.18, 16, 1, false, Math.PI * 0.72, Math.PI * 0.56),
-            railingMat
-          );
-          bowRail.position.set(-bw / 2 + 1.6, yBase + 1.15, bz);
-          bldGroup.add(bowRail);
-        });
-
-        // 南翼 3 開間半圓弧波浪陽台 (避開中間偏右之電梯塔)
-        [14.0, 21.0, 28.0].forEach(bz => {
-          const bSlab = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.28, 5.4), floorMat);
-          bSlab.position.set(-bw / 2 - 0.65, yBase + 0.14, bz);
-          bldGroup.add(bSlab);
-
-          const bowParapet = new THREE.Mesh(
-            new THREE.CylinderGeometry(2.7, 2.7, 1.05, 16, 1, false, Math.PI * 0.72, Math.PI * 0.56),
-            brickMat
-          );
-          bowParapet.position.set(-bw / 2 + 1.6, yBase + 0.55, bz);
-          bldGroup.add(bowParapet);
-
-          const bowRail = new THREE.Mesh(
-            new THREE.CylinderGeometry(2.72, 2.72, 0.18, 16, 1, false, Math.PI * 0.72, Math.PI * 0.56),
-            railingMat
-          );
-          bowRail.position.set(-bw / 2 + 1.6, yBase + 1.15, bz);
-          bldGroup.add(bowRail);
-        });
+        // 右翼 (南翼) 2 開間半圓弧波浪陽台
+        addBowBalcony(10.5, yBase);
+        addBowBalcony(18.0, yBase);
       });
 
       // =========================== 【中央大門廳與弧形門廊 (z = 0)】 ===========================
-      // (6) 1F 中央大弧形懸挑雨庇門廊 (深挑至 x = -12.2，寬 12.5m)
+      // (6) 1F 中央大弧形懸挑雨庇門廊 (深挑至 x = -9.5，弧長跨距 12m)
       const canopySlab = new THREE.Mesh(
-        new THREE.CylinderGeometry(10.5, 10.5, 0.55, 24, 1, false, Math.PI * 0.78, Math.PI * 0.44),
+        new THREE.CylinderGeometry(7.5, 7.5, 0.45, 24, 1, false, Math.PI * 0.76, Math.PI * 0.48),
         floorMat
       );
-      canopySlab.position.set(-bw / 2 + 6.8, 3.85, -0.25);
+      canopySlab.position.set(-bw / 2 + 5.5, 3.9, 0);
       bldGroup.add(canopySlab);
 
-      // 正面弧形大樑 (飾有金色雙語「機械館」牌匾)
+      // 正面弧形大樑 (深暗紅褐色收邊，飾有金色雙語牌匾)
       const curvedBeam = new THREE.Mesh(
-        new THREE.CylinderGeometry(10.55, 10.55, 0.95, 24, 1, false, Math.PI * 0.78, Math.PI * 0.44),
+        new THREE.CylinderGeometry(7.55, 7.55, 0.85, 24, 1, false, Math.PI * 0.76, Math.PI * 0.48),
         brickDarkMat
       );
-      curvedBeam.position.set(-bw / 2 + 6.8, 3.65, -0.25);
+      curvedBeam.position.set(-bw / 2 + 5.5, 3.7, 0);
       bldGroup.add(curvedBeam);
 
       // 金色牌匾平面
       if (mechPlaqueTex) {
         const plaquePlane = new THREE.Mesh(
-          new THREE.PlaneGeometry(6.4, 1.1),
+          new THREE.PlaneGeometry(5.4, 0.95),
           new THREE.MeshBasicMaterial({ map: mechPlaqueTex })
         );
         plaquePlane.rotation.y = -Math.PI / 2;
-        plaquePlane.position.set(-bw / 2 - 3.78, 3.65, -0.25);
+        plaquePlane.position.set(-bw / 2 - 2.06, 3.7, 0);
         bldGroup.add(plaquePlane);
       }
 
-      // 雨庇前緣 2 根承重立柱
-      [-4.5, 4.0].forEach(pz => {
-        const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.42, 3.9, 16), brickMat);
-        pillar.position.set(-bw / 2 - 2.8, 1.95, pz);
+      // 雨庇前緣 2 根承重圓立柱
+      [-3.8, 3.8].forEach(pz => {
+        const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.38, 3.9, 16), brickMat);
+        pillar.position.set(-bw / 2 - 1.5, 1.95, pz);
         pillar.castShadow = true;
         bldGroup.add(pillar);
       });
 
-      // 1F 大門穿堂不銹鋼捲門與側門
-      const rollDoor = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3.2, 5.2), shutterMat);
-      rollDoor.position.set(-bw / 2 - 0.2, 1.6, -1.8);
-      bldGroup.add(rollDoor);
+      // 1F 大門入口採光門與水泥迎賓台階
+      const mainDoor = new THREE.Mesh(new THREE.BoxGeometry(0.18, 3.0, 4.6), glassMat);
+      mainDoor.position.set(-bw / 2 - 0.05, 1.5, 0);
+      bldGroup.add(mainDoor);
 
-      const hallDoor = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.6, 2.8), glassMat);
-      hallDoor.position.set(-bw / 2 - 0.2, 1.3, 2.5);
-      bldGroup.add(hallDoor);
-
-      // 門前水泥迎賓大階梯平台
-      const steps = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.24, 14.5), getMat("#C6C0B5"));
-      steps.position.set(-bw / 2 - 3.3, 0.12, -0.25);
+      const steps = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.22, 11.0), getMat("#C6C0B5"));
+      steps.position.set(-bw / 2 - 1.2, 0.11, 0);
       steps.receiveShadow = true;
       bldGroup.add(steps);
 
-      // (7) 2F、3F、4F 中央懸挑大圓弧陽台 (突出至 x = -10.8)
+      // (7) 2F、3F、4F 中央懸挑大圓弧陽台 (連續三層雄偉弧形立面)
       [2, 3, 4].forEach(f => {
         const yBase = (f - 1) * fh;
 
         const cBalconySlab = new THREE.Mesh(
-          new THREE.CylinderGeometry(9.8, 9.8, 0.28, 24, 1, false, Math.PI * 0.79, Math.PI * 0.42),
+          new THREE.CylinderGeometry(7.2, 7.2, 0.26, 24, 1, false, Math.PI * 0.77, Math.PI * 0.46),
           floorMat
         );
-        cBalconySlab.position.set(-bw / 2 + 6.8, yBase + 0.14, -0.25);
+        cBalconySlab.position.set(-bw / 2 + 5.5, yBase + 0.13, 0);
         bldGroup.add(cBalconySlab);
 
         const cBalconyParapet = new THREE.Mesh(
-          new THREE.CylinderGeometry(9.82, 9.82, 1.05, 24, 1, false, Math.PI * 0.79, Math.PI * 0.42),
+          new THREE.CylinderGeometry(7.22, 7.22, 1.05, 24, 1, false, Math.PI * 0.77, Math.PI * 0.46),
           brickMat
         );
-        cBalconyParapet.position.set(-bw / 2 + 6.8, yBase + 0.55, -0.25);
+        cBalconyParapet.position.set(-bw / 2 + 5.5, yBase + 0.55, 0);
         bldGroup.add(cBalconyParapet);
 
         const cBalconyRail = new THREE.Mesh(
-          new THREE.CylinderGeometry(9.84, 9.84, 0.18, 24, 1, false, Math.PI * 0.79, Math.PI * 0.42),
+          new THREE.CylinderGeometry(7.24, 7.24, 0.16, 24, 1, false, Math.PI * 0.77, Math.PI * 0.46),
           railingMat
         );
-        cBalconyRail.position.set(-bw / 2 + 6.8, yBase + 1.15, -0.25);
+        cBalconyRail.position.set(-bw / 2 + 5.5, yBase + 1.15, 0);
         bldGroup.add(cBalconyRail);
       });
 
       // =========================== 【中間偏右：長條狀無障礙電梯塔】 ===========================
-      // 垂直實體塔身 (z = +8.5，x = -9.65，寬 4.6m，深 3.8m，高 18.2m 直達頂樓)
+      // 垂直實體塔身 (正面中間偏右 z = +7.8，高 18.2m 直達頂樓，珊瑚粉色 #D47A7E)
       const elevH = totalH + 1.4; // 18.2m
-      const elevTower = new THREE.Mesh(new THREE.BoxGeometry(3.8, elevH, 4.6), elevMat);
-      elevTower.position.set(-bw / 2 - 1.9, elevH / 2, 8.5);
+      const elevTower = new THREE.Mesh(new THREE.BoxGeometry(2.8, elevH, 3.2), elevMat);
+      elevTower.position.set(-bw / 2 - 1.4, elevH / 2, 7.8);
       elevTower.castShadow = true;
       bldGroup.add(elevTower);
 
-      // 電梯塔身頂部收邊女兒牆
-      const elevCap = new THREE.Mesh(new THREE.BoxGeometry(4.1, 0.4, 4.9), brickDarkMat);
-      elevCap.position.set(-bw / 2 - 1.9, elevH + 0.2, 8.5);
+      // 電梯塔頂部女兒牆收邊
+      const elevCap = new THREE.Mesh(new THREE.BoxGeometry(3.1, 0.35, 3.5), brickDarkMat);
+      elevCap.position.set(-bw / 2 - 1.4, elevH + 0.175, 7.8);
       bldGroup.add(elevCap);
 
-      // 電梯正面外牆「機械工程齒輪」彩繪圖騰 (面向西面 -X)
+      // 電梯正面外牆「機械工程齒輪咬合」彩繪圖騰
       if (gearMuralTex) {
-        const gearMuralMesh = new THREE.Mesh(
-          new THREE.PlaneGeometry(4.4, elevH - 1.2),
+        const gearMural = new THREE.Mesh(
+          new THREE.PlaneGeometry(3.0, elevH - 1.2),
           new THREE.MeshBasicMaterial({ map: gearMuralTex })
         );
-        gearMuralMesh.rotation.y = -Math.PI / 2;
-        gearMuralMesh.position.set(-bw / 2 - 3.82, (elevH - 1.2) / 2 + 0.6, 8.5);
-        bldGroup.add(gearMuralMesh);
+        gearMural.rotation.y = -Math.PI / 2;
+        gearMural.position.set(-bw / 2 - 2.82, (elevH - 1.2) / 2 + 0.6, 7.8);
+        bldGroup.add(gearMural);
       }
 
-      // 1F 電梯不銹鋼進出門 (西向 -X)
-      const elevDoor = new THREE.Mesh(new THREE.BoxGeometry(0.16, 2.5, 1.6), shutterMat);
-      elevDoor.position.set(-bw / 2 - 3.82, 1.25, 8.5);
+      // 1F 電梯不銹鋼進出門
+      const elevDoor = new THREE.Mesh(new THREE.BoxGeometry(0.15, 2.4, 1.4), shutterMat);
+      elevDoor.position.set(-bw / 2 - 2.82, 1.2, 7.8);
       bldGroup.add(elevDoor);
 
-      // 1F 無障礙專用緩坡道 (由柏油路 x = -14.8 緩緩上升至電梯口 x = -11.5)
-      const rampLen = 3.3;
-      const rampGeo = new THREE.BoxGeometry(rampLen, 0.28, 2.2);
-      const rampMesh = new THREE.Mesh(rampGeo, getMat("#B0ABA2"));
-      rampMesh.position.set(-bw / 2 - 5.1, 0.26, 8.5);
-      rampMesh.rotation.z = -0.09;
-      rampMesh.receiveShadow = true;
-      bldGroup.add(rampMesh);
-
-      // 坡道雙側不銹鋼防跌扶手 (銀色亮面)
-      const handrailMat = getMat("#B8C0C8", { metalness: 0.8, roughness: 0.2 });
-      [-1.0, 1.0].forEach(side => {
-        const railBar = new THREE.Mesh(new THREE.BoxGeometry(rampLen + 0.2, 0.06, 0.06), handrailMat);
-        railBar.position.set(-bw / 2 - 5.1, 0.72, 8.5 + side);
-        railBar.rotation.z = -0.09;
-        bldGroup.add(railBar);
-
-        [-1.2, 0.0, 1.2].forEach(ox => {
-          const post = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.82, 8), handrailMat);
-          post.position.set(-bw / 2 - 5.1 + ox, 0.52, 8.5 + side);
-          bldGroup.add(post);
-        });
-      });
-
-      // 柏油路面無障礙專用停車位標線 (藍底白輪椅圖示)
-      if (handicapTex) {
-        const parkingMark = new THREE.Mesh(
-          new THREE.PlaneGeometry(3.2, 4.6),
-          new THREE.MeshBasicMaterial({ map: handicapTex, transparent: true, opacity: 0.92 })
-        );
-        parkingMark.rotation.x = -Math.PI / 2;
-        parkingMark.position.set(-bw / 2 - 7.8, 0.04, 8.5);
-        bldGroup.add(parkingMark);
-      }
-
-      // 無障礙標誌專用立牌 (藍底 ♿ 標誌)
-      const signPost = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.5, 8), getMat("#555A60"));
-      signPost.position.set(-bw / 2 - 6.8, 0.75, 10.4);
-      bldGroup.add(signPost);
-      if (handicapTex) {
-        const signBoard = new THREE.Mesh(
-          new THREE.PlaneGeometry(0.55, 0.55),
-          new THREE.MeshBasicMaterial({ map: handicapTex })
-        );
-        signBoard.rotation.y = -Math.PI / 2;
-        signBoard.position.set(-bw / 2 - 6.8, 1.45, 10.4);
-        bldGroup.add(signBoard);
-      }
-
-      // (8) 北端樓梯間外包轉角 (對齊平面圖 L 型轉角)
-      const stairWrap = new THREE.Mesh(new THREE.BoxGeometry(2.6, totalH, 4.2), brickMat);
-      stairWrap.position.set(-bw / 2 - 0.5, totalH / 2, -29.2);
-      stairWrap.castShadow = true;
-      bldGroup.add(stairWrap);
-
-      const stairWin = new THREE.Mesh(new THREE.BoxGeometry(0.18, totalH - 2.5, 1.2), glassMat);
-      stairWin.position.set(-bw / 2 - 1.82, totalH / 2, -29.2);
-      bldGroup.add(stairWin);
+      // 1F 簡潔無障礙專用緩坡道（依使用者指示呈現主要外型，移除停車位標線與雜物立牌）
+      const ramp = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.22, 1.8), getMat("#B0ABA2"));
+      ramp.position.set(-bw / 2 - 3.9, 0.11, 7.8);
+      ramp.receiveShadow = true;
+      bldGroup.add(ramp);
 
       // =========================== 【屋頂配置 (Roof Level)】 ===========================
-      // (9) 屋頂女兒牆矮牆 (全周，高 0.9m)
-      const roofParapet = new THREE.Mesh(new THREE.BoxGeometry(bw + 0.3, 0.9, bd + 0.3), brickMat);
-      roofParapet.position.set(0, totalH + 0.45, 0);
+      // (8) 屋頂女兒牆矮牆 (全周高 0.85m)
+      const roofParapet = new THREE.Mesh(new THREE.BoxGeometry(bw + 0.3, 0.85, bd + 0.3), brickMat);
+      roofParapet.position.set(0, totalH + 0.425, 0);
       roofParapet.castShadow = true;
       bldGroup.add(roofParapet);
 
-      const roofInnerDeck = new THREE.Mesh(new THREE.BoxGeometry(bw - 0.7, 0.92, bd - 0.7), roofMat);
-      roofInnerDeck.position.set(0, totalH + 0.45, 0);
-      bldGroup.add(roofInnerDeck);
+      const roofDeck = new THREE.Mesh(new THREE.BoxGeometry(bw - 0.6, 0.86, bd - 0.6), roofMat);
+      roofDeck.position.set(0, totalH + 0.425, 0);
+      bldGroup.add(roofDeck);
 
-      // (10) 中央挑高樓梯機房塔樓 (帶斜面線腳女兒牆，高 2.5m，y = 16.8 ～ 19.3m)
-      const penthouse = new THREE.Mesh(new THREE.BoxGeometry(8.2, 2.5, 8.6), brickMat);
-      penthouse.position.set(0.5, totalH + 1.25, -0.25);
+      // (9) 中央挑高樓梯機房塔樓 (z = 0，對齊中心線，高 2.5m)
+      const penthouse = new THREE.Mesh(new THREE.BoxGeometry(7.6, 2.5, 7.6), brickMat);
+      penthouse.position.set(0, totalH + 1.25, 0);
       penthouse.castShadow = true;
       bldGroup.add(penthouse);
 
-      const penthouseCap = new THREE.Mesh(new THREE.BoxGeometry(8.6, 0.35, 9.0), brickDarkMat);
-      penthouseCap.position.set(0.5, totalH + 2.5 + 0.17, -0.25);
+      const penthouseCap = new THREE.Mesh(new THREE.BoxGeometry(8.0, 0.3, 8.0), brickDarkMat);
+      penthouseCap.position.set(0, totalH + 2.5 + 0.15, 0);
       bldGroup.add(penthouseCap);
-
-      // 北端樓梯間頂部女兒牆階梯造型
-      const northCap = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.4, 4.4), brickDarkMat);
-      northCap.position.set(-bw / 2 - 0.5, totalH + 0.7, -29.2);
-      bldGroup.add(northCap);
 
       // =========================== 【全棟一體綁定，絕不中空剖切】 ===========================
       root.add(bldGroup);
