@@ -446,13 +446,13 @@ window.CampusBuilder3D = (function () {
       return false;
     }
 
-    function addTree(x, z, scale = 1.0, style = "mahogany") {
+    function addTree(x, z, scale = 1.0, style = "mahogany", force = false) {
       // 1. 永平街校外道路完全不種樹 (永平街 x > 175)
       if (x > 174.0) return;
-      // 2. 嚴格道路避讓：不壓黑路
-      if (isPositionOnRoad(x, z)) return;
+      // 2. 嚴格道路避讓：不壓黑路 (除非特定迎賓椰林步道強制放置)
+      if (!force && isPositionOnRoad(x, z)) return;
       // 3. 嚴格建築物避讓：絕不在大樓屋頂或立面長樹
-      if (isPositionOnBuilding(x, z)) return;
+      if (!force && isPositionOnBuilding(x, z)) return;
 
       const g = new THREE.Group();
       g.position.set(x, 0, z);
@@ -478,15 +478,44 @@ window.CampusBuilder3D = (function () {
       registerThemeObject("pixel", varPixel);
 
       if (style === "palm") {
-        const trunkH = 8.5 * scale;
+        // 大王椰子樹 (依實景照片精細打造：修長灰白環紋樹幹、頂部翠綠葉鞘與放射狀羽狀椰葉)
+        const trunkH = 12.0 * scale;
         // 1. Day
-        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.28 * scale, 0.42 * scale, trunkH, 8), getMat("#8A857A"));
-        trunk.position.y = trunkH / 2;
+        const trunk = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.24 * scale, 0.38 * scale, trunkH - 1.6 * scale, 12),
+          getMat("#9E9A92", { roughness: 0.85 })
+        );
+        trunk.position.y = (trunkH - 1.6 * scale) / 2;
         trunk.castShadow = true;
         varDay.add(trunk);
-        const crown = new THREE.Mesh(new THREE.DodecahedronGeometry(2.4 * scale, 1), palmLeafMat);
-        crown.scale.set(1.35, 0.55, 1.35);
-        crown.position.y = trunkH + 0.6 * scale;
+
+        // 頂部翠綠葉鞘 (Crownshaft)
+        const crownShaft = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.22 * scale, 0.25 * scale, 1.6 * scale, 12),
+          getMat("#3A7A28", { roughness: 0.6 })
+        );
+        crownShaft.position.y = trunkH - 0.8 * scale;
+        crownShaft.castShadow = true;
+        varDay.add(crownShaft);
+
+        // 放射狀優雅羽狀椰葉 (8 枝向外拱垂羽葉)
+        for (let i = 0; i < 8; i++) {
+          const ang = (i / 8) * Math.PI * 2;
+          const frond = new THREE.Mesh(
+            new THREE.BoxGeometry(0.32 * scale, 0.08 * scale, 3.2 * scale),
+            palmLeafMat
+          );
+          frond.position.set(Math.cos(ang) * 1.4 * scale, trunkH + 0.15 * scale, Math.sin(ang) * 1.4 * scale);
+          frond.rotation.y = ang;
+          frond.rotation.x = 0.32;
+          frond.castShadow = true;
+          varDay.add(frond);
+        }
+
+        // 中心茂盛葉團
+        const crown = new THREE.Mesh(new THREE.DodecahedronGeometry(1.6 * scale, 1), palmLeafMat);
+        crown.scale.set(1.2, 0.65, 1.2);
+        crown.position.y = trunkH + 0.45 * scale;
         crown.castShadow = true;
         varDay.add(crown);
 
@@ -496,8 +525,8 @@ window.CampusBuilder3D = (function () {
         bTrunk.castShadow = true;
         varBrick.add(bTrunk);
         const bLeafMat = getMat("#228B22", { roughness: 0.16, metalness: 0.15 });
-        for (let i = 0; i < 6; i++) {
-          const ang = (i / 6) * Math.PI * 2;
+        for (let i = 0; i < 8; i++) {
+          const ang = (i / 8) * Math.PI * 2;
           const leaf = new THREE.Mesh(new THREE.BoxGeometry(0.38 * scale, 0.12 * scale, 3.2 * scale), bLeafMat);
           leaf.position.set(Math.cos(ang) * 1.5 * scale, trunkH - 0.2 * scale, Math.sin(ang) * 1.5 * scale);
           leaf.rotation.y = ang;
@@ -931,10 +960,16 @@ window.CampusBuilder3D = (function () {
       [22.0, -151.0], [34.0, -143.0], [46.0, -135.0], [58.0, -127.0]
     ].forEach(([x, z]) => addTree(x, z, 1.1, "mahogany"));
 
-    // ================= 3. 校門進場中央迎賓大道椰林 (位於 11m 大道兩側草坪 x = ±8.5m) =================
-    for (let z = -148; z <= -106; z += 8.5) {
-      addTree(-8.5, z, 1.1, "palm");
-      addTree(8.5, z, 1.1, "palm");
+    // ================= 3. 校門進場中央迎賓大道椰林與兩側景觀樹 (依使用者圖一實景與圖二紅黃框指示) =================
+    // (A) 活動中心正門口前迎賓步道兩排大王椰子樹 (紅色框框位置：西側排 x = -6.8，東側排 x = -2.2，每排 6 棵，共 12 棵)
+    for (let z = -148; z <= -106; z += 8.4) {
+      addTree(-6.8, z, 1.15, "palm", true); // 西側排 (緊鄰活動中心門前步道)
+      addTree(-2.2, z, 1.15, "palm", true); // 東側排 (迎賓步道東側)
+    }
+
+    // (B) 迎賓大道東側景觀樹列 (黃色框框位置：依使用者指示改為小棵樹，scale = 0.6)
+    for (let z = -148; z <= -114; z += 8.4) {
+      addTree(8.5, z, 0.6, "mahogany");
     }
 
     // ================= 4. 中庭教學區樹列配置 (依使用者圖二指示：樂耕樓北側、樂耕樓南側、利用樓西側、正德樓北側、正德樓南側各植一排樹) =================
