@@ -568,7 +568,191 @@
 
   // ================= 3D 附中學生角色公仔（支援男同學／女同學、寫實／微縮積木／復古像素切換） =================
   let studentAvatarGroup = null;
-  let avatarLimbParts = { leftArm: null, rightArm: null, leftLeg: null, rightLeg: null, body: null };
+  // 晴空寫實人偶另有膝蓋與手肘關節 (leftKnee 等)，積木／像素人偶沒有則為 null
+  let avatarLimbParts = { leftArm: null, rightArm: null, leftLeg: null, rightLeg: null, body: null, leftKnee: null, rightKnee: null, leftElbow: null, rightElbow: null };
+
+  // 圓角膠囊 (r128 沒有 CapsuleGeometry)：上下半球接一段可上下不同粗細的圓柱，繞 Y 軸旋轉成形
+  // 幾何中心在原點，總長 = length + rTop + rBottom
+  function makeCapsuleGeometry(rTop, rBottom, length, radial = 14) {
+    const pts = [];
+    const cap = 6;
+    for (let i = 0; i <= cap; i++) {
+      const a = -Math.PI / 2 + (i / cap) * (Math.PI / 2);
+      pts.push(new THREE.Vector2(Math.max(0, Math.cos(a) * rBottom), -length / 2 + Math.sin(a) * rBottom));
+    }
+    for (let i = 0; i <= cap; i++) {
+      const a = (i / cap) * (Math.PI / 2);
+      pts.push(new THREE.Vector2(Math.max(0, Math.cos(a) * rTop), length / 2 + Math.sin(a) * rTop));
+    }
+    return new THREE.LatheGeometry(pts, radial);
+  }
+
+  // 晴空寫實人偶：真實身材比例 (約 7.5 頭身、身高約 1.7m)、圓潤肢體、五官與髮型、附中制服
+  // 關節結構與積木／像素人偶相同 (肩、髖軸心)，另加膝蓋與手肘，走路時膝蓋會自然彎曲
+  function buildRealisticStudent(grp, gender) {
+    const isGirl = gender === "girl";
+    const mat = (color, roughness = 0.7) => new THREE.MeshStandardMaterial({ color, roughness, metalness: 0.02 });
+    const skinMat = mat("#EFC4A2", 0.55);
+    const hairMat = mat(isGirl ? "#2E211B" : "#1F1915", 0.5);
+    hairMat.side = THREE.DoubleSide; // 髮片為部分球殼，雙面才不會從側邊看穿
+    const shirtMat = mat("#F6F7F9", 0.82);          // 附中白襯衫
+    const tieMat = mat("#7B1F34", 0.6);             // 附中紫紅領帶／領結
+    const bottomMat = mat(isGirl ? "#1F2A3A" : "#26354A", 0.85); // 深藍制服長褲／百褶裙
+    const sockMat = mat("#F2F2F2", 0.85);
+    const shoeMat = mat("#22262C", 0.45);
+    const soleMat = mat("#E8E6E1", 0.8);
+    const bagMat = mat("#2E5540", 0.7);              // 附中深綠書包
+    const eyeWhiteMat = mat("#FAFAFA", 0.3);
+    const irisMat = new THREE.MeshBasicMaterial({ color: "#2A1D16" });
+    const lipMat = mat("#A4524B", 0.6);
+
+    const add = (parent, geo, material, x, y, z, shadow = true) => {
+      const m = new THREE.Mesh(geo, material);
+      m.position.set(x, y, z);
+      m.castShadow = shadow;
+      parent.add(m);
+      return m;
+    };
+
+    const body = new THREE.Group();
+    grp.add(body);
+
+    // 1. 軀幹：腰細胸寬的旋轉輪廓，前後壓扁成橢圓斷面
+    const torsoProfile = [[0, 0], [0.158, 0], [0.16, 0.06], [0.146, 0.19], [0.168, 0.31], [0.182, 0.4], [0.178, 0.45], [0.12, 0.5], [0.055, 0.52], [0, 0.52]]
+      .map(([r, y]) => new THREE.Vector2(r * (isGirl ? 0.93 : 1.0), y));
+    const torso = add(body, new THREE.LatheGeometry(torsoProfile, 24), shirtMat, 0, 0.86, 0);
+    torso.scale.z = 0.62;
+
+    // 腰臀：襯衫下擺之下的長褲／裙頭 (略小於下擺，交界不會閃爍)
+    const hips = add(body, makeCapsuleGeometry(0.14, 0.14, 0.06, 20), bottomMat, 0, 0.9, 0);
+    hips.scale.set(isGirl ? 0.96 : 1.0, 0.85, 0.6);
+
+    // 領口、領帶 (男) 或領結 (女)、左胸校徽
+    const collar = add(body, new THREE.CylinderGeometry(0.056, 0.078, 0.05, 16), shirtMat, 0, 1.4, 0.005);
+    collar.scale.z = 0.9;
+    if (isGirl) {
+      [-0.028, 0.028].forEach(x => {
+        const wing = add(body, new THREE.SphereGeometry(0.026, 10, 8), tieMat, x, 1.365, 0.1, false);
+        wing.scale.set(1.3, 0.8, 0.5);
+      });
+      add(body, new THREE.SphereGeometry(0.014, 8, 6), tieMat, 0, 1.365, 0.106, false);
+    } else {
+      add(body, new THREE.SphereGeometry(0.018, 8, 6), tieMat, 0, 1.37, 0.1, false);
+      const blade = add(body, new THREE.BoxGeometry(0.038, 0.24, 0.012), tieMat, 0, 1.24, 0.114, false);
+      blade.rotation.x = -0.06;
+    }
+    const badge = add(body, new THREE.CylinderGeometry(0.02, 0.02, 0.008, 12), tieMat, -0.075, 1.29, 0.11, false);
+    badge.rotation.x = Math.PI / 2;
+
+    // 側背書包 (左腰側) 與斜背帶 (右肩斜過胸前，不擋左胸校徽)
+    const bag = add(body, new THREE.BoxGeometry(0.075, 0.22, 0.28), bagMat, -0.2, 0.9, 0);
+    bag.rotation.z = -0.06;
+    const strap = add(body, new THREE.BoxGeometry(0.035, 0.6, 0.015), bagMat, -0.02, 1.18, 0.1, false);
+    strap.rotation.z = -0.62;
+
+    // 2. 頭頸
+    add(body, new THREE.CylinderGeometry(0.042, 0.048, 0.1, 12), skinMat, 0, 1.475, 0);
+    const head = new THREE.Group();
+    head.position.y = 1.585;
+    body.add(head);
+    const skull = add(head, new THREE.SphereGeometry(0.115, 28, 20), skinMat, 0, 0, 0);
+    skull.scale.set(0.9, 1.08, 1.0);
+    [-1, 1].forEach(s => {
+      const ear = add(head, new THREE.SphereGeometry(0.026, 10, 8), skinMat, s * 0.103, -0.005, -0.005, false);
+      ear.scale.set(0.45, 1.0, 0.75);
+      // 眼睛 (眼白＋瞳孔)、眉毛
+      const eyeW = add(head, new THREE.SphereGeometry(0.017, 12, 8), eyeWhiteMat, s * 0.037, 0.012, 0.094, false);
+      eyeW.scale.set(1.1, 0.75, 0.45);
+      add(head, new THREE.SphereGeometry(0.0095, 10, 8), irisMat, s * 0.037, 0.011, 0.101, false);
+      const brow = add(head, new THREE.BoxGeometry(0.036, 0.007, 0.008), hairMat, s * 0.038, 0.044, 0.1, false);
+      brow.rotation.z = 0;
+    });
+    const nose = add(head, new THREE.SphereGeometry(0.014, 10, 8), skinMat, 0, -0.012, 0.11, false);
+    nose.scale.set(0.8, 1.1, 1.0);
+    const mouth = add(head, new THREE.BoxGeometry(0.04, 0.009, 0.008), lipMat, 0, -0.05, 0.101, false);
+    mouth.rotation.x = -0.1;
+
+    // 髮型：頭頂髮蓋＋後腦頭髮；女同學另有側邊髮束與馬尾、紫紅髮夾
+    const hairCap = add(head, new THREE.SphereGeometry(0.128, 28, 16, 0, Math.PI * 2, 0, isGirl ? 1.2 : 1.12), hairMat, 0, 0.01, -0.002);
+    hairCap.scale.set(0.95, 1.06, 1.05);
+    // 後腦與兩側：從耳前繞到腦後
+    const hairBack = isGirl
+      ? add(head, new THREE.SphereGeometry(0.13, 24, 16, Math.PI - 0.45, Math.PI + 0.9, 0, 2.3), hairMat, 0, 0.004, -0.006)
+      : add(head, new THREE.SphereGeometry(0.13, 24, 16, Math.PI - 0.15, Math.PI + 0.3, 0, 1.72), hairMat, 0, 0.004, -0.006);
+    hairBack.scale.set(0.95, 1.06, 1.04);
+    if (isGirl) {
+      [-1, 1].forEach(s => {
+        const lock = add(head, makeCapsuleGeometry(0.024, 0.016, 0.13, 10), hairMat, s * 0.1, -0.06, 0.03, false);
+        lock.scale.set(0.7, 1.0, 0.75);
+        lock.rotation.z = s * 0.08;
+      });
+      const tail = add(head, makeCapsuleGeometry(0.035, 0.022, 0.2, 12), hairMat, 0, -0.08, -0.15);
+      tail.rotation.x = 0.35;
+      add(head, new THREE.BoxGeometry(0.035, 0.012, 0.05), tieMat, 0.085, 0.07, 0.06, false);
+    }
+
+    // 3. 手臂：肩軸心 → 短袖＋上臂 → 手肘軸心 → 前臂＋手掌
+    const makeArm = side => {
+      const shoulder = new THREE.Group();
+      shoulder.position.set(side * (isGirl ? 0.182 : 0.198), 1.355, 0);
+      const sleeve = add(shoulder, makeCapsuleGeometry(0.05, 0.047, 0.09, 14), shirtMat, 0, -0.065, 0);
+      sleeve.scale.z = 0.9;
+      add(shoulder, makeCapsuleGeometry(0.04, 0.036, 0.16, 12), skinMat, 0, -0.15, 0);
+      const elbow = new THREE.Group();
+      elbow.position.y = -0.27;
+      shoulder.add(elbow);
+      add(elbow, makeCapsuleGeometry(0.035, 0.029, 0.17, 12), skinMat, 0, -0.11, 0);
+      const hand = add(elbow, new THREE.SphereGeometry(0.038, 12, 10), skinMat, 0, -0.245, 0.005);
+      hand.scale.set(0.75, 1.2, 0.55);
+      body.add(shoulder);
+      return { shoulder, elbow };
+    };
+    const armL = makeArm(-1);
+    const armR = makeArm(1);
+
+    // 4. 腿：髖軸心 → 大腿 → 膝蓋軸心 → 小腿＋鞋 (男：深藍長褲；女：百褶裙＋白色長襪)
+    const makeLeg = side => {
+      const hip = new THREE.Group();
+      hip.position.set(side * 0.082, 0.88, 0);
+      add(hip, isGirl ? makeCapsuleGeometry(0.068, 0.052, 0.28, 14) : makeCapsuleGeometry(0.08, 0.066, 0.28, 14), isGirl ? skinMat : bottomMat, 0, -0.2, 0);
+      const knee = new THREE.Group();
+      knee.position.y = -0.41;
+      hip.add(knee);
+      add(knee, isGirl ? makeCapsuleGeometry(0.052, 0.04, 0.3, 14) : makeCapsuleGeometry(0.064, 0.056, 0.3, 14), isGirl ? skinMat : bottomMat, 0, -0.19, 0);
+      if (isGirl) add(knee, makeCapsuleGeometry(0.057, 0.045, 0.2, 14), sockMat, 0, -0.25, 0);
+      const shoe = add(knee, new THREE.SphereGeometry(0.076, 18, 12), shoeMat, 0, -0.395, 0.045);
+      shoe.scale.set(0.8, 0.55, 1.6);
+      const sole = add(knee, new THREE.CylinderGeometry(0.06, 0.06, 0.022, 18), soleMat, 0, -0.43, 0.045, false);
+      sole.scale.set(1.0, 1.0, 2.0);
+      body.add(hip);
+      return { hip, knee };
+    };
+    const legL = makeLeg(-1);
+    const legR = makeLeg(1);
+
+    if (isGirl) {
+      // 百褶裙：上窄下寬的開口圓錐，平面著色呈現褶痕
+      const skirtMat = new THREE.MeshStandardMaterial({ color: "#1F2A3A", roughness: 0.85, flatShading: true, side: THREE.DoubleSide });
+      const skirt = add(body, new THREE.CylinderGeometry(0.152, 0.235, 0.34, 18, 1, true), skirtMat, 0, 0.79, 0);
+      skirt.scale.z = 0.78;
+    }
+
+    // 手肘自然微彎
+    armL.elbow.rotation.x = -0.25;
+    armR.elbow.rotation.x = -0.25;
+
+    return {
+      body,
+      leftArm: armL.shoulder,
+      rightArm: armR.shoulder,
+      leftLeg: legL.hip,
+      rightLeg: legR.hip,
+      leftElbow: armL.elbow,
+      rightElbow: armR.elbow,
+      leftKnee: legL.knee,
+      rightKnee: legR.knee
+    };
+  }
 
   function buildStudentAvatar(gender = "boy", themeStyle = "day") {
     if (studentAvatarGroup) {
@@ -579,15 +763,24 @@
     const grp = new THREE.Group();
     grp.name = "StudentAvatar";
 
+    if (themeStyle === "day") {
+      avatarLimbParts = buildRealisticStudent(grp, gender);
+      grp.visible = false;
+      scene.add(grp);
+      studentAvatarGroup = grp;
+      return grp;
+    }
+
+    // 以下為積木／像素風格的方塊人偶
     const isBrick = themeStyle === "brick";
     const isPixel = themeStyle === "pixel";
-    const roughness = isBrick ? 0.16 : (isPixel ? 0.85 : 0.68);
+    const roughness = isBrick ? 0.16 : 0.85;
     const metalness = isBrick ? 0.15 : 0.06;
 
     // 材質庫
     const skinColor = isBrick ? "#FFD034" : "#F8D5C2";
     const skinMat = new THREE.MeshStandardMaterial({ color: skinColor, roughness, metalness, flatShading: isPixel });
-    const hairColor = gender === "boy" ? (isBrick ? "#2B1D14" : (isPixel ? "#1A1A1A" : "#2B211B")) : (isBrick ? "#5C381E" : "#3B2A20");
+    const hairColor = gender === "boy" ? (isBrick ? "#2B1D14" : "#1A1A1A") : (isBrick ? "#5C381E" : "#3B2A20");
     const hairMat = new THREE.MeshStandardMaterial({ color: hairColor, roughness, metalness, flatShading: isPixel });
     const shirtMat = new THREE.MeshStandardMaterial({ color: "#F8F9FA", roughness, metalness, flatShading: isPixel }); // 附中白襯衫
     const purpleMat = new THREE.MeshStandardMaterial({ color: "#7B1F34", roughness, metalness, flatShading: isPixel }); // 附中校服紫紅領／蝴蝶結
@@ -602,20 +795,14 @@
 
     // 1. 骨盆與下身 (Pelvis / Shorts / Skirt)
     const pelvis = new THREE.Mesh(
-      isBrick ? new THREE.BoxGeometry(0.40, 0.16, 0.22) : (isPixel ? new THREE.BoxGeometry(0.38, 0.16, 0.22) : new THREE.BoxGeometry(0.36, 0.16, 0.20)),
+      isBrick ? new THREE.BoxGeometry(0.40, 0.16, 0.22) : new THREE.BoxGeometry(0.38, 0.16, 0.22),
       pantsMat
     );
     pelvis.position.y = 0.82;
     pelvis.castShadow = true;
     bodyGroup.add(pelvis);
 
-    if (gender === "girl" && !isBrick && !isPixel) {
-      // 寫實女同學百褶裙擺
-      const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.30, 0.22, 16), pantsMat);
-      skirt.position.y = 0.78;
-      skirt.castShadow = true;
-      bodyGroup.add(skirt);
-    } else if (gender === "girl" && (isBrick || isPixel)) {
+    if (gender === "girl") {
       // 積木／像素百褶裙 (直筒方裙)
       const skirt = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.22, 0.26), pantsMat);
       skirt.position.y = 0.78;
@@ -625,7 +812,7 @@
 
     // 2. 軀幹與上衣 (Torso with School Uniform)
     const torso = new THREE.Mesh(
-      isBrick ? new THREE.BoxGeometry(0.42, 0.48, 0.24) : (isPixel ? new THREE.BoxGeometry(0.40, 0.46, 0.24) : new THREE.BoxGeometry(0.38, 0.46, 0.22)),
+      isBrick ? new THREE.BoxGeometry(0.42, 0.48, 0.24) : new THREE.BoxGeometry(0.40, 0.46, 0.24),
       shirtMat
     );
     torso.position.y = 1.12;
@@ -673,7 +860,7 @@
       const topStud = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.08, 12), skinMat);
       topStud.position.y = 0.16;
       headGroup.add(topStud);
-    } else if (isPixel) {
+    } else {
       // 體素像素風格：正立方體方塊頭 (Minecraft / Crossy Road)
       const pixelHead = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.36, 0.36), skinMat);
       pixelHead.castShadow = true;
@@ -682,11 +869,6 @@
       const pixelHairTop = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.12, 0.38), hairMat);
       pixelHairTop.position.set(0, 0.14, -0.01);
       headGroup.add(pixelHairTop);
-    } else {
-      // 寫實圓潤頭部
-      const head = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.26), skinMat);
-      head.castShadow = true;
-      headGroup.add(head);
     }
 
     // 髮型細節
@@ -731,7 +913,7 @@
     // 4. 左手臂與右手臂 (具有肩膀旋轉關節軸心)
     const armGeo = isPixel
       ? new THREE.BoxGeometry(0.12, 0.42, 0.12)
-      : (isBrick ? new THREE.BoxGeometry(0.10, 0.42, 0.10) : new THREE.CylinderGeometry(0.055, 0.05, 0.42, 8));
+      : new THREE.BoxGeometry(0.10, 0.42, 0.10);
 
     const leftArmPivot = new THREE.Group();
     leftArmPivot.position.set(-0.25, 1.30, 0);
@@ -775,7 +957,7 @@
     const legLength = 0.64;
     const legGeo = isPixel
       ? new THREE.BoxGeometry(0.13, legLength, 0.13)
-      : (isBrick ? new THREE.BoxGeometry(0.13, legLength, 0.13) : new THREE.CylinderGeometry(0.055, 0.05, legLength, 10));
+      : new THREE.BoxGeometry(0.13, legLength, 0.13);
 
     const leftLegPivot = new THREE.Group();
     leftLegPivot.position.set(-0.11, 0.74, 0);
@@ -806,7 +988,11 @@
       leftArm: leftArmPivot,
       rightArm: rightArmPivot,
       leftLeg: leftLegPivot,
-      rightLeg: rightLegPivot
+      rightLeg: rightLegPivot,
+      leftKnee: null,
+      rightKnee: null,
+      leftElbow: null,
+      rightElbow: null
     };
 
     grp.visible = false;
@@ -2422,19 +2608,34 @@
       // 角色走動擺臂擺腿動畫與身體起伏 (Walking limb swing cycle & bobbing)
       if (isMoving) {
         state.walkLimbPhase += WALK_LIMB_RATE[state.walkPace] * Math.abs(moveInput) * dt;
+        const p = state.walkLimbPhase;
         if (avatarLimbParts.leftLeg) {
-          avatarLimbParts.leftLeg.rotation.x = Math.sin(state.walkLimbPhase) * 0.65;
-          avatarLimbParts.rightLeg.rotation.x = -Math.sin(state.walkLimbPhase) * 0.65;
-          avatarLimbParts.leftArm.rotation.x = -Math.sin(state.walkLimbPhase) * 0.55;
-          avatarLimbParts.rightArm.rotation.x = Math.sin(state.walkLimbPhase) * 0.55;
+          avatarLimbParts.leftLeg.rotation.x = Math.sin(p) * 0.65;
+          avatarLimbParts.rightLeg.rotation.x = -Math.sin(p) * 0.65;
+          avatarLimbParts.leftArm.rotation.x = -Math.sin(p) * 0.55;
+          avatarLimbParts.rightArm.rotation.x = Math.sin(p) * 0.55;
+        }
+        // 寫實人偶：腿往前擺動 (擺盪期) 時膝蓋彎曲，前臂隨手臂前擺而多彎一些
+        if (avatarLimbParts.leftKnee) {
+          avatarLimbParts.leftKnee.rotation.x = 0.08 + Math.max(0, -Math.cos(p)) * 0.95;
+          avatarLimbParts.rightKnee.rotation.x = 0.08 + Math.max(0, Math.cos(p)) * 0.95;
+          avatarLimbParts.leftElbow.rotation.x = -0.25 - Math.max(0, Math.sin(p)) * 0.45;
+          avatarLimbParts.rightElbow.rotation.x = -0.25 - Math.max(0, -Math.sin(p)) * 0.45;
         }
       } else {
+        const decay = Math.pow(0.82, frames60);
         if (avatarLimbParts.leftLeg) {
-          const decay = Math.pow(0.82, frames60);
           avatarLimbParts.leftLeg.rotation.x *= decay;
           avatarLimbParts.rightLeg.rotation.x *= decay;
           avatarLimbParts.leftArm.rotation.x *= decay;
           avatarLimbParts.rightArm.rotation.x *= decay;
+        }
+        if (avatarLimbParts.leftKnee) {
+          avatarLimbParts.leftKnee.rotation.x *= decay;
+          avatarLimbParts.rightKnee.rotation.x *= decay;
+          // 手肘回到自然微彎
+          avatarLimbParts.leftElbow.rotation.x = -0.25 + (avatarLimbParts.leftElbow.rotation.x + 0.25) * decay;
+          avatarLimbParts.rightElbow.rotation.x = -0.25 + (avatarLimbParts.rightElbow.rotation.x + 0.25) * decay;
         }
       }
 
