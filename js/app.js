@@ -71,6 +71,7 @@
     navDistance: 300,
     navSpeedMultiplier: 1.0,
     navCamHeightLevel: 0,
+    navApproach: false,    // 帶路接近終點：鏡頭已轉為垂直俯瞰
     walkMode: false,       // 地面漫步模式
     walkChar: "boy",       // 'boy' | 'girl'
     walkView: "third_person", // 'third_person' | 'first_person'
@@ -310,6 +311,11 @@
     new THREE.MeshStandardMaterial({ color: "#FFE5D9" })
   );
   walkerHead.position.y = 2.9;
+  // 帶路人偶永遠畫在最上層：沿途經過高樓後方或抵達入口時都不會被建築擋住
+  [walkerBody, walkerHead].forEach((m, i) => {
+    m.material.depthTest = false;
+    m.renderOrder = 10 + i; // 頭部最後畫，俯視時才不會被身體蓋住
+  });
   walkerMesh.add(walkerBody, walkerHead);
   walkerMesh.visible = false;
   scene.add(walkerMesh);
@@ -1387,7 +1393,7 @@
       return { node: extra.node, building: DATA.buildings.find(b => b.id === extra.building), name: extra.name };
     }
     const b = DATA.buildings.find(x => x.id === id);
-    return { node: DATA.buildingNavNode[id], building: b, name: b ? b.name.replace(/（.*）/, "") : "" };
+    return { node: DATA.buildingNavNode[id], building: b, name: b ? (b.navLabel || b.name.replace(/（.*）/, "")) : "" };
   }
 
   // 教室所在樓層若有專屬入口 (例如圖書館 3F 資訊學程走北側入口)，改以該入口為導航終點
@@ -1429,6 +1435,16 @@
       if (n) pts.push(new THREE.Vector3(n.x, 0.75, n.z));
     });
 
+    // 入口節點位在建築外牆上：起點與終點各往路線內側退 1.5m，人偶與標記停在門口外，不會被屋頂蓋住
+    const ENTRANCE_STANDOFF = 1.5;
+    [[0, 1], [pts.length - 1, pts.length - 2]].forEach(([i, j]) => {
+      if (!pts[j]) return;
+      const seg = pts[j].distanceTo(pts[i]);
+      if (seg > ENTRANCE_STANDOFF * 2) {
+        pts[i].add(new THREE.Vector3().subVectors(pts[j], pts[i]).setLength(ENTRANCE_STANDOFF));
+      }
+    });
+
     if (pts.length >= 2) {
       const curve = createRoadRouteCurve(pts, 1.8);
       state.navCurve = curve;
@@ -1449,6 +1465,7 @@
     state.navWalking = false;
     state.navPaused = false;
     state.navProgress = 0;
+    state.navApproach = false;
     walkerMesh.visible = false;
     const simBtn = document.getElementById("simWalkBtn");
     if (simBtn) simBtn.innerHTML = "🚶 模擬沿路帶路";
@@ -1478,25 +1495,42 @@
     }
   }
 
+  // 帶路接近終點時改為垂直俯瞰：斜角鏡頭會讓人偶被建築擋住，看不出從哪個入口進去
+  const NAV_APPROACH_DIST = 40;    // 距終點多少公尺開始轉為垂直俯瞰
+  const NAV_APPROACH_PHI = 0.05;   // 幾乎垂直 (約 3°)，建築屋頂不會遮到入口
+  const NAV_APPROACH_MAX_RADIUS = 40; // 拉近到人偶清楚可見的高度
+
   function applyNavCameraPreset() {
     const level = state.navCamHeightLevel || 0;
     const heightBtn = document.getElementById("walkCamHeightBtn");
     if (level === 0) {
       camControl.sphericalGoal.radius = 140;
       camControl.sphericalGoal.phi = 0.94;
-      if (heightBtn) heightBtn.innerHTML = "🔭 俯瞰：高空全景";
-      showToast("🔭 視角切換：高空全景 (可綜覽沿途各大樓)");
+      if (heightBtn) heightBtn.innerHTML = "🔭 視角：高空全景";
+      if (!state.navApproach) showToast("🔭 視角切換：高空全景 (可綜覽沿途各大樓)");
     } else if (level === 1) {
       camControl.sphericalGoal.radius = 95;
       camControl.sphericalGoal.phi = 1.02;
-      if (heightBtn) heightBtn.innerHTML = "🚁 俯瞰：中景跟隨";
-      showToast("🚁 視角切換：中景跟隨");
+      if (heightBtn) heightBtn.innerHTML = "🚁 視角：中景跟隨";
+      if (!state.navApproach) showToast("🚁 視角切換：中景跟隨");
     } else {
       camControl.sphericalGoal.radius = 55;
       camControl.sphericalGoal.phi = 1.12;
-      if (heightBtn) heightBtn.innerHTML = "👀 俯瞰：近距特寫";
-      showToast("👀 視角切換：近距特寫");
+      if (heightBtn) heightBtn.innerHTML = "👀 視角：近距特寫";
+      if (!state.navApproach) showToast("👀 視角切換：近距特寫");
     }
+    // 接近終點時仍維持垂直俯瞰，高度按鈕只調整遠近
+    if (state.navApproach) {
+      camControl.sphericalGoal.phi = NAV_APPROACH_PHI;
+      camControl.sphericalGoal.radius = Math.min(camControl.sphericalGoal.radius, NAV_APPROACH_MAX_RADIUS);
+      if (heightBtn) heightBtn.innerHTML = "🎯 垂直俯瞰";
+    }
+  }
+
+  function enterNavApproach() {
+    state.navApproach = true;
+    applyNavCameraPreset();
+    showToast("🎯 即將抵達，切換為垂直俯瞰，看清楚從哪個入口進入");
   }
 
   function startSimulatedWalk() {
@@ -1527,6 +1561,7 @@
     if (state.navProgress >= 1) {
       state.navProgress = 0;
     }
+    state.navApproach = false;
     state.navWalking = true;
     state.navPaused = false;
     walkerMesh.visible = true;
@@ -1868,11 +1903,11 @@
     // 8. 導航起終點選單初始化
     const startSel = document.getElementById("navStartSelect");
     const endSel = document.getElementById("navEndSelect");
-    // 每棟建築之後接著列出該棟的其他入口 (例如圖書館 → 資訊應用學程北側入口)
+    // 同棟建築的其他入口 (例如資訊應用學程北側入口) 緊接在該建築之後，以獨立項目並列
     const optsHtml = DATA.buildings.map(b => {
       const extras = (DATA.extraNavTargets || []).filter(t => t.building === b.id);
-      return [`<option value="${b.id}">${b.name}</option>`]
-        .concat(extras.map(t => `<option value="${t.id}">　└ ${t.name}</option>`))
+      return [`<option value="${b.id}">${b.navLabel || b.name}</option>`]
+        .concat(extras.map(t => `<option value="${t.id}">${t.name}</option>`))
         .join("");
     }).join("");
     startSel.innerHTML = optsHtml;
@@ -1924,6 +1959,7 @@
       state.navWalking = false;
       state.navPaused = false;
       state.navProgress = 0;
+      state.navApproach = false;
       const simBtn = document.getElementById("simWalkBtn");
       if (simBtn) simBtn.innerHTML = "🚶 模擬沿路帶路";
       const wrap = document.getElementById("navWalkProgressWrap");
@@ -2473,6 +2509,10 @@
       if (state.navWalking && state.navCurve) {
         const totalDist = Math.max(30, state.navDistance || 300);
         state.navProgress += (NAV_WALK_SPEED * (state.navSpeedMultiplier || 1.0) * dt) / totalDist;
+
+        if (!state.navApproach && (1 - state.navProgress) * totalDist <= NAV_APPROACH_DIST) {
+          enterNavApproach();
+        }
 
         const progressBar = document.getElementById("navWalkProgressBar");
         if (progressBar) {

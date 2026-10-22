@@ -414,9 +414,9 @@ window.CAMPUS_DATA = {
     { points: [[122.0, -3.0], [122.0, 0.0]], width: 3.0 }
   ],
 
-  // 同一棟建築的其他入口：可在導航終點單獨選擇；搜尋到 floors 所列樓層的教室時也改走此入口
+  // 同一棟建築的其他入口：在導航選單中與建築並列為獨立項目；搜尋到 floors 所列樓層的教室時也改走此入口
   extraNavTargets: [
-    { id: "library_info", building: "library", node: "n_info_entrance", name: "資訊應用學程（圖書館北側入口）", floors: [3] }
+    { id: "library_info", building: "library", node: "n_info_entrance", name: "資訊應用學程（圖書館北側入口 3F）", floors: [3] }
   ],
 
   // 建築物與場域清單 (僅保留主要教學校區，座標對齊 OSM 與校園平面圖)
