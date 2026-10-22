@@ -648,7 +648,7 @@
     // (人偶面向 +Z：右側為 -X、左側為 +X)
     const bag = add(body, new THREE.BoxGeometry(0.08, 0.22, 0.27), bagMat, 0.165, 0.94, -0.075);
     bag.rotation.y = -0.55;
-    [0.113, -0.116].forEach(z => {
+    [0.12, -0.122].forEach(z => {
       const strap = add(body, new THREE.BoxGeometry(0.035, 0.52, 0.012), bagMat, 0.01, 1.16, z, false);
       strap.rotation.z = 0.58;
     });
@@ -847,8 +847,9 @@
     schoolBag.rotation.z = -0.15;
     schoolBag.castShadow = true;
     bodyGroup.add(schoolBag);
-    const bagStrap = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.55, 0.26), bagMat);
-    bagStrap.position.set(0.06, 1.18, 0.01);
+    // 背帶前後都略凸出軀幹表面 (軀幹深 0.24)，避免與軀幹背面共平面而閃爍
+    const bagStrap = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.55, 0.28), bagMat);
+    bagStrap.position.set(0.06, 1.18, 0);
     bagStrap.rotation.z = 0.52;
     bodyGroup.add(bagStrap);
 
@@ -1446,14 +1447,15 @@
       sunLight.position.set(120, 185, 110);
       showToast("☀️ 已切換為「晴空寫實風格」");
     } else if (themeName === "pixel") {
-      // 復古像素冒險風格：極致清晰體素方塊世界 (Minecraft / Crossy Road 稜角分明體素大樓與方塊樹)
-      scene.background.set("#1E2430");
-      scene.fog.color.set("#1E2430");
-      hemiLight.color.set("#7DFFB3");
-      hemiLight.groundColor.set("#3D1E4A");
-      hemiLight.intensity = 0.95;
-      sunLight.color.set("#FFF677");
-      sunLight.intensity = 1.25;
+      // 復古像素冒險風格：明亮藍天的體素方塊世界 (Crossy Road 式清新配色)
+      // 天光用中性白、地面反光用草綠，建築維持原色；方塊感由體素樹與屋頂體素女兒牆呈現
+      scene.background.set("#8FD6FF");
+      scene.fog.color.set("#BDE7FF");
+      hemiLight.color.set("#FFFFFF");
+      hemiLight.groundColor.set("#86C25E");
+      hemiLight.intensity = 0.9;
+      sunLight.color.set("#FFF3D2");
+      sunLight.intensity = 1.2;
       sunLight.position.set(100, 180, 100);
       showToast("🕹️ 已切換為「復古像素冒險風格」！全校體素方塊樹、方塊女兒牆與像素冒險家已生成");
     } else if (themeName === "brick") {
