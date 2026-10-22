@@ -253,14 +253,7 @@ window.CampusBuilder3D = (function () {
     entryWhiteCircle.receiveShadow = true;
     envGroup.add(entryWhiteCircle);
 
-    // (b) 中央迎賓大道雙排植栽綠島 (圓形廣場 z=-150 至 行政/敬業穿堂 z=-102)
-    [-3.4, 3.4].forEach(mx => {
-      const median = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.32, 46), getMat("#528742"));
-      median.position.set(mx, 0.16, -126);
-      envGroup.add(median);
-    });
-
-    // (c) 行政大樓北側扇形景觀公園與圓形廣場 (x=34, z=-124)
+    // (b) 行政大樓北側扇形景觀公園與圓形廣場 (x=34, z=-124)
     const neParkBase = new THREE.Mesh(new THREE.CylinderGeometry(16, 16, 0.12, 32), gardenPathMat);
     neParkBase.position.set(34, 0.02, -124);
     envGroup.add(neParkBase);
@@ -268,12 +261,12 @@ window.CampusBuilder3D = (function () {
     neParkCenter.position.set(34, 0.08, -124);
     envGroup.add(neParkCenter);
 
-    // (d) 敬業樓與行政大樓中間、樂耕樓北側的「圓環花圃」 (0, -96)
-    const circleCurb = new THREE.Mesh(new THREE.CylinderGeometry(5.6, 5.9, 0.52, 32), getMat("#7B6E75"));
-    circleCurb.position.set(0, 0.26, -96);
+    // (c) 樂耕樓北側十字路口中央縮小版「圓環花圃」 (0, -75)（依使用者圖二指示自 (0,-96) 往南移至十字路口中心並縮小體量）
+    const circleCurb = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.8, 0.44, 32), getMat("#7B6E75"));
+    circleCurb.position.set(0, 0.22, -75);
     envGroup.add(circleCurb);
-    const circleBush = new THREE.Mesh(new THREE.CylinderGeometry(4.8, 5.0, 0.68, 32), darkGreenMat);
-    circleBush.position.set(0, 0.36, -96);
+    const circleBush = new THREE.Mesh(new THREE.CylinderGeometry(2.1, 2.2, 0.56, 32), darkGreenMat);
+    circleBush.position.set(0, 0.32, -75);
     envGroup.add(circleBush);
 
     // (e) 中庭教學區景觀 (中央草坪 + 十字土橘色步道 + 中央方形集會廣場)
@@ -960,11 +953,11 @@ window.CampusBuilder3D = (function () {
       [22.0, -151.0], [34.0, -143.0], [46.0, -135.0], [58.0, -127.0]
     ].forEach(([x, z]) => addTree(x, z, 1.1, "mahogany"));
 
-    // ================= 3. 校門進場中央迎賓大道椰林與兩側景觀樹 (依使用者圖一實景與圖二紅黃框指示) =================
-    // (A) 活動中心正門口前迎賓步道兩排大王椰子樹 (紅色框框位置：西側排 x = -6.8，東側排 x = -2.2，每排 6 棵，共 12 棵)
+    // ================= 3. 校門進場中央迎賓大道椰林與兩側景觀樹 (依使用者指示調整為道路正中央兩排) =================
+    // (A) 迎賓大道正中間兩排大王椰子樹 (西側排 x = -2.2，東側排 x = +2.2，每排 6 棵，共 12 棵對稱佇立於道路中央迎賓步道兩側)
     for (let z = -148; z <= -106; z += 8.4) {
-      addTree(-6.8, z, 1.15, "palm", true); // 西側排 (緊鄰活動中心門前步道)
-      addTree(-2.2, z, 1.15, "palm", true); // 東側排 (迎賓步道東側)
+      addTree(-2.2, z, 1.15, "palm", true); // 西側排 (道路中央偏西)
+      addTree(2.2, z, 1.15, "palm", true);  // 東側排 (道路中央偏東)
     }
 
     // (B) 迎賓大道東側景觀樹列 (黃色框框位置：依使用者指示改為小棵樹，scale = 0.6)
