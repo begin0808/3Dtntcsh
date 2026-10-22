@@ -1097,7 +1097,7 @@
       }
 
       const r = Math.min(cornerRadius, len1 * 0.45, len2 * 0.45);
-      const filletStart = new THREE.Vector3().copy(pCurr).subScaledVector(dir1, r);
+      const filletStart = new THREE.Vector3().copy(pCurr).addScaledVector(dir1, -r);
       const filletEnd = new THREE.Vector3().copy(pCurr).addScaledVector(dir2, r);
 
       if (prevEnd.distanceTo(filletStart) > 0.05) {
@@ -1136,6 +1136,12 @@
       const n = DATA.navNodes[nid];
       if (n) pts.push(new THREE.Vector3(n.x, 0.75, n.z));
     });
+
+    if (pts.length < 2 && fromBld && toBld) {
+      pts.length = 0;
+      pts.push(new THREE.Vector3(fromBld.x, 0.75, fromBld.z));
+      pts.push(new THREE.Vector3(toBld.x, 0.75, toBld.z));
+    }
 
     if (pts.length >= 2) {
       const curve = createRoadRouteCurve(pts, 1.8);
