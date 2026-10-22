@@ -1615,7 +1615,7 @@ window.CampusBuilder3D = (function () {
 
         ctx.font = "bold 44px 'Microsoft JhengHei', 'Noto Sans TC', sans-serif";
         ctx.fillStyle = "#FFFFFF";
-        ctx.fillText("115 學年度升學繁星成果輝煌", w / 2, 325);
+        ctx.fillText((window.CAMPUS_DATA.school || {}).welcomeBannerText || "", w / 2, 325); // 文字在 data/school-year.js 設定
 
         ctx.strokeStyle = "#2D3848";
         ctx.lineWidth = 3;

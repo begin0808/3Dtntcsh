@@ -50,6 +50,11 @@
   const DATA = window.CAMPUS_DATA;
   const BUILDER = window.CampusBuilder3D;
 
+  // 頁面上的學年度文字 (data/school-year.js 設定)
+  document.querySelectorAll("[data-academic-year]").forEach(el => {
+    el.textContent = DATA.school.academicYear;
+  });
+
   // 狀態管理
   const state = {
     theme: "day",          // 'day' | 'pixel' | 'brick'
@@ -145,7 +150,8 @@
       labelsContainer.appendChild(el);
       roadLabels.push({
         el,
-        pos: new THREE.Vector3(lp.x, 1.8, lp.z)
+        pos: new THREE.Vector3(lp.x, 1.8, lp.z),
+        isPrimary: !!rd.isPrimary
       });
     });
   });
@@ -2105,9 +2111,65 @@
     const w = window.innerWidth;
     const h = window.innerHeight;
     renderer.setSize(w, h);
+    resetLabelSizes(); // 版面斷點切換時標籤字級會變
     camera.aspect = w / h;
     if (!state.walkMode) camera.fov = getBirdFov();
     camera.updateProjectionMatrix();
+  }
+
+  // ================= 標籤避讓 =================
+  // 每幀依重要程度依序放置標籤，與已放置標籤重疊者暫時淡出；放大後不再重疊即自動出現
+  const LABEL_PRIORITY = {
+    selected: 100,
+    cardinal: 90,
+    roadPrimary: 30,
+    road: 20
+  };
+  // 建築標籤：類別基本分＋占地面積加分 (大樓優先於小型設施，例如圖書館大樓優先於原美術教室)
+  const BUILDING_LABEL_BASE = { admin: 60, teaching: 60, tech: 55, landmark: 55, facility: 45, sport: 45 };
+
+  function buildingLabelPriority(b) {
+    return (BUILDING_LABEL_BASE[b.category] || 45) + Math.min(20, (b.w * b.d) / 60);
+  }
+  const LABEL_GAP = 3; // 標籤之間至少保留的像素
+  const labelCandidates = [];
+  const placedLabelRects = [];
+
+  function addLabelCandidate(item, x, y, priority) {
+    labelCandidates.push({ item, x, y, priority });
+  }
+
+  // 標籤尺寸只在第一次顯示時量測並快取 (避免每幀觸發版面重算)；視窗縮放時清除快取
+  function measureLabel(item) {
+    if (!item.size) {
+      const w = item.el.offsetWidth;
+      const h = item.el.offsetHeight;
+      if (!w) return { w: 0, h: 0 };
+      item.size = { w, h };
+    }
+    return item.size;
+  }
+
+  function resetLabelSizes() {
+    [...roadLabels, ...cardinalLabels, ...buildingLabels.values()].forEach(item => { item.size = null; });
+  }
+
+  function resolveLabelOverlaps() {
+    labelCandidates.sort((a, b) => b.priority - a.priority);
+    placedLabelRects.length = 0;
+    labelCandidates.forEach(c => {
+      const { w, h } = measureLabel(c.item);
+      const rect = {
+        l: c.x - w / 2 - LABEL_GAP,
+        r: c.x + w / 2 + LABEL_GAP,
+        t: c.y - h / 2 - LABEL_GAP,
+        b: c.y + h / 2 + LABEL_GAP
+      };
+      const blocked = placedLabelRects.some(p => rect.l < p.r && rect.r > p.l && rect.t < p.b && rect.b > p.t);
+      c.item.el.classList.toggle("label-occluded", blocked);
+      if (!blocked) placedLabelRects.push(rect);
+    });
+    labelCandidates.length = 0;
   }
 
   // ================= 投影 3D 標籤至螢幕座標 =================
@@ -2141,6 +2203,7 @@
       const y = (-tempV.y * 0.5 + 0.5) * h;
       item.el.style.display = "inline-flex";
       item.el.style.transform = `translate(-50%, -50%) translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+      addLabelCandidate(item, x, y, item.isPrimary ? LABEL_PRIORITY.roadPrimary : LABEL_PRIORITY.road);
     });
 
     // 2. 東西南北方位大標籤 (地面實境漫步模式全數隱藏，鳥瞰模式顯示)
@@ -2159,13 +2222,17 @@
       const y = (-tempV.y * 0.5 + 0.5) * h;
       item.el.style.display = "inline-flex";
       item.el.style.transform = `translate(-50%, -50%) translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+      addLabelCandidate(item, x, y, LABEL_PRIORITY.cardinal);
     });
 
     // 3. 建築物標籤 (地面漫步模式嚴格只顯示身旁 <= 65m 且在視線前方的建築，遠距大樓與兩側街道徹底隱藏)
     buildingLabels.forEach(item => {
+      const isSelected = !!(state.selectedBuilding && state.selectedBuilding.id === item.data.id);
+      // 鳥瞰：依建築類別；漫步：越近越優先
+      let priority = isSelected ? LABEL_PRIORITY.selected : buildingLabelPriority(item.data);
       if (state.walkMode) {
-        const isSelected = !!(state.selectedBuilding && state.selectedBuilding.id === item.data.id);
         const dist = Math.hypot(item.pos.x - state.walkPos.x, item.pos.z - state.walkPos.z);
+        if (!isSelected) priority = LABEL_PRIORITY.cardinal - dist;
         const maxDist = isSelected ? 120 : 65;
         if (dist > maxDist) {
           item.el.style.display = "none";
@@ -2194,8 +2261,11 @@
       const y = (-tempV.y * 0.5 + 0.5) * h;
       item.el.style.display = "inline-flex";
       item.el.style.transform = `translate(-50%, -50%) translate(${Math.round(x)}px, ${Math.round(y)}px)`;
-      item.el.classList.toggle("selected", !!(state.selectedBuilding && state.selectedBuilding.id === item.data.id));
+      item.el.classList.toggle("selected", isSelected);
+      addLabelCandidate(item, x, y, priority);
     });
+
+    resolveLabelOverlaps();
 
     // 4. 整體大樓各樓層獨立指標標籤 (1F, 2F, 3F...)
     floorMarkerPool.forEach(item => {

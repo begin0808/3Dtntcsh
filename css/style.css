@@ -72,6 +72,18 @@ html, body {
   touch-action: none;
 }
 
+/* 標籤避讓：與較重要標籤重疊時淡出 (見 app.js resolveLabelOverlaps) */
+.b-label,
+.road-label,
+.cardinal-label {
+  transition: opacity 0.18s ease, background 0.15s, border-color 0.15s;
+}
+
+.label-occluded {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 .b-label {
   position: absolute;
   left: 0;

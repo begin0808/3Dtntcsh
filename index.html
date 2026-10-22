@@ -4,10 +4,31 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>國立臺南大學附屬高級中學 — 3D 互動校園導覽地圖</title>
-  <meta name="description" content="國立南大附中（TNTCSH）115學年度 3D 互動校園導覽：整合教學大樓、綜合高中專門學程館舍、地面實境漫步與動態羅盤方位標示。">
+  <meta name="description" content="國立臺南大學附屬高級中學 3D 互動校園導覽：班級教室查詢、校園路線導航、綜合高中特色學程科館與地面實境漫步。">
   <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
   <link rel="shortcut icon" href="favicon.ico">
-  <link rel="apple-touch-icon" href="assets/tntcsh-logo.png">
+
+  <!-- 加到主畫面 (PWA) -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0F1A26">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="南大附中3D">
+
+  <!-- 社群分享預覽 (LINE、Facebook 等需使用完整網址) -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="國立南大附中 3D 校園導覽">
+  <meta property="og:title" content="國立南大附中 3D 校園導覽">
+  <meta property="og:description" content="查班級教室、規劃校園步行路線、認識特色學程科館，還能化身附中同學在校園裡漫步。">
+  <meta property="og:url" content="https://begin0808.github.io/3Dtntcsh/">
+  <meta property="og:image" content="https://begin0808.github.io/3Dtntcsh/assets/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="國立南大附中 3D 校園全景">
+  <meta property="og:locale" content="zh_TW">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -35,7 +56,7 @@
         <img class="school-logo-img" src="assets/tntcsh-logo.png" alt="國立臺南大學附屬高級中學校徽 (ASHS.NUTN)">
         <div class="brand-text">
           <h1>國立南大附中 3D 校園導覽</h1>
-          <small>115 學年度 ・ 臺南市永康區中山南路 948 號</small>
+          <small><span data-academic-year>115</span> 學年度 ・ 臺南市永康區中山南路 948 號</small>
         </div>
       </div>
       <!-- 手機版：搜尋框收合為圖示 -->
@@ -203,7 +224,7 @@
         <div class="copy-body">
           <p><b>🏫 版權所有：</b>國立臺南大學附屬高級中學（The Affiliated Senior High School of National University of Tainan）</p>
           <p><b>📍 學校地址：</b>710034 臺南市永康區中山南路 948 號 ｜ <b>電話：</b>(06) 232-6251</p>
-          <p><b>🏛️ 空間資料聲明：</b>本系統所載之 115 學年度班級教室配置、專門學程介紹與校園平面配置資料，均由國立南大附中彙整建置。</p>
+          <p><b>🏛️ 空間資料聲明：</b>本系統所載之 <span data-academic-year>115</span> 學年度班級教室配置、專門學程介紹與校園平面配置資料，均由國立南大附中彙整建置。</p>
           <p><b>🗺️ 開放地理資料致謝（Open Data）：</b>校園周邊街道路網（中山南路、正強街、永平街、永二街、永興路等）與校界多邊形座標引用自 <a href="https://www.openstreetmap.org/way/161510567" target="_blank" rel="noopener">OpenStreetMap 開放街圖</a>（© OpenStreetMap contributors，依 ODbL 開放資料庫授權條款標示）。</p>
           <p><b>⚙️ 3D 互動引擎技術：</b>基於 WebGL / Three.js (MIT License) 與原創程序化建築立面建模開發。</p>
         </div>
@@ -272,6 +293,7 @@
 
   <!-- Three.js r128 (MIT)：放在專案內，不依賴外部 CDN -->
   <script src="js/vendor/three.min.js"></script>
+  <script src="data/school-year.js"></script>
   <script src="data/campus-data.js"></script>
   <script src="js/buildings-3d.js"></script>
   <script src="js/app.js"></script>

@@ -32,16 +32,26 @@ css/style.css         版面與樣式（含手機精簡版面）
 js/app.js             主程式：鏡頭操控、觸控手勢、搜尋、導航、漫步與碰撞
 js/buildings-3d.js    3D 場景：地面、道路、圍牆、樹木與各建築模型
 js/vendor/three.min.js  Three.js r128（MIT 授權，放在專案內不依賴外部 CDN）
-data/campus-data.js   校園資料：建築、班級教室、學程、道路、導航路網
-assets/               校徽圖檔
+data/school-year.js   每學年更新資料：學年度、建築名稱與介紹、各樓層班級教室配置
+data/campus-data.js   校園結構資料：建築位置與外觀、學程、道路、導航路網
+manifest.webmanifest  「加到主畫面」設定
+assets/               校徽、App 圖示 (icons/)、社群分享預覽圖 (og-image.png)
 TODO.md               待辦事項
 ```
 
-### 修改校園資料
+### 每學年更新（行政人員）
 
-所有資料集中在 `data/campus-data.js`，座標單位為公尺，**北方為 -Z、東方為 +X**：
+換學年時只需修改 `data/school-year.js`，檔案開頭有填寫說明：
 
-- `buildings`：建築位置、尺寸、樓層數與各樓層教室 (`floorsData`)。
+- `academicYear`：學年度，頁首與版權說明會自動顯示。
+- `welcomeBannerText`：校門口電子看板的文字。
+- `buildings`：各建築的名稱、介紹、特色標籤與各樓層空間。每層依建築走向排列（每棟第一行註解標示「由西 → 東」或「由北 → 南」），班級的 `type` 為 `class1`／`class2`／`class3`（高一／高二／高三）。
+
+### 修改校園結構
+
+`data/campus-data.js` 的座標單位為公尺，**北方為 -Z、東方為 +X**：
+
+- `buildings`：建築位置、尺寸、樓層數與外觀（名稱與教室在 `school-year.js`）。
 - `internalRoads`／`walkways`：校內車道與人行步道（同時影響樹木避讓）。
 - `navNodes`／`navEdges`：導航路網節點與連線；`buildingNavNode` 指定每棟建築的入口節點（每棟建築應有自己的入口）。
 - 新增或移動道路時，請一併更新導航路網，以及 `js/buildings-3d.js` 中的 `isPositionOnRoad`（樹木避讓範圍）。
@@ -56,6 +66,11 @@ TODO.md               待辦事項
   python -m http.server 8080
   ```
   接著於瀏覽器開啟 `http://localhost:8080`。
+
+### 加到主畫面與分享預覽
+
+- 手機瀏覽器選單中的「加到主畫面」會以全螢幕 App 方式開啟（設定在 `manifest.webmanifest`）。
+- 貼到 LINE、Facebook 時顯示的標題與預覽圖設定在 `index.html` 的 `og:` 標籤，圖片為 `assets/og-image.png`。若網站網址變更，請一併修改 `og:url` 與 `og:image`。
 
 ## 📜 版權與資料來源
 
