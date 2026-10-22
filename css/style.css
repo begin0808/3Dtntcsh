@@ -32,6 +32,8 @@ html, body {
   background: #0F1A26;
   color: var(--text-main);
   -webkit-font-smoothing: antialiased;
+  /* 地圖類全螢幕介面：只允許面板捲動，停用瀏覽器雙指縮放整頁 (縮放交給 3D 地圖手勢) */
+  touch-action: pan-x pan-y;
 }
 
 #appContainer {
@@ -63,6 +65,11 @@ html, body {
   pointer-events: none;
   overflow: hidden;
   z-index: 2;
+}
+
+/* 從標籤上開始的觸控交給地圖手勢處理 (見 app.js beginPointer) */
+#labelsOverlay > * {
+  touch-action: none;
 }
 
 .b-label {
@@ -1643,6 +1650,73 @@ body.theme-brick #themeSwitcher button.active {
 .gesture-card .act-btn {
   padding: 10px 12px;
   font-size: 14px;
+}
+
+/* 載入畫面 (第一幀畫出後淡出；錯誤時改顯示說明) */
+#loadingScreen {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px;
+  text-align: center;
+  background: radial-gradient(circle at 50% 40%, #1C2C3E 0%, #0F1A26 70%);
+  transition: opacity 0.45s ease;
+}
+
+#loadingScreen.done {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loading-logo {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  object-fit: contain;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+}
+
+.loading-title {
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.loading-spinner {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.18);
+  border-top-color: var(--accent-gold);
+  animation: loading-spin 0.9s linear infinite;
+}
+
+@keyframes loading-spin {
+  to { transform: rotate(360deg); }
+}
+
+#loadingMsg {
+  font-size: 13.5px;
+  color: var(--text-muted);
+  max-width: 340px;
+  line-height: 1.6;
+}
+
+#loadingScreen.error .loading-spinner {
+  display: none;
+}
+
+#loadingScreen.error #loadingMsg b {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 15px;
+  color: var(--accent-gold);
 }
 
 /* 觸控裝置：滑鼠專用控制 (左鍵模式切換、十字平移盤) 改以手勢取代 */

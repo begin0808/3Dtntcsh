@@ -1,7 +1,52 @@
 // 國立臺南大學附屬高級中學 (TNTCSH) 3D 互動校園主程式
-// 包含：3D 視角控制、第一人稱地面實境漫步、動態 3D 羅盤指北針與方位標示、特色學程導覽、樓層剖面檢視、A* 路線導航与實景照片對照
+// 包含：3D 視角控制、第一人稱地面實境漫步、動態 3D 羅盤指北針與方位標示、特色學程導覽、樓層剖面檢視、校園路線導航 (Dijkstra 最短路徑)
 
 (function () {
+  // ================= 載入畫面與啟動檢查 =================
+  const loadingScreen = document.getElementById("loadingScreen");
+  let loadingDone = false;
+
+  function showLoadError(title, detail) {
+    if (loadingDone) return;
+    loadingDone = true;
+    loadingScreen.classList.add("error");
+    document.getElementById("loadingMsg").innerHTML = `<b>${title}</b><span>${detail}</span>`;
+  }
+
+  function hideLoadingScreen() {
+    if (loadingDone) return;
+    loadingDone = true;
+    loadingScreen.classList.add("done");
+    setTimeout(() => { loadingScreen.hidden = true; }, 500);
+  }
+
+  function supportsWebGL() {
+    try {
+      const c = document.createElement("canvas");
+      return !!(window.WebGLRenderingContext && (c.getContext("webgl2") || c.getContext("webgl") || c.getContext("experimental-webgl")));
+    } catch (err) {
+      return false;
+    }
+  }
+
+  // 啟動過程中任何錯誤 (含腳本載入失敗) 都在載入畫面顯示說明，不會只剩一片空白
+  // (只處理程式錯誤與 <script> 載入失敗；圖片、字型載入失敗不影響地圖運作)
+  window.addEventListener("error", e => {
+    const isScriptLoadError = e.target && e.target.tagName === "SCRIPT";
+    if (e instanceof ErrorEvent || isScriptLoadError) {
+      showLoadError("校園地圖載入失敗", "請檢查網路連線後重新整理頁面。");
+    }
+  }, true);
+
+  if (!window.THREE || !window.CAMPUS_DATA || !window.CampusBuilder3D) {
+    showLoadError("校園地圖載入失敗", "請檢查網路連線後重新整理頁面。");
+    return;
+  }
+  if (!supportsWebGL()) {
+    showLoadError("您的瀏覽器不支援 3D 繪圖 (WebGL)", "請改用最新版的 Chrome、Edge、Safari 或 Firefox，並確認已開啟硬體加速。");
+    return;
+  }
+
   const DATA = window.CAMPUS_DATA;
   const BUILDER = window.CampusBuilder3D;
 
@@ -45,7 +90,11 @@
   });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  // 手機、平板等觸控裝置 GPU 較弱：陰影貼圖解析度減半並改用一般濾波 (不做柔化)，減輕每幀負擔
+  const IS_LOW_POWER_DEVICE = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+  const SHADOW_MAP_SIZE = IS_LOW_POWER_DEVICE ? 1024 : 2048;
+  renderer.shadowMap.type = IS_LOW_POWER_DEVICE ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("#CFE5F5");
@@ -61,8 +110,8 @@
   const sunLight = new THREE.DirectionalLight("#FFF8E7", 1.05);
   sunLight.position.set(120, 185, 110);
   sunLight.castShadow = true;
-  sunLight.shadow.mapSize.width = 2048;
-  sunLight.shadow.mapSize.height = 2048;
+  sunLight.shadow.mapSize.width = SHADOW_MAP_SIZE;
+  sunLight.shadow.mapSize.height = SHADOW_MAP_SIZE;
   sunLight.shadow.camera.near = 10;
   sunLight.shadow.camera.far = 650;
   const d = 240;
@@ -336,10 +385,12 @@
 
   // 滑鼠與觸控事件
   // 單指／滑鼠：拖曳平移或旋轉；雙指：捏合縮放、旋轉手勢轉動視角、上下滑動調整俯角
+  // 觸控從 3D 浮動標籤上開始時也納入手勢 (否則手指剛好按在標籤上，瀏覽器會改成縮放整個網頁)
   let pointerDownPos = { x: 0, y: 0 };
   const activePointers = new Map(); // pointerId -> { x, y }
   let pinchState = null;            // 雙指手勢上一幀的距離、角度與中點
   let gestureWasMulti = false;      // 本次觸控曾出現雙指，放開時不視為點擊
+  let gestureStartedOnLabel = false; // 單指輕點標籤時交給標籤自己的點擊處理
 
   function measurePinch() {
     const [a, b] = Array.from(activePointers.values());
@@ -350,8 +401,7 @@
     };
   }
 
-  canvas.addEventListener("pointerdown", e => {
-    canvas.setPointerCapture(e.pointerId);
+  function beginPointer(e, fromLabel) {
     activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
     if (activePointers.size >= 2) {
@@ -362,6 +412,7 @@
     }
 
     gestureWasMulti = false;
+    gestureStartedOnLabel = fromLabel;
     pointerDownPos = { x: e.clientX, y: e.clientY };
     camControl.isDragging = true;
     // 若處於「✋ 左鍵平移」模式：左鍵＝平移，右鍵／Shift+左鍵＝旋轉
@@ -374,14 +425,24 @@
     }
     camControl.lastX = e.clientX;
     camControl.lastY = e.clientY;
+  }
+
+  canvas.addEventListener("pointerdown", e => {
+    canvas.setPointerCapture(e.pointerId);
+    beginPointer(e, false);
   });
 
-  canvas.addEventListener("pointermove", e => {
+  // 標籤上的觸控不設 pointer capture，讓輕點仍會觸發標籤自己的 click
+  labelsContainer.addEventListener("pointerdown", e => {
+    if (e.pointerType === "touch") beginPointer(e, true);
+  });
+
+  // 移動與放開改在 window 上監聽，從標籤或畫布開始的觸控都能追蹤
+  window.addEventListener("pointermove", e => {
     const tracked = activePointers.get(e.pointerId);
-    if (tracked) {
-      tracked.x = e.clientX;
-      tracked.y = e.clientY;
-    }
+    if (!tracked) return;
+    tracked.x = e.clientX;
+    tracked.y = e.clientY;
 
     if (activePointers.size >= 2 && pinchState) {
       const cur = measurePinch();
@@ -425,6 +486,7 @@
   });
 
   function endPointer(e, isCancel) {
+    if (!activePointers.has(e.pointerId)) return;
     activePointers.delete(e.pointerId);
 
     if (activePointers.size === 1) {
@@ -444,15 +506,15 @@
 
     pinchState = null;
     camControl.isDragging = false;
-    if (isCancel || gestureWasMulti) return;
+    if (isCancel || gestureWasMulti || gestureStartedOnLabel) return;
     const moveDist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
     if (moveDist < 5 && e.button === 0) {
       handleCanvasClick(e);
     }
   }
 
-  canvas.addEventListener("pointerup", e => endPointer(e, false));
-  canvas.addEventListener("pointercancel", e => endPointer(e, true));
+  window.addEventListener("pointerup", e => endPointer(e, false));
+  window.addEventListener("pointercancel", e => endPointer(e, true));
 
   canvas.addEventListener("contextmenu", e => e.preventDefault());
 
@@ -1211,7 +1273,7 @@
     }
   }
 
-  // ================= A* 校園步道導航引擎 =================
+  // ================= 校園步道導航引擎 (Dijkstra 最短路徑) =================
   function findShortestPath(startNodeId, endNodeId) {
     const nodes = DATA.navNodes;
     const adj = {};
@@ -2356,6 +2418,7 @@
     renderer.render(scene, camera);
     updateFloatingLabels();
     updateCompass();
+    hideLoadingScreen();
   }
 
   initUI();
