@@ -1261,6 +1261,96 @@ window.CampusBuilder3D = (function () {
   }
 
   // 主建築程序化外觀生成器 (根據 b.style 打造真實特徵)
+  // 屋頂主題裝飾：微縮積木凸粒陣列 (brick) 與像素冒險體素女兒牆 (pixel)
+  // parent：裝飾所在群組；rect：屋頂範圍 (群組本地座標，中心 cx/cz 與寬深 w/d)；roofTopY：屋頂頂面高度
+  // 每棟各用一個 InstancedMesh，凸粒再多也只多一次繪製
+  const STUD_STEP = 2.2;
+  const STUD_RADIUS = 0.55;
+  const STUD_HEIGHT = 0.45;
+  const VOXEL_STEP = 1.6;
+  const VOXEL_SIZE = 0.72;
+  const studGeo = new THREE.CylinderGeometry(STUD_RADIUS, STUD_RADIUS, STUD_HEIGHT, 14);
+  const voxelGeo = new THREE.BoxGeometry(VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE);
+
+  // 凸粒顏色與屋頂略有明暗差 (深色屋頂調亮、淺色屋頂調暗)，俯視時才看得出顆粒
+  function studColorFor(roofHex) {
+    const c = new THREE.Color(roofHex);
+    const hsl = {};
+    c.getHSL(hsl);
+    c.offsetHSL(0, 0.05, hsl.l > 0.6 ? -0.14 : 0.14);
+    return "#" + c.getHexString();
+  }
+
+  function makeInstanced(geo, mat, positions) {
+    const mesh = new THREE.InstancedMesh(geo, mat, positions.length);
+    const m = new THREE.Matrix4();
+    positions.forEach((p, i) => {
+      m.makeTranslation(p[0], p[1], p[2]);
+      mesh.setMatrixAt(i, m);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.castShadow = true;
+    return mesh;
+  }
+
+  function addRoofThemeDecor(parent, b, rect, roofTopY) {
+    const { cx, cz, w, d } = rect;
+
+    // (1) 微縮積木：屋頂均勻排列的圓形凸粒
+    const studPos = [];
+    for (let sx = -w / 2 + 1.3; sx <= w / 2 - 1.3; sx += STUD_STEP) {
+      for (let sz = -d / 2 + 1.3; sz <= d / 2 - 1.3; sz += STUD_STEP) {
+        studPos.push([cx + sx, roofTopY + STUD_HEIGHT / 2, cz + sz]);
+      }
+    }
+    if (studPos.length) {
+      const studMat = getMat(studColorFor(b.colors.roof || "#AAB4C0"), { roughness: 0.18, metalness: 0.12 });
+      const studs = makeInstanced(studGeo, studMat, studPos);
+      studs.name = "var-brick";
+      studs.visible = false;
+      parent.add(studs);
+      registerThemeObject("brick", studs);
+    }
+
+    // (2) 像素冒險：屋頂四周邊緣的體素方塊女兒牆
+    const voxelPos = [];
+    const vy = roofTopY + VOXEL_SIZE / 2;
+    for (let vx = -w / 2 + 0.4; vx <= w / 2; vx += VOXEL_STEP) {
+      voxelPos.push([cx + vx, vy, cz - d / 2 + 0.4], [cx + vx, vy, cz + d / 2 - 0.4]);
+    }
+    for (let vz = -d / 2 + 0.4 + VOXEL_STEP; vz <= d / 2 - 0.4 - VOXEL_STEP; vz += VOXEL_STEP) {
+      voxelPos.push([cx - w / 2 + 0.4, vy, cz + vz], [cx + w / 2 - 0.4, vy, cz + vz]);
+    }
+    const voxelMat = getMat(b.colors.accent || "#00E5FF", { roughness: 0.85, flatShading: true });
+    const voxels = makeInstanced(voxelGeo, voxelMat, voxelPos);
+    voxels.name = "var-pixel";
+    voxels.visible = false;
+    parent.add(voxels);
+    registerThemeObject("pixel", voxels);
+  }
+
+  // 斜屋頂用：沿南北向屋脊 (x = 0) 排成一列的凸粒與體素方塊
+  function addRidgeThemeDecor(parent, b, length, ridgeTopY) {
+    const studPos = [];
+    const voxelPos = [];
+    for (let z = -length / 2 + 1.0; z <= length / 2 - 1.0; z += STUD_STEP) {
+      studPos.push([0, ridgeTopY + STUD_HEIGHT / 2, z]);
+    }
+    for (let z = -length / 2 + 0.4; z <= length / 2 - 0.4; z += VOXEL_STEP) {
+      voxelPos.push([0, ridgeTopY + VOXEL_SIZE / 2, z]);
+    }
+    const studs = makeInstanced(studGeo, getMat(studColorFor(b.colors.roof || "#43464B"), { roughness: 0.18, metalness: 0.12 }), studPos);
+    studs.name = "var-brick";
+    studs.visible = false;
+    parent.add(studs);
+    registerThemeObject("brick", studs);
+    const voxels = makeInstanced(voxelGeo, getMat(b.colors.accent || "#00E5FF", { roughness: 0.85 }), voxelPos);
+    voxels.name = "var-pixel";
+    voxels.visible = false;
+    parent.add(voxels);
+    registerThemeObject("pixel", voxels);
+  }
+
   function createBuildingMesh(b) {
     const root = new THREE.Group();
     root.position.set(b.x, 0, b.z);
@@ -1513,6 +1603,8 @@ window.CampusBuilder3D = (function () {
       canopyRoof.castShadow = true;
       g1.add(canopyRoof);
 
+      // 鋼棚屋頂的主題裝飾 (棚頂寬深各外伸 0.9m)
+      addRoofThemeDecor(g1, b, { cx: 0, cz: 0, w: b.w + 1.8, d: b.d + 1.8 }, b.floorHeight + 0.19);
       root.add(g1);
       root.userData.floorGroups[1] = g1;
       root.userData.pickMesh = plat;
@@ -1972,6 +2064,8 @@ window.CampusBuilder3D = (function () {
       redGate.castShadow = true;
       gGate.add(redGate);
 
+      // 警衛室平屋頂的主題裝飾
+      addRoofThemeDecor(gGate, b, { cx: -9.3, cz: 0.2, w: 8.2, d: 6.8 }, 3.625);
       root.add(gGate);
       root.userData.pickMesh = guardBody;
       root.userData.floorGroups[1] = root;
@@ -2552,6 +2646,8 @@ window.CampusBuilder3D = (function () {
       roofDeckInner.position.set(poolHallCenterX, totalH + 0.22, 0);
       g2.add(roofDeckInner);
 
+      // 泳池館平屋頂 (女兒牆內側屋面) 的主題裝飾
+      addRoofThemeDecor(g2, b, { cx: poolHallCenterX, cz: 0, w: poolHallW - 0.8, d: poolHallD - 0.8 }, totalH + 0.45);
       root.add(g1);
       root.add(g2);
       root.userData.floorGroups[1] = root;
@@ -2842,6 +2938,8 @@ window.CampusBuilder3D = (function () {
       bldGroup.add(penthouseCap);
 
       // =========================== 【全棟一體綁定，絕不中空剖切】 ===========================
+      // 機械館屋面 (女兒牆內側) 的主題裝飾
+      addRoofThemeDecor(bldGroup, b, { cx: 0, cz: 0, w: bw - 0.6, d: bd - 0.6 }, totalH + 0.85);
       root.add(bldGroup);
       root.userData.floorGroups[1] = root;
       root.userData.pickMesh = mainSolidBody;
@@ -2941,50 +3039,10 @@ window.CampusBuilder3D = (function () {
     const topGroup = root.userData.floorGroups[b.floors];
 
     // 為各棟建築頂樓增添「微縮積木 Stud 凸粒陣列」與「像素冒險體素階梯女兒牆」
-    if (topGroup && b.style !== "track" && b.style !== "sport_court" && b.w > 6 && b.d > 6) {
-      // (1) 微縮積木風格：屋頂均勻排列的圓形凸粒陣列 (Brick Studs)
-      const brickStudsGrp = new THREE.Group();
-      brickStudsGrp.name = "var-brick";
-      brickStudsGrp.visible = false;
-      const studMat = getMat(b.colors.roof || "#AAB4C0", { roughness: 0.16, metalness: 0.15 });
-      const studGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.24, 10);
-      const step = 2.6;
-      for (let sx = -b.w / 2 + 1.4; sx <= b.w / 2 - 1.4; sx += step) {
-        for (let sz = -b.d / 2 + 1.4; sz <= b.d / 2 - 1.4; sz += step) {
-          const stud = new THREE.Mesh(studGeo, studMat);
-          stud.position.set(sx, fh + 0.12, sz);
-          stud.castShadow = true;
-          brickStudsGrp.add(stud);
-        }
-      }
-      topGroup.add(brickStudsGrp);
-      registerThemeObject("brick", brickStudsGrp);
-
-      // (2) 復古像素冒險風格：屋頂四周邊緣的體素方塊女兒牆 (Voxel Battlements)
-      const voxelEdgesGrp = new THREE.Group();
-      voxelEdgesGrp.name = "var-pixel";
-      voxelEdgesGrp.visible = false;
-      const vEdgeMat = getMat(b.colors.accent || "#00E5FF", { roughness: 0.85, flatShading: true });
-      const vCubeGeo = new THREE.BoxGeometry(0.72, 0.72, 0.72);
-      const vStep = 1.6;
-      for (let vx = -b.w / 2 + 0.4; vx <= b.w / 2; vx += vStep) {
-        [-b.d / 2 + 0.4, b.d / 2 - 0.4].forEach(vz => {
-          const cube = new THREE.Mesh(vCubeGeo, vEdgeMat);
-          cube.position.set(vx, fh + 0.36, vz);
-          cube.castShadow = true;
-          voxelEdgesGrp.add(cube);
-        });
-      }
-      for (let vz = -b.d / 2 + 0.4 + vStep; vz <= b.d / 2 - 0.4 - vStep; vz += vStep) {
-        [-b.w / 2 + 0.4, b.w / 2 - 0.4].forEach(vx => {
-          const cube = new THREE.Mesh(vCubeGeo, vEdgeMat);
-          cube.position.set(vx, fh + 0.36, vz);
-          cube.castShadow = true;
-          voxelEdgesGrp.add(cube);
-        });
-      }
-      topGroup.add(voxelEdgesGrp);
-      registerThemeObject("pixel", voxelEdgesGrp);
+    // (原美術教室為斜屋頂，改沿屋脊排列，見下方 japanese_annex；樂揚樓屋頂有整片天藍色冠頂外框，裝飾要放在外框頂面)
+    const ROOF_TOP_OFFSET = { yueyang: 0.525 };
+    if (topGroup && b.style !== "track" && b.style !== "sport_court" && b.style !== "japanese_annex" && b.w > 6 && b.d > 6) {
+      addRoofThemeDecor(topGroup, b, { cx: 0, cz: 0, w: b.w, d: b.d }, fh + (ROOF_TOP_OFFSET[b.style] || 0));
     }
 
         // 敬業樓 (`jingye`) — 東南側入口圓弧陽台 + 金色「敬業樓」牌匾 (還原 20261020_125209.jpg)
@@ -3009,6 +3067,8 @@ window.CampusBuilder3D = (function () {
       centerPavilion.position.set(0, fh * 0.55, 0);
       centerPavilion.castShadow = true;
       topGroup.add(centerPavilion);
+      // 中央較高的量體頂面也加上主題裝飾
+      addRoofThemeDecor(topGroup, b, { cx: 0, cz: 0, w: 12.0, d: b.d + 1.2 }, fh * 1.125);
 
       const eastCylinder = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, totalH + fh * 0.9, 20), mainMat);
       eastCylinder.position.set(b.w / 2 - 1.5, (totalH + fh * 0.9) / 2, 0);
@@ -3319,6 +3379,8 @@ window.CampusBuilder3D = (function () {
       ridgeBeam.position.set(0, fh + roofH - 0.05, 0);
       ridgeBeam.castShadow = true;
       topGroup.add(ridgeBeam);
+      // 斜屋頂不放滿版凸粒：主題裝飾沿屋脊排成一列
+      addRidgeThemeDecor(topGroup, b, roofLen, fh + roofH + 0.11);
 
       // 西側中央傳統木造山牆式玄關門廊 (朝西 -X，含獨立小斜頂與木柱)
       const porchW = 2.6;
@@ -3348,6 +3410,8 @@ window.CampusBuilder3D = (function () {
         cornerTower.position.set(0, (totalH + fh * 0.85) / 2, tz);
         cornerTower.castShadow = true;
         root.add(cornerTower);
+        // 兩端較高的角塔頂面也加上主題裝飾
+        addRoofThemeDecor(root, b, { cx: 0, cz: tz, w: b.w + 1.2, d: 6.4 }, totalH + fh * 0.85);
       });
       addSolarPanels(topGroup, b.w, b.d * 0.55, fh, 2);
     }
