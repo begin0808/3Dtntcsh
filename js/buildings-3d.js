@@ -247,13 +247,7 @@ window.CampusBuilder3D = (function () {
     const gardenPathMat = getMat("#8C8A84", { roughness: 0.85 });
     const darkGreenMat = getMat("#497A3B", { roughness: 0.85 });
 
-    // (a) 校門口進門後的「白色圓形迎賓廣場」中央圓島 (0, -162)，半徑設為 7.0m 位於圓環內側不與黑路重疊
-    const entryWhiteCircle = new THREE.Mesh(new THREE.CylinderGeometry(7.0, 7.2, 0.22, 36), whitePlazaMat);
-    entryWhiteCircle.position.set(0, 0.11, -162);
-    entryWhiteCircle.receiveShadow = true;
-    envGroup.add(entryWhiteCircle);
-
-    // (b) 行政大樓北側扇形景觀公園與圓形廣場 (x=34, z=-124)
+    // (a) 行政大樓北側扇形景觀公園與圓形廣場 (x=34, z=-124)
     const neParkBase = new THREE.Mesh(new THREE.CylinderGeometry(16, 16, 0.12, 32), gardenPathMat);
     neParkBase.position.set(34, 0.02, -124);
     envGroup.add(neParkBase);
@@ -261,12 +255,12 @@ window.CampusBuilder3D = (function () {
     neParkCenter.position.set(34, 0.08, -124);
     envGroup.add(neParkCenter);
 
-    // (c) 樂耕樓北側十字路口中央縮小版「圓環花圃」 (0, -75)（依使用者圖二指示自 (0,-96) 往南移至十字路口中心並縮小體量）
-    const circleCurb = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.8, 0.44, 32), getMat("#7B6E75"));
-    circleCurb.position.set(0, 0.22, -75);
+    // (b) 樂耕樓北側十字路口中央「圓環花圃」 (0, -75)（依使用者指示放大 1.2 倍）
+    const circleCurb = new THREE.Mesh(new THREE.CylinderGeometry(3.12, 3.36, 0.46, 32), getMat("#7B6E75"));
+    circleCurb.position.set(0, 0.23, -75);
     envGroup.add(circleCurb);
-    const circleBush = new THREE.Mesh(new THREE.CylinderGeometry(2.1, 2.2, 0.56, 32), darkGreenMat);
-    circleBush.position.set(0, 0.32, -75);
+    const circleBush = new THREE.Mesh(new THREE.CylinderGeometry(2.52, 2.64, 0.58, 32), darkGreenMat);
+    circleBush.position.set(0, 0.33, -75);
     envGroup.add(circleBush);
 
     // (e) 中庭教學區景觀 (中央草坪 + 十字土橘色步道 + 中央方形集會廣場)
