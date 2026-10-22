@@ -1507,11 +1507,11 @@ window.CAMPUS_DATA = {
     "n_swim": { x: -116, z: 86, label: "游泳館正門" },
     "n_west_rd_end": { x: -80, z: 193.3, label: "西側主幹道南端" },
 
-    // 8. 正德樓南側橫向車道 (z = 86)
-    "n_civil": { x: -56, z: 86, label: "土木館北口車道" },
-    "n_civil_entrance": { x: -56, z: 114, label: "土木館正門" },
-    "n_animal": { x: -22, z: 86, label: "畜產館北口車道" },
-    "n_animal_entrance": { x: -22, z: 114, label: "畜產館正門" },
+    // 8. 正德樓南側橫向車道 (z = 86) 與土木館／畜產館專屬正門口 (土木館西側紅色星星、畜產館東側紅色星星)
+    "n_civil_road": { x: -80, z: 146, label: "西側主幹道（土木館西口）" },
+    "n_civil_entrance": { x: -66, z: 146, label: "土木館西側正門入口" },
+    "n_animal_road": { x: 4, z: 146, label: "中央南幹道（畜產館東口）" },
+    "n_animal_entrance": { x: -12, z: 146, label: "畜產館東側正門入口" },
     "n_hort": { x: 38, z: 86, label: "園藝館北口車道" },
     "n_hort_entrance": { x: 38, z: 102.5, label: "園藝館正門" },
 
@@ -1610,20 +1610,21 @@ window.CAMPUS_DATA = {
     ["n_zhengde_n", "n_zhengde_s"],
     ["n_zhengde_s", "n_zhengde_s2"],
 
-    // 8. 正德樓南側橫向車道 (z = 86)
-    ["n_west_rd_s2", "n_civil"],
-    ["n_civil", "n_civil_entrance"],
-    ["n_civil", "n_animal"],
-    ["n_animal", "n_animal_entrance"],
-    ["n_animal", "n_zhengde_s2"],
+    // 8. 正德樓南側橫向車道 (z = 86) 與土木館西側正門 (左側紅色星星)
+    ["n_west_rd_s2", "n_zhengde_s2"],
+    ["n_west_rd_s2", "n_civil_road"],
+    ["n_civil_road", "n_civil_entrance"],
+    ["n_civil_road", "n_west_rd_end"],
     ["n_zhengde_s2", "n_hort"],
     ["n_hort", "n_hort_entrance"],
     ["n_hort", "n_east_rd_s1"],
 
-    // 9. 正德樓往南中央通道與農經／園藝區
+    // 9. 正德樓往南中央通道與畜產館東側正門 (右側紅色星星)／農經／園藝區
     ["n_zhengde_s2", "n_south_path_110"],
-    ["n_south_path_110", "n_hort_shed"],
-    ["n_south_path_110", "n_farm_mgmt"],
+    ["n_south_path_110", "n_animal_road"],
+    ["n_animal_road", "n_animal_entrance"],
+    ["n_animal_road", "n_hort_shed"],
+    ["n_animal_road", "n_farm_mgmt"],
     ["n_farm_mgmt", "n_farm_entrance"],
     ["n_farm_mgmt", "n_east_rd_s2"],
     ["n_hort_shed", "n_south_gate"],

@@ -3349,9 +3349,17 @@ window.CampusBuilder3D = (function () {
       redRoof.position.set(0, fh + 3.5, 0);
       topGroup.add(redRoof);
 
+      // 依實景照片與使用者指示：土木館正門在西側 (-X 左邊紅星)，畜產館正門在東側 (+X 右邊紅星)
+      const entranceSign = (b.id === "civil_eng") ? -1 : 1;
       const entranceBox = new THREE.Mesh(new THREE.BoxGeometry(2.8, totalH + 0.5, 7.5), secMat);
-      entranceBox.position.set(-b.w / 2 - 0.8, totalH / 2, 0);
+      entranceBox.position.set(entranceSign * (b.w / 2 + 0.8), totalH / 2, 0);
+      entranceBox.castShadow = true;
       root.add(entranceBox);
+
+      // 1F 正門挑高玻璃迎賓大門與門楣
+      const doorMesh = new THREE.Mesh(new THREE.BoxGeometry(1.2, 3.2, 4.2), glassMat);
+      doorMesh.position.set(entranceSign * (b.w / 2 + 2.0), 1.6, 0);
+      root.add(doorMesh);
 
       // 土木館與畜產館中央 1F～3F 連通走廊廊橋 (依 20261020_125439.jpg 實景：位於兩棟大樓正中央 connZ = 0.0，跨距 12m、深 7.2m，1F 設有挑高拱門通道供行人穿過草坪)
       if (b.id === "civil_eng") {
