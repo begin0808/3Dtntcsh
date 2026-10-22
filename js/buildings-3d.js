@@ -1195,6 +1195,9 @@ window.CampusBuilder3D = (function () {
   // 座標方向約定：
   // - 東西向建築 (isEW = b.w >= b.d)：rooms 陣列索引 0..N-1 由西側 (-X) 排至東側 (+X)
   // - 南北向建築 (isEW = false)：rooms 陣列索引 0..N-1 由北側 (-Z) 排至南側 (+Z)
+  // 一樓中央穿堂 (行人可貫穿南北，中軸對齊世界座標 x = 0)：建築 style → 穿堂半寬 (m)
+  const GROUND_PASSAGE_HALF_WIDTH = { legeng: 6.0, zhengde: 4.0 };
+
   function buildFloorInterior(b, floorIndex, yBase, fh) {
     const fg = new THREE.Group();
     fg.position.y = yBase;
@@ -1224,12 +1227,13 @@ window.CampusBuilder3D = (function () {
 
       const span = (isEW ? b.w - 1.2 : b.d - 1.2) / count;
       rooms.forEach((rm, idx) => {
-        // 樂耕樓 1F 中央玄關穿堂通道徹底打通：絕不在穿堂走廊中央生成任何 roomBlock 障礙方塊！
-        if (b.style === "legeng" && floorIndex === 1) {
+        // 一樓中央穿堂 (樂耕樓、正德樓) 不生成教室方塊，保持通道淨空
+        const passageHalfW = GROUND_PASSAGE_HALF_WIDTH[b.style];
+        if (passageHalfW && floorIndex === 1) {
           const rxCheck = isEW ? (-b.w / 2 + 0.6 + span * (idx + 0.5)) : 0;
           const hallCenter = -b.x;
-          if (rm.code === "LG4" || rm.type === "common" || rm.name.includes("穿堂") || rm.name.includes("玄關") || Math.abs(rxCheck - hallCenter) < 6.8) {
-            return; // 穿堂範圍完全淨空通透，絕無任何障礙！
+          if (rm.code === "LG4" || rm.type === "common" || rm.name.includes("穿堂") || rm.name.includes("玄關") || Math.abs(rxCheck - hallCenter) < passageHalfW + 0.8) {
+            return;
           }
         }
         const cHex = roomColors[rm.type] || "#CFD4D8";
@@ -2953,10 +2957,10 @@ window.CampusBuilder3D = (function () {
       const yBase = (f - 1) * fh;
       const fg = buildFloorInterior(b, f, yBase, fh);
 
-      if (b.style === "legeng" && f === 1) {
-        // 樂耕樓 1F：中央穿堂玄關通道 (寬 12.0m 貫穿南北，行人可直接穿堂進出中庭，絕非實體牆壁)
+      if (GROUND_PASSAGE_HALF_WIDTH[b.style] && f === 1) {
+        // 一樓中央穿堂 (樂耕樓寬 12m、正德樓寬 8m，貫穿南北，行人可直接穿堂進出中庭)
         const hallCenter = -b.x; // 對齊世界座標 x = 0 中軸線
-        const hallHalfW = 6.0;
+        const hallHalfW = GROUND_PASSAGE_HALF_WIDTH[b.style];
 
         // 西翼實體建築外殼
         const wLeft = (hallCenter - hallHalfW) - (-b.w / 2);
@@ -3539,6 +3543,7 @@ window.CampusBuilder3D = (function () {
   return {
     buildCampusGrounds,
     createBuildingMesh,
-    setVisualTheme
+    setVisualTheme,
+    groundPassageHalfWidth: style => GROUND_PASSAGE_HALF_WIDTH[style] || 0
   };
 })();

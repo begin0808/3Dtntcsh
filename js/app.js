@@ -1027,16 +1027,25 @@
     return Math.hypot(px - (ax + t * dx), pz - (az + t * dz));
   }
 
+  const makeObstacle = (cx, cz, w, d, rotY = 0) => ({
+    x: cx,
+    z: cz,
+    halfW: w / 2 + WALK_BODY_RADIUS,
+    halfD: d / 2 + WALK_BODY_RADIUS,
+    cos: Math.cos(rotY),
+    sin: Math.sin(rotY)
+  });
+
+  // 一樓有中央穿堂的建築 (樂耕樓、正德樓) 拆成東西兩翼，穿堂整個寬度都可以走 (穿堂中軸在 x = 0)
   const walkObstacles = DATA.buildings
     .filter(b => !WALK_PASSABLE_STYLES.has(b.style))
-    .map(b => ({
-      x: b.x,
-      z: b.z,
-      halfW: b.w / 2 + WALK_BODY_RADIUS,
-      halfD: b.d / 2 + WALK_BODY_RADIUS,
-      cos: Math.cos(b.rotY || 0),
-      sin: Math.sin(b.rotY || 0)
-    }));
+    .flatMap(b => {
+      const hallHalfW = BUILDER.groundPassageHalfWidth ? BUILDER.groundPassageHalfWidth(b.style) : 0;
+      if (!hallHalfW) return [makeObstacle(b.x, b.z, b.w, b.d, b.rotY || 0)];
+      const west = [b.x - b.w / 2, -hallHalfW];
+      const east = [hallHalfW, b.x + b.w / 2];
+      return [west, east].map(([x1, x2]) => makeObstacle((x1 + x2) / 2, b.z, x2 - x1, b.d));
+    });
 
   const walkPassages = DATA.navEdges
     .filter(([a, b]) => DATA.navNodes[a] && DATA.navNodes[b])
