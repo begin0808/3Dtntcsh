@@ -2513,7 +2513,7 @@ window.CampusBuilder3D = (function () {
     // 1. 建築體量：寬 15.0m、長 44.0m、高 16.8m（4 層樓，每層 4.2m），正面朝西
     // 2. 對稱結構本質：
     //    - 中央核心 (z = 0，寬 12.0m)：
-    //      * 1F 懸挑大圓弧雨庇門廊，飾有金色「機  械  館」與「Mechanical Engineering Building」雙語牌匾，前方兩根圓立柱
+    //      * 1F 迎賓穿堂大門與台階（上方由 2F 懸挑圓弧大陽台遮蔽）
     //      * 2F～4F 連續三層懸挑大圓弧陽台，形成連續雄偉弧形立面
     //      * 屋頂中央挑高樓梯機房塔樓（z = 0）
     //    - 左翼（北側，z = -6.0 ～ -22.0，長 16m）：
@@ -2552,30 +2552,7 @@ window.CampusBuilder3D = (function () {
       const shutterMat = getMat("#8E96A0", { roughness: 0.5 });
 
       // --- 動態生成貼圖 ---
-      // (1) 正面中央大雨庇金色「機 械 館」牌匾貼圖
-      const mechPlaqueTex = makeTextCanvas(1024, 256, (ctx, w, h) => {
-        ctx.fillStyle = "#823D3F";
-        ctx.fillRect(0, 0, w, h);
-        ctx.strokeStyle = "#5E2527";
-        ctx.lineWidth = 6;
-        ctx.strokeRect(6, 6, w - 12, h - 12);
-
-        ctx.font = "bold 90px 'Noto Serif TC', 'DFKai-SB', 'Microsoft JhengHei', serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillStyle = "#381416";
-        ctx.fillText("機     械     館", w / 2 + 3, 86 + 3);
-        ctx.fillStyle = "#FFD700";
-        ctx.fillText("機     械     館", w / 2, 86);
-
-        ctx.font = "bold 34px 'Arial', 'Helvetica', sans-serif";
-        ctx.fillStyle = "#2E1012";
-        ctx.fillText("Mechanical   Engineering   Building", w / 2 + 2, 178 + 2);
-        ctx.fillStyle = "#FFE885";
-        ctx.fillText("Mechanical   Engineering   Building", w / 2, 178);
-      });
-
-      // (2) 無障礙電梯塔身「機械工程齒輪」彩繪圖騰貼圖
+      // 無障礙電梯塔身「機械工程齒輪」彩繪圖騰貼圖
       const gearMuralTex = makeTextCanvas(512, 1024, (ctx, w, h) => {
         ctx.fillStyle = "#D47A7E";
         ctx.fillRect(0, 0, w, h);
@@ -2718,46 +2695,15 @@ window.CampusBuilder3D = (function () {
         addBowBalcony(18.0, yBase);
       });
 
-      // =========================== 【中央大門廳與弧形門廊 (z = 0)】 ===========================
-      // (6) 1F 中央大弧形懸挑雨庇門廊 (深挑至 x = -9.5，弧長跨距 12m)
-      const canopySlab = new THREE.Mesh(
-        new THREE.CylinderGeometry(7.5, 7.5, 0.45, 24, 1, false, Math.PI * 0.76, Math.PI * 0.48),
-        floorMat
-      );
-      canopySlab.position.set(-bw / 2 + 5.5, 3.9, 0);
-      bldGroup.add(canopySlab);
-
-      // 正面弧形大樑 (深暗紅褐色收邊，飾有金色雙語牌匾)
-      const curvedBeam = new THREE.Mesh(
-        new THREE.CylinderGeometry(7.55, 7.55, 0.85, 24, 1, false, Math.PI * 0.76, Math.PI * 0.48),
-        brickDarkMat
-      );
-      curvedBeam.position.set(-bw / 2 + 5.5, 3.7, 0);
-      bldGroup.add(curvedBeam);
-
-      // 金色牌匾平面
-      if (mechPlaqueTex) {
-        const plaquePlane = new THREE.Mesh(
-          new THREE.PlaneGeometry(5.4, 0.95),
-          new THREE.MeshBasicMaterial({ map: mechPlaqueTex })
-        );
-        plaquePlane.rotation.y = -Math.PI / 2;
-        plaquePlane.position.set(-bw / 2 - 2.06, 3.7, 0);
-        bldGroup.add(plaquePlane);
-      }
-
-      // 雨庇前緣 2 根承重圓立柱
-      [-3.8, 3.8].forEach(pz => {
-        const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.38, 3.9, 16), brickMat);
-        pillar.position.set(-bw / 2 - 1.5, 1.95, pz);
-        pillar.castShadow = true;
-        bldGroup.add(pillar);
-      });
-
-      // 1F 大門入口採光門與水泥迎賓台階
-      const mainDoor = new THREE.Mesh(new THREE.BoxGeometry(0.18, 3.0, 4.6), glassMat);
-      mainDoor.position.set(-bw / 2 - 0.05, 1.5, 0);
+      // =========================== 【中央大門廳與迎賓階梯 (z = 0)】 ===========================
+      // (6) 1F 大門入口採光門與水泥迎賓台階（依使用者指示移除 1F 前方圓柱與懸空門牌，上方由 2F 圓弧大陽台遮蔽）
+      const mainDoor = new THREE.Mesh(new THREE.BoxGeometry(0.18, 3.2, 4.6), glassMat);
+      mainDoor.position.set(-bw / 2 - 0.05, 1.6, 0);
       bldGroup.add(mainDoor);
+
+      const doorFrame = new THREE.Mesh(new THREE.BoxGeometry(0.24, 3.3, 4.8), frameMat);
+      doorFrame.position.set(-bw / 2 - 0.05, 1.65, 0);
+      bldGroup.add(doorFrame);
 
       const steps = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.22, 11.0), getMat("#C6C0B5"));
       steps.position.set(-bw / 2 - 1.2, 0.11, 0);
