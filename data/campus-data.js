@@ -905,7 +905,7 @@ window.CAMPUS_DATA = {
       englishName: "Food Processing Building",
       category: "tech",
       zone: "east",
-      x: 96.0, z: 78.0, w: 15.0, d: 38.0, rotY: 0,
+      x: 100.0, z: 78.0, w: 15.0, d: 38.0, rotY: 0,
       floors: 3, centerTowerFloors: 4, floorHeight: 5.5,
       style: "food_proc",
       colors: {
@@ -928,7 +928,7 @@ window.CAMPUS_DATA = {
       englishName: "Processing Workshop",
       category: "tech",
       zone: "east",
-      x: 118.0, z: 78.0, w: 14.0, d: 38.0, rotY: 0,
+      x: 122.0, z: 78.0, w: 14.0, d: 38.0, rotY: 0,
       floors: 2, floorHeight: 5.6,
       style: "factory",
       colors: {
@@ -950,7 +950,7 @@ window.CAMPUS_DATA = {
       englishName: "Book Depository",
       category: "facility",
       zone: "east",
-      x: 116.0, z: 128.0, w: 15.0, d: 36.0, rotY: 0,
+      x: 120.0, z: 128.0, w: 15.0, d: 36.0, rotY: 0,
       floors: 4, floorHeight: 5.3,
       style: "book_depot",
       colors: {
