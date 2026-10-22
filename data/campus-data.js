@@ -407,7 +407,16 @@ window.CAMPUS_DATA = {
     { points: [[-82.0, -42.5], [-142.0, -42.5], [-142.0, -48.0]], width: 3.5 },
     { points: [[-110.0, -42.5], [-110.0, -37.0]], width: 3.5 },
     { points: [[-82.0, -16.5], [-143.0, -16.5], [-143.0, -12.0]], width: 3.5 },
-    { points: [[-118.5, -16.5], [-118.5, -10.0]], width: 3.5 }
+    { points: [[-118.5, -16.5], [-118.5, -10.0]], width: 3.5 },
+    // 東側主幹道 (z = 40) 斜向至圖書館西側正門，經原美術教室南端外側
+    { points: [[76.0, 40.0], [107.0, 23.0]], width: 3.0 },
+    // 圖書館北側道路至資訊應用學程北側入口
+    { points: [[122.0, -3.0], [122.0, 0.0]], width: 3.0 }
+  ],
+
+  // 同一棟建築的其他入口：可在導航終點單獨選擇；搜尋到 floors 所列樓層的教室時也改走此入口
+  extraNavTargets: [
+    { id: "library_info", building: "library", node: "n_info_entrance", name: "資訊應用學程（圖書館北側入口）", floors: [3] }
   ],
 
   // 建築物與場域清單 (僅保留主要教學校區，座標對齊 OSM 與校園平面圖)
@@ -973,6 +982,8 @@ window.CAMPUS_DATA = {
     "n_east_rd_37": { x: 74, z: -37, label: "東側主幹道（烹飪教室西北口）" },
     "n_east_rd_m1": { x: 74, z: -5, label: "東側主幹道（烹飪南／圖書館西北口）" },
     "n_cooking_road": { x: 74, z: -21, label: "烹飪教室西側道路" },
+    "n_lib_walk_road": { x: 74, z: 40, label: "東側主幹道（圖書館步道口）" },
+    "n_library_entrance": { x: 107, z: 23, label: "圖書館大樓西側正門" },
     "n_east_rd_52": { x: 74, z: 52, label: "東側主幹道（圖書館西南口）" },
     "n_east_rd_s1": { x: 74, z: 86, label: "東側主幹道（食品加工館西口）" },
     "n_food_road": { x: 74, z: 78, label: "食品加工館西側車道" },
@@ -992,8 +1003,9 @@ window.CAMPUS_DATA = {
     // 5. 最東側南北向主幹道 (x = 136)
     "n_yueyang_road": { x: 136, z: -21, label: "東外環車道（樂揚樓東）" },
     "n_far_east_m1": { x: 136, z: -5, label: "東外環車道（資源室西門）" },
-    "n_library_road": { x: 136, z: 24, label: "東外環車道（圖書館正門口）" },
-    "n_library_entrance": { x: 129, z: 24, label: "圖書館大樓正門迎賓階梯" },
+    "n_library_road": { x: 136, z: 24, label: "東外環車道（圖書館東側）" },
+    "n_info_road": { x: 122, z: -5, label: "圖書館北側道路（資訊學程門口）" },
+    "n_info_entrance": { x: 122, z: 0, label: "資訊應用學程北側入口" },
     "n_far_east_m2": { x: 136, z: 52, label: "東外環車道（圖書館東南口）" },
     "n_factory_road": { x: 136, z: 78, label: "東外環車道（加工工廠東口）" },
     "n_factory_entrance": { x: 129, z: 78, label: "加工工廠正門" },
@@ -1116,7 +1128,9 @@ window.CAMPUS_DATA = {
     ["n_east_rd_66", "n_east_rd_37"],
     ["n_east_rd_37", "n_cooking_road"],
     ["n_cooking_road", "n_east_rd_m1"],
-    ["n_east_rd_m1", "n_east_rd_52"],
+    ["n_east_rd_m1", "n_lib_walk_road"],
+    ["n_lib_walk_road", "n_east_rd_52"],
+    ["n_lib_walk_road", "n_library_entrance"], // 斜向人行步道至圖書館西側正門
     ["n_east_rd_52", "n_food_road"],
     ["n_food_road", "n_east_rd_s1"],
     ["n_food_road", "n_food_entrance"],
@@ -1137,9 +1151,10 @@ window.CAMPUS_DATA = {
     ["n_far_east_66", "n_far_east_37"],
     ["n_far_east_37", "n_yueyang_road"],
     ["n_yueyang_road", "n_far_east_m1"],
-    ["n_east_rd_m1", "n_far_east_m1"],
+    ["n_east_rd_m1", "n_info_road"],
+    ["n_info_road", "n_far_east_m1"],
+    ["n_info_road", "n_info_entrance"],
     ["n_far_east_m1", "n_library_road"],
-    ["n_library_road", "n_library_entrance"],
     ["n_library_road", "n_far_east_m2"],
     ["n_east_rd_52", "n_far_east_m2"],
     ["n_far_east_m2", "n_factory_road"],

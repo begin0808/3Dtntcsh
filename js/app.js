@@ -1168,7 +1168,7 @@
     }
 
     document.getElementById("navToHereBtn").addEventListener("click", () => {
-      startNavigation(state.navStartId || "main_gate", b.id);
+      startNavigation(state.navStartId || "main_gate", highlightRoom ? getNavTargetIdForRoom({ ...highlightRoom, buildingId: b.id }) : b.id);
     });
 
     document.getElementById("setStartHereBtn").addEventListener("click", () => {
@@ -1380,18 +1380,36 @@
     return cp;
   }
 
-  function startNavigation(fromBuildingId, toBuildingId, roomLabel = "") {
-    state.navStartId = fromBuildingId;
-    state.navEndId = toBuildingId;
+  // 導航目標：建築 id (走該建築主入口) 或 extraNavTargets 的 id (同棟建築的其他入口)
+  function getNavTarget(id) {
+    const extra = (DATA.extraNavTargets || []).find(t => t.id === id);
+    if (extra) {
+      return { node: extra.node, building: DATA.buildings.find(b => b.id === extra.building), name: extra.name };
+    }
+    const b = DATA.buildings.find(x => x.id === id);
+    return { node: DATA.buildingNavNode[id], building: b, name: b ? b.name.replace(/（.*）/, "") : "" };
+  }
 
-    const startNode = DATA.buildingNavNode[fromBuildingId] || "n_gate";
-    const endNode = DATA.buildingNavNode[toBuildingId] || "n_quad_c";
-    const fromBld = DATA.buildings.find(b => b.id === fromBuildingId);
-    const toBld = DATA.buildings.find(b => b.id === toBuildingId);
+  // 教室所在樓層若有專屬入口 (例如圖書館 3F 資訊學程走北側入口)，改以該入口為導航終點
+  function getNavTargetIdForRoom(rm) {
+    const extra = (DATA.extraNavTargets || []).find(t => t.building === rm.buildingId && (t.floors || []).includes(rm.floor));
+    return extra ? extra.id : rm.buildingId;
+  }
+
+  function startNavigation(fromTargetId, toTargetId, roomLabel = "") {
+    state.navStartId = fromTargetId;
+    state.navEndId = toTargetId;
+
+    const fromTarget = getNavTarget(fromTargetId);
+    const toTarget = getNavTarget(toTargetId);
+    const startNode = fromTarget.node || "n_gate";
+    const endNode = toTarget.node || "n_quad_c";
+    const fromBld = fromTarget.building;
+    const toBld = toTarget.building;
 
     // 起點與終點相同，或路網上找不到連通路線：不畫線 (避免直線切過草皮與建築)
     if (startNode === endNode) {
-      showToast(fromBuildingId === toBuildingId ? "📍 起點與終點相同，請選擇其他目的地" : "📍 兩地相鄰，步行即可直接抵達");
+      showToast(fromTargetId === toTargetId ? "📍 起點與終點相同，請選擇其他目的地" : "📍 兩地相鄰，步行即可直接抵達");
       return;
     }
 
@@ -1446,7 +1464,7 @@
 
     const navBar = document.getElementById("navStatusBar");
     navBar.hidden = false;
-    document.getElementById("navRouteTitle").textContent = `${fromBld ? fromBld.name.replace(/（.*）/, "") : "起點"} ➔ ${toBld ? toBld.name.replace(/（.*）/, "") : "終點"}${roomLabel ? " (" + roomLabel + ")" : ""}`;
+    document.getElementById("navRouteTitle").textContent = `${fromTarget.name || "起點"} ➔ ${toTarget.name || "終點"}${roomLabel ? " (" + roomLabel + ")" : ""}`;
     document.getElementById("navRouteMeta").textContent = `預估步行距離約 ${totalMeters} 公尺 ・ 步行時間約 ${walkMins} 分鐘`;
 
     // 手機版：收起面板，讓路線完整露出
@@ -1574,7 +1592,7 @@
           selectBuilding(item.buildingId, true);
         } else if (item.kind === "room") {
           focusOnRoom(item.rm);
-          startNavigation(state.navStartId || "main_gate", item.rm.buildingId, `${item.rm.floor}F ${item.rm.name}`);
+          startNavigation(state.navStartId || "main_gate", getNavTargetIdForRoom(item.rm), `${item.rm.floor}F ${item.rm.name}`);
         }
       });
     });
@@ -1850,7 +1868,13 @@
     // 8. 導航起終點選單初始化
     const startSel = document.getElementById("navStartSelect");
     const endSel = document.getElementById("navEndSelect");
-    const optsHtml = DATA.buildings.map(b => `<option value="${b.id}">${b.name}</option>`).join("");
+    // 每棟建築之後接著列出該棟的其他入口 (例如圖書館 → 資訊應用學程北側入口)
+    const optsHtml = DATA.buildings.map(b => {
+      const extras = (DATA.extraNavTargets || []).filter(t => t.building === b.id);
+      return [`<option value="${b.id}">${b.name}</option>`]
+        .concat(extras.map(t => `<option value="${t.id}">　└ ${t.name}</option>`))
+        .join("");
+    }).join("");
     startSel.innerHTML = optsHtml;
     endSel.innerHTML = `<option value="">-- 選擇目的地建築 --</option>` + optsHtml;
     startSel.value = "main_gate";

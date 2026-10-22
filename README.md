@@ -53,7 +53,8 @@ TODO.md               待辦事項
 
 - `buildings`：建築位置、尺寸、樓層數與外觀（名稱與教室在 `school-year.js`）。
 - `internalRoads`／`walkways`：校內車道與人行步道（同時影響樹木避讓）。
-- `navNodes`／`navEdges`：導航路網節點與連線；`buildingNavNode` 指定每棟建築的入口節點（每棟建築應有自己的入口）。
+- `navNodes`／`navEdges`：導航路網節點與連線；`buildingNavNode` 指定每棟建築的主入口節點（每棟建築應有自己的入口）。
+- `extraNavTargets`：同一棟建築的其他入口（例如圖書館北側的資訊應用學程入口），會出現在導航終點選單；搜尋到 `floors` 所列樓層的教室時也會改走這個入口。
 - 新增或移動道路時，請一併更新導航路網，以及 `js/buildings-3d.js` 中的 `isPositionOnRoad`（樹木避讓範圍）。
 
 ## 🚀 部署與本機預覽
