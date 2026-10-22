@@ -30,6 +30,8 @@
           <small>115 學年度 ・ 臺南市永康區中山南路 948 號</small>
         </div>
       </div>
+      <!-- 手機版：搜尋框收合為圖示 -->
+      <button type="button" id="mobileSearchBtn" class="icon-btn glass-card compact-only" aria-label="搜尋班級、教室或建築">🔍</button>
 
       <!-- 搜尋框與熱門關鍵字 -->
       <div class="search-box">
@@ -97,7 +99,10 @@
 
     <!-- 左中：校園路線導航 -->
     <aside id="leftNavBox" class="glass-card">
-      <h3>🧭 校園路線導航</h3>
+      <div class="sheet-head">
+        <h3>🧭 校園路線導航</h3>
+        <button type="button" class="close-btn compact-only" id="closeNavBoxBtn" aria-label="關閉路線導航">✕</button>
+      </div>
       <div class="nav-select-row">
         <span>起點</span>
         <select id="navStartSelect" aria-label="導航起點"></select>
@@ -139,6 +144,7 @@
           <button type="button" class="char-chip" id="charGirlBtn" data-char="girl" title="切換為南大附中女同學角色">👧 女同學</button>
           <span class="hud-sub-sep">|</span>
           <button type="button" class="char-chip view-chip active" id="toggleWalkCamViewBtn" title="切換第三人稱／第一人稱視角">🎥 第三人稱</button>
+          <button type="button" class="char-chip" id="walkPaceBtn" title="切換跑步／步行速度">🏃 跑步</button>
           <button type="button" class="char-chip" id="toggleHudCollapseBtn" title="收合或展開下方操作面板 (快捷鍵 H)">🔽 收合面板</button>
           <button type="button" class="act-btn" id="exitWalkBtn" style="flex:none; margin-left:6px;">🦅 返回鳥瞰</button>
         </div>
@@ -152,6 +158,11 @@
         </div>
         <div class="walk-spawns" id="walkSpawnBtns"></div>
       </div>
+    </div>
+
+    <!-- 手機版漫步：虛擬搖桿 (上下＝前進後退、左右＝轉向) -->
+    <div id="walkJoystick" aria-label="漫步搖桿：上下前進後退、左右轉向">
+      <div class="joy-knob"></div>
     </div>
 
     <!-- 底部：A* 導航狀態列 (含播放/暫停、速度切換、俯瞰視角高度切換與即時進度條) -->
@@ -195,12 +206,55 @@
       </div>
     </div>
 
+    <!-- 手機版：底部工具列 -->
+    <nav id="mobileDock" class="compact-only" aria-label="主要功能">
+      <button type="button" data-dock="overview"><span>🏠</span>全覽</button>
+      <button type="button" data-dock="walk"><span>🚶</span>漫步</button>
+      <button type="button" data-dock="nav"><span>🧭</span>導航</button>
+      <button type="button" data-dock="programs"><span>🎓</span>學程</button>
+      <button type="button" data-dock="more"><span>⋯</span>更多</button>
+    </nav>
+
+    <!-- 手機版：「更多」選單 (視覺風格、操作說明、版權) -->
+    <aside id="moreSheet" class="glass-card" hidden>
+      <div class="sheet-head">
+        <h3>⋯ 更多設定</h3>
+        <button type="button" class="close-btn" id="closeMoreSheetBtn" aria-label="關閉">✕</button>
+      </div>
+      <div class="more-label">視覺風格</div>
+      <div class="seg-group more-themes" role="group" aria-label="視覺風格切換">
+        <button type="button" class="active" data-theme="day">☀️ 晴空寫實</button>
+        <button type="button" data-theme="pixel">🕹️ 像素冒險</button>
+        <button type="button" data-theme="brick">🧱 微縮積木</button>
+      </div>
+      <button type="button" class="act-btn" id="showGestureHintBtn">👆 操作說明</button>
+      <button type="button" class="act-btn" id="openCopyModalBtn2">ℹ️ 版權與資料來源說明</button>
+    </aside>
+
+    <!-- 觸控操作說明 (手機首次開啟時顯示一次) -->
+    <div id="gestureHint" hidden>
+      <div class="glass-card gesture-card">
+        <h3>👆 觸控操作說明</h3>
+        <ul>
+          <li><b>單指拖曳</b>：平移地圖</li>
+          <li><b>雙指捏合</b>：放大／縮小</li>
+          <li><b>雙指旋轉</b>：轉動視角</li>
+          <li><b>雙指上下滑</b>：調整俯視角度</li>
+          <li><b>點建築或標籤</b>：查看介紹與教室</li>
+          <li><b>點羅盤</b>：回到正北朝上</li>
+          <li><b>漫步模式</b>：左下搖桿移動，單指拖曳環顧四周</li>
+        </ul>
+        <button type="button" class="act-btn pri" id="closeGestureHintBtn">知道了</button>
+      </div>
+    </div>
+
     <!-- 頂部浮動通知 -->
     <div id="campusToast"></div>
 
     <!-- 底部操作說明與版權列 -->
     <footer id="campusFooter">
-      <span>🖱️ <b>操作</b>：左鍵拖曳平移 ・ 右鍵拖曳旋轉（可於右上角切換） ・ 滾輪縮放 ・ WASD 移動 ・ 點擊「🏠 最佳全覽視角」回正置中</span>
+      <span class="hint-mouse">🖱️ <b>操作</b>：左鍵拖曳平移 ・ 右鍵拖曳旋轉（可於右上角切換） ・ 滾輪縮放 ・ WASD 移動 ・ 點擊「🏠 最佳全覽視角」回正置中</span>
+      <span class="hint-touch">👆 <b>操作</b>：單指拖曳平移 ・ 雙指捏合縮放 ・ 雙指旋轉轉動視角 ・ 雙指上下滑調整俯角 ・ 點羅盤回正北</span>
       <span class="footer-copy">
         © 2026 <b>國立臺南大學附屬高級中學 (TNTCSH)</b> All Rights Reserved. ｜ 地圖資料：© OpenStreetMap contributors ｜
         <button type="button" id="openCopyModalBtn" class="copy-link-btn">ℹ️ 版權與資料來源說明</button>

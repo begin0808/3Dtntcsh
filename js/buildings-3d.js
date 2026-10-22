@@ -61,6 +61,16 @@ window.CampusBuilder3D = (function () {
     return;
   }
 
+  // 工具函式：點 (px, pz) 到線段 (ax, az)-(bx, bz) 的平面距離
+  function distToSegment2D(px, pz, ax, az, bx, bz) {
+    const dx = bx - ax;
+    const dz = bz - az;
+    const lenSq = dx * dx + dz * dz;
+    let t = lenSq > 0 ? ((px - ax) * dx + (pz - az) * dz) / lenSq : 0;
+    t = Math.max(0, Math.min(1, t));
+    return Math.hypot(px - (ax + t * dx), pz - (az + t * dz));
+  }
+
   // 工具函式：依據折線頂點建立平滑連接的 3D 道路帶與轉角圓盤
   // 透過微小高度步進 (microStep) 確保轉角圓盤與直線段、交叉路口絕不共平面，徹底消除 Z-fighting 閃爍
   let roadPartCounter = 0;
@@ -241,6 +251,17 @@ window.CampusBuilder3D = (function () {
       addPolylineRoad(envGroup, r.points, r.width || 8, 0.07, internalRoadMat, false, null, 0.14);
     });
 
+    // 4b. 校內人行步道 (磚色鋪面，與中庭步道同色系)
+    const walkwayMat = getMat("#B68F66", {
+      roughness: 0.8,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -2
+    });
+    (DATA.walkways || []).forEach(r => {
+      addPolylineRoad(envGroup, r.points, r.width || 3.5, 0.07, walkwayMat, false, null, 0.14);
+    });
+
     // 5. 平面圖特色地景與廣場還原 (aa190fc6a5da5710e0aea63299779c6c.PNG)
     const whitePlazaMat = getMat("#F0EFEA", { roughness: 0.75, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
     const brickPlazaMat = getMat("#B68F66", { roughness: 0.8, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
@@ -412,6 +433,15 @@ window.CampusBuilder3D = (function () {
       }
       if (x >= 74.0 && x <= 172.0) {
         if (Math.abs(z - 180.5) < 4.2) return true;
+      }
+      // 17. 人行步道 (DATA.walkways)，兩側各留 1m 淨空
+      const walkways = DATA.walkways || [];
+      for (let i = 0; i < walkways.length; i++) {
+        const pts = walkways[i].points;
+        const half = (walkways[i].width || 3.5) / 2 + 1.0;
+        for (let j = 0; j < pts.length - 1; j++) {
+          if (distToSegment2D(x, z, pts[j][0], pts[j][1], pts[j + 1][0], pts[j + 1][1]) < half) return true;
+        }
       }
       return false;
     }

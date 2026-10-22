@@ -24,6 +24,8 @@
     walkMode: false,       // 地面漫步模式
     walkChar: "boy",       // 'boy' | 'girl'
     walkView: "third_person", // 'third_person' | 'first_person'
+    walkPace: "run",       // 'run' | 'walk'
+    walkJoy: { x: 0, y: 0 }, // 觸控搖桿輸入，x = 轉向、y = 前後 (-1..1)
     walkPos: new THREE.Vector3(2.0, 0, -200),
     walkYaw: Math.PI,      // 0 = 朝北(-Z), Math.PI = 朝南(+Z), -Math.PI/2 = 朝東(+X), Math.PI/2 = 朝西(-X)
     walkPitch: 0.04,
@@ -314,8 +316,33 @@
   }
 
   // 滑鼠與觸控事件
+  // 單指／滑鼠：拖曳平移或旋轉；雙指：捏合縮放、旋轉手勢轉動視角、上下滑動調整俯角
   let pointerDownPos = { x: 0, y: 0 };
+  const activePointers = new Map(); // pointerId -> { x, y }
+  let pinchState = null;            // 雙指手勢上一幀的距離、角度與中點
+  let gestureWasMulti = false;      // 本次觸控曾出現雙指，放開時不視為點擊
+
+  function measurePinch() {
+    const [a, b] = Array.from(activePointers.values());
+    return {
+      dist: Math.max(1, Math.hypot(b.x - a.x, b.y - a.y)),
+      angle: Math.atan2(b.y - a.y, b.x - a.x),
+      midY: (a.y + b.y) / 2
+    };
+  }
+
   canvas.addEventListener("pointerdown", e => {
+    canvas.setPointerCapture(e.pointerId);
+    activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (activePointers.size >= 2) {
+      gestureWasMulti = true;
+      camControl.isDragging = false;
+      pinchState = measurePinch();
+      return;
+    }
+
+    gestureWasMulti = false;
     pointerDownPos = { x: e.clientX, y: e.clientY };
     camControl.isDragging = true;
     // 若處於「✋ 左鍵平移」模式：左鍵＝平移，右鍵／Shift+左鍵＝旋轉
@@ -328,10 +355,29 @@
     }
     camControl.lastX = e.clientX;
     camControl.lastY = e.clientY;
-    canvas.setPointerCapture(e.pointerId);
   });
 
   canvas.addEventListener("pointermove", e => {
+    const tracked = activePointers.get(e.pointerId);
+    if (tracked) {
+      tracked.x = e.clientX;
+      tracked.y = e.clientY;
+    }
+
+    if (activePointers.size >= 2 && pinchState) {
+      const cur = measurePinch();
+      if (!state.walkMode) {
+        camControl.sphericalGoal.radius = Math.max(18, Math.min(700, camControl.sphericalGoal.radius * (pinchState.dist / cur.dist)));
+        let dAngle = cur.angle - pinchState.angle;
+        if (dAngle > Math.PI) dAngle -= Math.PI * 2;
+        if (dAngle < -Math.PI) dAngle += Math.PI * 2;
+        camControl.sphericalGoal.theta += dAngle;
+        camControl.sphericalGoal.phi = Math.max(0.18, Math.min(Math.PI / 2 - 0.05, camControl.sphericalGoal.phi - (cur.midY - pinchState.midY) * 0.004));
+      }
+      pinchState = cur;
+      return;
+    }
+
     if (!camControl.isDragging) return;
     const dx = e.clientX - camControl.lastX;
     const dy = e.clientY - camControl.lastY;
@@ -359,13 +405,35 @@
     }
   });
 
-  canvas.addEventListener("pointerup", e => {
+  function endPointer(e, isCancel) {
+    activePointers.delete(e.pointerId);
+
+    if (activePointers.size === 1) {
+      // 雙指放開其中一指：以剩下的手指接續單指拖曳，避免畫面跳動
+      pinchState = null;
+      const rest = activePointers.values().next().value;
+      camControl.isDragging = true;
+      camControl.dragMode = camControl.leftMouseAction;
+      camControl.lastX = rest.x;
+      camControl.lastY = rest.y;
+      return;
+    }
+    if (activePointers.size > 1) {
+      pinchState = measurePinch();
+      return;
+    }
+
+    pinchState = null;
     camControl.isDragging = false;
+    if (isCancel || gestureWasMulti) return;
     const moveDist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
     if (moveDist < 5 && e.button === 0) {
       handleCanvasClick(e);
     }
-  });
+  }
+
+  canvas.addEventListener("pointerup", e => endPointer(e, false));
+  canvas.addEventListener("pointercancel", e => endPointer(e, true));
 
   canvas.addEventListener("contextmenu", e => e.preventDefault());
 
@@ -654,9 +722,112 @@
     return grp;
   }
 
+  // ================= 漫步碰撞：建築物與校界圍牆 =================
+  // 可直接走入的場地 (操場、球場、校門拱門) 不列為障礙物
+  const WALK_PASSABLE_STYLES = new Set(["sport_court", "track", "gate"]);
+  const WALK_BODY_RADIUS = 0.8;    // 角色與建築外牆保留的距離
+  const WALK_WALL_MARGIN = 1.2;    // 角色與校界圍牆保留的距離
+  const WALK_PASSAGE_RADIUS = 2.2; // 導航路線兩側可通行的半寬：穿堂與建築入口因此可以走進去
+  const WALK_MAX_SUBSTEP = 1.0;    // 單次碰撞檢查的最大移動距離，避免高速時穿透薄牆
+
+  // 校門口前廣場 (位於校界多邊形外的內凹處)，可自由走動
+  const GATE_FORECOURT = { minX: -8, maxX: 10.5, minZ: -206, maxZ: -180 };
+
+  function distToSegment(px, pz, ax, az, bx, bz) {
+    const dx = bx - ax;
+    const dz = bz - az;
+    const lenSq = dx * dx + dz * dz;
+    let t = lenSq > 0 ? ((px - ax) * dx + (pz - az) * dz) / lenSq : 0;
+    t = Math.max(0, Math.min(1, t));
+    return Math.hypot(px - (ax + t * dx), pz - (az + t * dz));
+  }
+
+  const walkObstacles = DATA.buildings
+    .filter(b => !WALK_PASSABLE_STYLES.has(b.style))
+    .map(b => ({
+      x: b.x,
+      z: b.z,
+      halfW: b.w / 2 + WALK_BODY_RADIUS,
+      halfD: b.d / 2 + WALK_BODY_RADIUS,
+      cos: Math.cos(b.rotY || 0),
+      sin: Math.sin(b.rotY || 0)
+    }));
+
+  const walkPassages = DATA.navEdges
+    .filter(([a, b]) => DATA.navNodes[a] && DATA.navNodes[b])
+    .map(([a, b]) => [DATA.navNodes[a], DATA.navNodes[b]]);
+
+  // 校界圍牆線段；校門口內凹處沒有圍牆 (與 buildings-3d.js 建立圍牆時的判斷一致)
+  const boundaryPts = DATA.campusBoundary || [];
+  const boundaryWalls = boundaryPts
+    .map((p1, i) => [p1, boundaryPts[(i + 1) % boundaryPts.length]])
+    .filter(([p1, p2]) => !(p1[0] >= -14 && p1[0] <= 14 && p2[0] >= -14 && p2[0] <= 14 && p1[1] < -170 && p2[1] < -170));
+
+  function isInsideCampus(x, z) {
+    let inside = false;
+    for (let i = 0, j = boundaryPts.length - 1; i < boundaryPts.length; j = i++) {
+      const [xi, zi] = boundaryPts[i];
+      const [xj, zj] = boundaryPts[j];
+      if ((zi > z) !== (zj > z) && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside;
+    }
+    return inside;
+  }
+
+  function isInGateForecourt(x, z) {
+    return x >= GATE_FORECOURT.minX && x <= GATE_FORECOURT.maxX && z >= GATE_FORECOURT.minZ && z <= GATE_FORECOURT.maxZ;
+  }
+
+  function isNearPassage(x, z) {
+    return walkPassages.some(([a, b]) => distToSegment(x, z, a.x, a.z, b.x, b.z) < WALK_PASSAGE_RADIUS);
+  }
+
+  function isWalkable(x, z) {
+    if (!isInGateForecourt(x, z)) {
+      if (boundaryPts.length >= 3 && !isInsideCampus(x, z)) return false;
+      if (boundaryWalls.some(([p1, p2]) => distToSegment(x, z, p1[0], p1[1], p2[0], p2[1]) < WALK_WALL_MARGIN)) return false;
+    }
+    for (let i = 0; i < walkObstacles.length; i++) {
+      const o = walkObstacles[i];
+      const dx = x - o.x;
+      const dz = z - o.z;
+      // 轉換至建築本地座標 (Three.js rotation.y 為逆時針)
+      const lx = dx * o.cos - dz * o.sin;
+      const lz = dx * o.sin + dz * o.cos;
+      if (Math.abs(lx) < o.halfW && Math.abs(lz) < o.halfD && !isNearPassage(x, z)) return false;
+    }
+    return true;
+  }
+
+  // 依碰撞結果移動角色；撞牆時分別嘗試 X、Z 方向，讓角色沿牆面滑動
+  function moveWalker(dx, dz) {
+    const steps = Math.max(1, Math.ceil(Math.hypot(dx, dz) / WALK_MAX_SUBSTEP));
+    const sx = dx / steps;
+    const sz = dz / steps;
+    const p = state.walkPos;
+    // 若目前位置已在障礙物內 (例如舊版起點)，放行移動以便離開
+    const stuck = !isWalkable(p.x, p.z);
+    for (let i = 0; i < steps; i++) {
+      if (stuck || isWalkable(p.x + sx, p.z + sz)) {
+        p.x += sx;
+        p.z += sz;
+      } else if (isWalkable(p.x + sx, p.z)) {
+        p.x += sx;
+      } else if (isWalkable(p.x, p.z + sz)) {
+        p.z += sz;
+      } else {
+        break;
+      }
+    }
+  }
+
   // ================= 地面漫步冒險模式（第三人稱角色探索與第一人稱切換） =================
   function toggleWalkMode(enable, spawnId = "gate") {
     state.walkMode = enable;
+    document.body.classList.toggle("walk-active", enable);
+    if (!enable) {
+      state.walkJoy.x = 0;
+      state.walkJoy.y = 0;
+    }
     const walkBtn = document.getElementById("walkModeBtn");
     const walkHud = document.getElementById("walkHudBar");
     walkBtn.classList.toggle("active", enable);
@@ -685,6 +856,7 @@
       camControl.sphericalGoal.radius = 165;
       camControl.sphericalGoal.phi = 0.85;
     }
+    syncDock();
   }
 
   function teleportWalkSpawn(spawnId) {
@@ -801,6 +973,7 @@
   // 渲染右側建築與教室詳情抽屜
   function renderBuildingCard(b, highlightRoom = null) {
     const panel = document.getElementById("detailDrawer");
+    closeMobileSheets("detail");
     panel.hidden = false;
 
     const reopenPill = document.getElementById("reopenDrawerPill");
@@ -963,7 +1136,7 @@
   // ================= 三種原創視覺風格切換 (晴空寫實 / 復古像素冒險 / 微縮積木世界) =================
   function applyVisualTheme(themeName) {
     state.theme = themeName;
-    document.querySelectorAll("#themeSwitcher button").forEach(btn => {
+    document.querySelectorAll("#themeSwitcher button, .more-themes button").forEach(btn => {
       btn.classList.toggle("active", btn.dataset.theme === themeName);
     });
 
@@ -1129,7 +1302,17 @@
     const fromBld = DATA.buildings.find(b => b.id === fromBuildingId);
     const toBld = DATA.buildings.find(b => b.id === toBuildingId);
 
+    // 起點與終點相同，或路網上找不到連通路線：不畫線 (避免直線切過草皮與建築)
+    if (startNode === endNode) {
+      showToast(fromBuildingId === toBuildingId ? "📍 起點與終點相同，請選擇其他目的地" : "📍 兩地相鄰，步行即可直接抵達");
+      return;
+    }
+
     const res = findShortestPath(startNode, endNode);
+    if (res.path.length < 2 || res.path[0] !== startNode) {
+      showToast("⚠️ 找不到沿校園道路的步行路線");
+      return;
+    }
 
     while (routeGroup.children.length) {
       routeGroup.remove(routeGroup.children[0]);
@@ -1140,12 +1323,6 @@
       const n = DATA.navNodes[nid];
       if (n) pts.push(new THREE.Vector3(n.x, 0.75, n.z));
     });
-
-    if (pts.length < 2 && fromBld && toBld) {
-      pts.length = 0;
-      pts.push(new THREE.Vector3(fromBld.x, 0.75, fromBld.z));
-      pts.push(new THREE.Vector3(toBld.x, 0.75, toBld.z));
-    }
 
     if (pts.length >= 2) {
       const curve = createRoadRouteCurve(pts, 1.8);
@@ -1184,6 +1361,9 @@
     navBar.hidden = false;
     document.getElementById("navRouteTitle").textContent = `${fromBld ? fromBld.name.replace(/（.*）/, "") : "起點"} ➔ ${toBld ? toBld.name.replace(/（.*）/, "") : "終點"}${roomLabel ? " (" + roomLabel + ")" : ""}`;
     document.getElementById("navRouteMeta").textContent = `預估步行距離約 ${totalMeters} 公尺 ・ 步行時間約 ${walkMins} 分鐘`;
+
+    // 手機版：收起面板，讓路線完整露出
+    closeMobileSheets();
 
     if (fromBld && toBld && !state.walkMode) {
       const midX = (fromBld.x + toBld.x) / 2;
@@ -1302,6 +1482,7 @@
       li.addEventListener("click", () => {
         const item = matches[parseInt(li.dataset.idx, 10)];
         listEl.hidden = true;
+        document.body.classList.remove("search-open");
         if (item.kind === "building") {
           selectBuilding(item.buildingId, true);
         } else if (item.kind === "room") {
@@ -1572,8 +1753,8 @@
 
     // 6. 樓層切換器 (已依需求移除)
 
-    // 7. 視覺風格切換器
-    document.querySelectorAll("#themeSwitcher button").forEach(btn => {
+    // 7. 視覺風格切換器 (桌機頂部列與手機「更多」選單共用)
+    document.querySelectorAll("#themeSwitcher button, .more-themes button").forEach(btn => {
       btn.addEventListener("click", () => {
         applyVisualTheme(btn.dataset.theme);
       });
@@ -1657,6 +1838,177 @@
     // 10. 視窗縮放處理
     window.addEventListener("resize", onWindowResize);
     onWindowResize();
+
+    initCompactUI();
+  }
+
+  // ================= 手機／平板精簡介面 =================
+  // 斷點需與 style.css 的「精簡版面」媒體查詢一致
+  const compactQuery = window.matchMedia("(max-width: 900px), (max-height: 520px)");
+  const touchQuery = window.matchMedia("(hover: none) and (pointer: coarse)");
+  const GESTURE_HINT_KEY = "tntcsh3d.gestureHintSeen";
+
+  function isCompactLayout() {
+    return compactQuery.matches;
+  }
+
+  // 底部面板一次只開一個；except 為保留開啟的面板 ('nav' | 'programs' | 'more' | 'detail')
+  function closeMobileSheets(except) {
+    if (!isCompactLayout()) return;
+    if (except !== "nav") document.getElementById("leftNavBox").classList.remove("open");
+    if (except !== "more") document.getElementById("moreSheet").hidden = true;
+    if (except !== "programs") {
+      document.getElementById("programsDrawer").hidden = true;
+      document.getElementById("programsToggleBtn").classList.remove("active");
+    }
+    if (except !== "detail" && !document.getElementById("detailDrawer").hidden) {
+      const minBtn = document.getElementById("minimizeDrawerBtn");
+      if (minBtn) minBtn.click();
+    }
+    document.body.classList.remove("search-open");
+    syncDock();
+  }
+
+  function syncDock() {
+    const dock = document.getElementById("mobileDock");
+    if (!dock) return;
+    const activeMap = {
+      walk: state.walkMode,
+      nav: document.getElementById("leftNavBox").classList.contains("open"),
+      programs: !document.getElementById("programsDrawer").hidden,
+      more: !document.getElementById("moreSheet").hidden
+    };
+    dock.querySelectorAll("button[data-dock]").forEach(btn => {
+      btn.classList.toggle("active", !!activeMap[btn.dataset.dock]);
+    });
+  }
+
+  function showGestureHint() {
+    document.getElementById("gestureHint").hidden = false;
+  }
+
+  function initCompactUI() {
+    const navBox = document.getElementById("leftNavBox");
+    const moreSheet = document.getElementById("moreSheet");
+
+    document.querySelectorAll("#mobileDock button[data-dock]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const act = btn.dataset.dock;
+        if (act === "overview") {
+          closeMobileSheets();
+          resetToBestOverview();
+        } else if (act === "walk") {
+          closeMobileSheets();
+          toggleWalkMode(!state.walkMode, "gate");
+        } else if (act === "nav") {
+          const willOpen = !navBox.classList.contains("open");
+          closeMobileSheets("nav");
+          navBox.classList.toggle("open", willOpen);
+        } else if (act === "programs") {
+          closeMobileSheets("programs");
+          document.getElementById("programsToggleBtn").click();
+        } else if (act === "more") {
+          const willOpen = moreSheet.hidden;
+          closeMobileSheets("more");
+          moreSheet.hidden = !willOpen;
+        }
+        syncDock();
+      });
+    });
+
+    document.getElementById("closeNavBoxBtn").addEventListener("click", () => {
+      navBox.classList.remove("open");
+      syncDock();
+    });
+    document.getElementById("closeMoreSheetBtn").addEventListener("click", () => {
+      moreSheet.hidden = true;
+      syncDock();
+    });
+    document.getElementById("closeProgramsBtn").addEventListener("click", syncDock);
+    document.getElementById("openCopyModalBtn2").addEventListener("click", () => {
+      moreSheet.hidden = true;
+      syncDock();
+      document.getElementById("copyrightModal").hidden = false;
+    });
+    document.getElementById("showGestureHintBtn").addEventListener("click", () => {
+      moreSheet.hidden = true;
+      syncDock();
+      showGestureHint();
+    });
+
+    // 搜尋：手機版點 🔍 展開搜尋列
+    const searchInput = document.getElementById("campusSearchInput");
+    document.getElementById("mobileSearchBtn").addEventListener("click", () => {
+      const willOpen = !document.body.classList.contains("search-open");
+      closeMobileSheets();
+      document.body.classList.toggle("search-open", willOpen);
+      if (willOpen) searchInput.focus();
+    });
+    document.addEventListener("click", e => {
+      if (!e.target.closest(".search-box") && !e.target.closest("#mobileSearchBtn")) {
+        document.body.classList.remove("search-open");
+      }
+    });
+
+    // 觸控操作說明：觸控裝置或精簡版面首次開啟時顯示一次
+    document.getElementById("closeGestureHintBtn").addEventListener("click", () => {
+      document.getElementById("gestureHint").hidden = true;
+      try {
+        localStorage.setItem(GESTURE_HINT_KEY, "1");
+      } catch (err) { /* 無痕模式等情況無法儲存，下次再顯示即可 */ }
+    });
+    let hintSeen = false;
+    try {
+      hintSeen = localStorage.getItem(GESTURE_HINT_KEY) === "1";
+    } catch (err) { /* 同上 */ }
+    if (!hintSeen && (touchQuery.matches || isCompactLayout())) showGestureHint();
+
+    // 漫步跑步／步行切換
+    const paceBtn = document.getElementById("walkPaceBtn");
+    paceBtn.addEventListener("click", () => {
+      state.walkPace = state.walkPace === "run" ? "walk" : "run";
+      paceBtn.innerHTML = state.walkPace === "run" ? "🏃 跑步" : "🚶 步行";
+      showToast(state.walkPace === "run" ? "🏃 已切換為跑步速度" : "🚶 已切換為步行速度");
+    });
+
+    // 漫步虛擬搖桿
+    const joy = document.getElementById("walkJoystick");
+    const knob = joy.querySelector(".joy-knob");
+    let joyPointer = null;
+    const updateJoy = e => {
+      const rect = joy.getBoundingClientRect();
+      const radius = rect.width / 2;
+      let ox = e.clientX - (rect.left + radius);
+      let oy = e.clientY - (rect.top + radius);
+      const len = Math.hypot(ox, oy);
+      const maxLen = radius * 0.62;
+      if (len > maxLen) {
+        ox *= maxLen / len;
+        oy *= maxLen / len;
+      }
+      knob.style.transform = `translate(${ox}px, ${oy}px)`;
+      state.walkJoy.x = ox / maxLen;
+      state.walkJoy.y = oy / maxLen;
+    };
+    const releaseJoy = () => {
+      joyPointer = null;
+      knob.style.transform = "";
+      state.walkJoy.x = 0;
+      state.walkJoy.y = 0;
+    };
+    joy.addEventListener("pointerdown", e => {
+      e.preventDefault();
+      joyPointer = e.pointerId;
+      joy.setPointerCapture(e.pointerId);
+      updateJoy(e);
+    });
+    joy.addEventListener("pointermove", e => {
+      if (e.pointerId === joyPointer) updateJoy(e);
+    });
+    joy.addEventListener("pointerup", releaseJoy);
+    joy.addEventListener("pointercancel", releaseJoy);
+
+    syncDock();
   }
 
   function onWindowResize() {
@@ -1805,39 +2157,50 @@
   }
 
   // ================= 主動畫迴圈 =================
-  function animate() {
+  // 所有移動量皆以「每秒」計算再乘上實際經過時間 dt，速度不受螢幕更新率 (60/120/144Hz) 影響
+  const WALK_SPEED = { run: 43, walk: 10 };   // 漫步移動速度 (公尺/秒)
+  const WALK_LIMB_RATE = { run: 13, walk: 7 }; // 擺臂擺腿頻率 (弧度/秒)
+  const WALK_TURN_SPEED = 1.7;                 // 轉向速度 (弧度/秒)
+  const NAV_WALK_SPEED = 14;                   // 模擬帶路小人 1x 速度 (公尺/秒)
+  const CAM_SMOOTHING = 6.3;                   // 鏡頭平滑跟隨速率 (約等於 60fps 下每幀趨近 10%)
+  const MAX_FRAME_DT = 0.1;                    // 切換分頁回來時避免瞬間移動
+
+  let lastFrameTime = null;
+
+  function animate(now) {
     requestAnimationFrame(animate);
+    if (lastFrameTime === null) lastFrameTime = now;
+    const dt = Math.min(MAX_FRAME_DT, Math.max(0, (now - lastFrameTime) / 1000));
+    lastFrameTime = now;
+    const frames60 = dt * 60; // 以 60fps 為基準的幀數，用於原本「每幀乘以係數」的平滑運算
 
     if (state.walkMode) {
       // 地面漫步冒險 / 第三人稱角色探索控制
-      const walkSpeed = 0.72;
-      const turnSpeed = 0.028;
-      let isMoving = false;
+      const keys = camControl.keys;
+      const hold = state.walkHoldActions;
+      let turnInput = -state.walkJoy.x;
+      let moveInput = -state.walkJoy.y;
+      if (keys["KeyA"] || keys["ArrowLeft"] || hold.turnLeft) turnInput += 1;
+      if (keys["KeyD"] || keys["ArrowRight"] || hold.turnRight) turnInput -= 1;
+      if (keys["KeyW"] || keys["ArrowUp"] || hold.forward) moveInput += 1;
+      if (keys["KeyS"] || keys["ArrowDown"] || hold.backward) moveInput -= 1;
+      turnInput = Math.max(-1, Math.min(1, turnInput));
+      moveInput = Math.max(-1, Math.min(1, moveInput));
 
-      if (camControl.keys["KeyA"] || camControl.keys["ArrowLeft"] || state.walkHoldActions.turnLeft) {
-        state.walkYaw += turnSpeed;
-      }
-      if (camControl.keys["KeyD"] || camControl.keys["ArrowRight"] || state.walkHoldActions.turnRight) {
-        state.walkYaw -= turnSpeed;
-      }
+      state.walkYaw += turnInput * WALK_TURN_SPEED * dt;
 
       const lookDirX = -Math.sin(state.walkYaw);
       const lookDirZ = -Math.cos(state.walkYaw);
 
-      if (camControl.keys["KeyW"] || camControl.keys["ArrowUp"] || state.walkHoldActions.forward) {
-        state.walkPos.x += lookDirX * walkSpeed;
-        state.walkPos.z += lookDirZ * walkSpeed;
-        isMoving = true;
-      }
-      if (camControl.keys["KeyS"] || camControl.keys["ArrowDown"] || state.walkHoldActions.backward) {
-        state.walkPos.x -= lookDirX * walkSpeed;
-        state.walkPos.z -= lookDirZ * walkSpeed;
-        isMoving = true;
+      const isMoving = Math.abs(moveInput) > 0.05;
+      if (isMoving) {
+        const step = moveInput * WALK_SPEED[state.walkPace] * dt;
+        moveWalker(lookDirX * step, lookDirZ * step);
       }
 
       // 角色走動擺臂擺腿動畫與身體起伏 (Walking limb swing cycle & bobbing)
       if (isMoving) {
-        state.walkLimbPhase += 0.22;
+        state.walkLimbPhase += WALK_LIMB_RATE[state.walkPace] * Math.abs(moveInput) * dt;
         if (avatarLimbParts.leftLeg) {
           avatarLimbParts.leftLeg.rotation.x = Math.sin(state.walkLimbPhase) * 0.65;
           avatarLimbParts.rightLeg.rotation.x = -Math.sin(state.walkLimbPhase) * 0.65;
@@ -1846,10 +2209,11 @@
         }
       } else {
         if (avatarLimbParts.leftLeg) {
-          avatarLimbParts.leftLeg.rotation.x *= 0.82;
-          avatarLimbParts.rightLeg.rotation.x *= 0.82;
-          avatarLimbParts.leftArm.rotation.x *= 0.82;
-          avatarLimbParts.rightArm.rotation.x *= 0.82;
+          const decay = Math.pow(0.82, frames60);
+          avatarLimbParts.leftLeg.rotation.x *= decay;
+          avatarLimbParts.rightLeg.rotation.x *= decay;
+          avatarLimbParts.leftArm.rotation.x *= decay;
+          avatarLimbParts.rightArm.rotation.x *= decay;
         }
       }
 
@@ -1899,7 +2263,7 @@
       }
     } else {
       // 鳥瞰軌道模式：支援鍵盤 WASD／方向鍵 與 右上角十字平移按鈕 (panHold) 前後左右平移與縮放
-      const moveSpeed = Math.max(1.1, camControl.spherical.radius * 0.0055);
+      const moveSpeed = Math.max(1.1, camControl.spherical.radius * 0.0055) * frames60;
       const forward = new THREE.Vector3(Math.sin(camControl.spherical.theta), 0, Math.cos(camControl.spherical.theta));
       const right = new THREE.Vector3(forward.z, 0, -forward.x);
       if (camControl.keys["KeyW"] || camControl.keys["ArrowUp"] || camControl.panHold.up) {
@@ -1915,17 +2279,15 @@
         camControl.targetGoal.addScaledVector(right, moveSpeed);
       }
       if (camControl.panHold.zoomIn) {
-        camControl.sphericalGoal.radius = Math.max(18, camControl.sphericalGoal.radius * 0.975);
+        camControl.sphericalGoal.radius = Math.max(18, camControl.sphericalGoal.radius * Math.pow(0.975, frames60));
       }
       if (camControl.panHold.zoomOut) {
-        camControl.sphericalGoal.radius = Math.min(700, camControl.sphericalGoal.radius * 1.025);
+        camControl.sphericalGoal.radius = Math.min(700, camControl.sphericalGoal.radius * Math.pow(1.025, frames60));
       }
 
       if (state.navWalking && state.navCurve) {
         const totalDist = Math.max(30, state.navDistance || 300);
-        // 基準移動速度約 14 公尺/秒 (以 60 FPS 計算每幀約 0.23 公尺)
-        const baseStep = 0.23 / totalDist;
-        state.navProgress += baseStep * (state.navSpeedMultiplier || 1.0);
+        state.navProgress += (NAV_WALK_SPEED * (state.navSpeedMultiplier || 1.0) * dt) / totalDist;
 
         const progressBar = document.getElementById("navWalkProgressBar");
         if (progressBar) {
@@ -1946,10 +2308,11 @@
         // 不強制覆蓋 sphericalGoal.radius，讓使用者也能自由用滑鼠滾輪隨時縮放視角高度！
       }
 
-      camControl.target.lerp(camControl.targetGoal, 0.1);
-      camControl.spherical.radius += (camControl.sphericalGoal.radius - camControl.spherical.radius) * 0.1;
-      camControl.spherical.phi += (camControl.sphericalGoal.phi - camControl.spherical.phi) * 0.1;
-      camControl.spherical.theta += (camControl.sphericalGoal.theta - camControl.spherical.theta) * 0.1;
+      const smooth = 1 - Math.exp(-CAM_SMOOTHING * dt);
+      camControl.target.lerp(camControl.targetGoal, smooth);
+      camControl.spherical.radius += (camControl.sphericalGoal.radius - camControl.spherical.radius) * smooth;
+      camControl.spherical.phi += (camControl.sphericalGoal.phi - camControl.spherical.phi) * smooth;
+      camControl.spherical.theta += (camControl.sphericalGoal.theta - camControl.spherical.theta) * smooth;
 
       const r = camControl.spherical.radius;
       const sinPhi = Math.sin(camControl.spherical.phi);
@@ -1967,5 +2330,5 @@
   }
 
   initUI();
-  animate();
+  requestAnimationFrame(animate);
 })();

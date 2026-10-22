@@ -397,6 +397,17 @@ window.CAMPUS_DATA = {
     { points: [[-174.0, 201.2], [-80.0, 193.3], [4.0, 186.0], [74.0, 181.0], [136.0, 180.5], [168.0, 180.3]], width: 7.5 }
   ],
 
+  // 校內人行步道 (以磚色鋪面繪製，與黑色車道區分；導航節點見 navNodes 7b)
+  // 西側球場區兩條東西向步道，讓每座球場都有自己的入口：
+  //   北步道 z = -42.5：風雨球場南側與露天籃球場北側之間 → 網球場、露天籃球場
+  //   南步道 z = -16.5：露天籃球場南側與北排球場北側之間 → 北排球場、匹克球場
+  walkways: [
+    { points: [[-80.0, -42.5], [-142.0, -42.5], [-142.0, -48.0]], width: 3.5 },
+    { points: [[-110.0, -42.5], [-110.0, -37.0]], width: 3.5 },
+    { points: [[-80.0, -16.5], [-143.0, -16.5], [-143.0, -12.0]], width: 3.5 },
+    { points: [[-118.5, -16.5], [-118.5, -10.0]], width: 3.5 }
+  ],
+
   // 建築物與場域清單 (僅保留主要教學校區，座標對齊 OSM 與校園平面圖)
   buildings: [
     // ================= 1. 北側校門與行政集會區 =================
@@ -1497,11 +1508,26 @@ window.CAMPUS_DATA = {
     "n_west_rd_n": { x: -80, z: -156, label: "西側主幹道（活動中心路口）" },
     "n_track_n": { x: -80, z: -245, label: "西側主幹道北端（操場北）" },
     "n_track": { x: -95, z: -156, label: "田徑操場東側入口" },
-    "n_ncourts": { x: -92, z: -68, label: "北座風雨球場入口" },
+    "n_west_rd_71": { x: -80, z: -71, label: "西側主幹道（風雨籃球場東口）" },
+    "n_cbasket_entrance": { x: -88, z: -71, label: "風雨籃球場東側入口" },
+    "n_west_rd_42": { x: -80, z: -42.5, label: "西側主幹道（球場北步道口）" },
+    "n_west_rd_16": { x: -80, z: -16.5, label: "西側主幹道（球場南步道口）" },
     "n_west_rd_m2": { x: -80, z: 0, label: "西側主幹道（利用樓西口）" },
-    "n_coop": { x: -84, z: 8, label: "合作社／露天球場入口" },
-    "n_scourts": { x: -96, z: 32, label: "南座風雨球場入口" },
+    "n_west_rd_8": { x: -80, z: 8, label: "西側主幹道（合作社東口）" },
+    "n_coop": { x: -86, z: 8, label: "合作社東側入口" },
+    "n_west_rd_41": { x: -80, z: 41, label: "西側主幹道（南排球場東口）" },
+    "n_vball_s_entrance": { x: -86, z: 41, label: "南座風雨排球場東側入口" },
     "n_west_rd_62": { x: -80, z: 62, label: "西側主幹道（游泳館北口）" },
+
+    // 7b. 西側球場區人行步道 (walkways)：每座球場各自的入口
+    "n_lane_n_110": { x: -110, z: -42.5, label: "球場北步道（露天籃球場北口）" },
+    "n_obasket_entrance": { x: -110, z: -37, label: "露天籃球場北側入口" },
+    "n_lane_n_142": { x: -142, z: -42.5, label: "球場北步道西端" },
+    "n_tennis_entrance": { x: -142, z: -48, label: "網球場南側入口" },
+    "n_lane_s_118": { x: -118.5, z: -16.5, label: "球場南步道（匹克球場北口）" },
+    "n_pickle_entrance": { x: -118.5, z: -10, label: "匹克球場北側入口" },
+    "n_lane_s_143": { x: -143, z: -16.5, label: "球場南步道西端" },
+    "n_vball_n_entrance": { x: -143, z: -12, label: "北座風雨排球場北側入口" },
     "n_west_rd_s2": { x: -80, z: 86, label: "西側主幹道（游泳館南口）" },
     "n_swim_loop": { x: -105, z: 88, label: "游泳館聯絡車道" },
     "n_swim": { x: -116, z: 86, label: "游泳館正門" },
@@ -1546,12 +1572,27 @@ window.CAMPUS_DATA = {
     ["n_track_n", "n_west_rd_n"],
     ["n_west_rd_n", "n_track"],
     ["n_west_rd_n", "n_west_rd_m1"],
-    ["n_west_rd_m1", "n_ncourts"],
-    ["n_west_rd_m1", "n_west_rd_m2"],
-    ["n_west_rd_m2", "n_coop"],
-    ["n_west_rd_m2", "n_west_rd_62"],
-    ["n_west_rd_62", "n_scourts"],
+    ["n_west_rd_m1", "n_west_rd_71"],
+    ["n_west_rd_71", "n_cbasket_entrance"],
+    ["n_west_rd_71", "n_west_rd_42"],
+    ["n_west_rd_42", "n_west_rd_16"],
+    ["n_west_rd_16", "n_west_rd_m2"],
+    ["n_west_rd_m2", "n_west_rd_8"],
+    ["n_west_rd_8", "n_coop"],
+    ["n_west_rd_8", "n_west_rd_41"],
+    ["n_west_rd_41", "n_vball_s_entrance"],
+    ["n_west_rd_41", "n_west_rd_62"],
     ["n_west_rd_62", "n_west_rd_s2"],
+
+    // 2b. 西側球場區人行步道
+    ["n_west_rd_42", "n_lane_n_110"],
+    ["n_lane_n_110", "n_obasket_entrance"],
+    ["n_lane_n_110", "n_lane_n_142"],
+    ["n_lane_n_142", "n_tennis_entrance"],
+    ["n_west_rd_16", "n_lane_s_118"],
+    ["n_lane_s_118", "n_pickle_entrance"],
+    ["n_lane_s_118", "n_lane_s_143"],
+    ["n_lane_s_143", "n_vball_n_entrance"],
     ["n_west_rd_s2", "n_swim_loop"],
     ["n_swim_loop", "n_swim"],
     ["n_west_rd_s2", "n_west_rd_end"],
@@ -1666,12 +1707,12 @@ window.CAMPUS_DATA = {
     farm_mgmt: "n_farm_entrance",
     coop_art: "n_coop",
     swimming: "n_swim",
-    tennis_courts: "n_ncourts",
-    covered_basketball: "n_ncourts",
-    outdoor_basketball: "n_coop",
-    covered_volleyball_n: "n_scourts",
-    covered_pickleball: "n_coop",
-    covered_volleyball_s: "n_scourts",
+    tennis_courts: "n_tennis_entrance",
+    covered_basketball: "n_cbasket_entrance",
+    outdoor_basketball: "n_obasket_entrance",
+    covered_volleyball_n: "n_vball_n_entrance",
+    covered_pickleball: "n_pickle_entrance",
+    covered_volleyball_s: "n_vball_s_entrance",
     track_field: "n_track",
     hort_teach_shed: "n_hort_shed"
   }

@@ -1590,16 +1590,541 @@ body.theme-brick #themeSwitcher button.active {
   color: #141C24;
 }
 
-@media (max-width: 900px) {
-  #zoneBar, #leftNavBox, #minimapBox {
+/* 面板標題列 (標題＋關閉鈕) */
+.sheet-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 僅在精簡版面 (手機／平板) 顯示的元件 */
+.compact-only,
+#moreSheet,
+#walkJoystick,
+.hint-touch {
+  display: none;
+}
+
+/* 觸控操作說明 */
+#gestureHint {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(6, 12, 18, 0.62);
+}
+
+.gesture-card {
+  width: 100%;
+  max-width: 340px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gesture-card h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--accent-gold);
+}
+
+.gesture-card ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13.5px;
+  line-height: 1.8;
+  color: #DCE6F0;
+}
+
+.gesture-card .act-btn {
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+/* 觸控裝置：滑鼠專用控制 (左鍵模式切換、十字平移盤) 改以手勢取代 */
+@media (hover: none) and (pointer: coarse) {
+  .mouse-mode-switch,
+  .pan-dpad-grid {
     display: none;
   }
-  #detailDrawer, #programsDrawer {
-    right: 12px;
-    left: 12px;
-    width: auto;
+  .hint-mouse {
+    display: none;
+  }
+  .hint-touch {
+    display: inline;
+  }
+}
+
+/* ================= 精簡版面：手機、平板直向、手機橫向 =================
+   斷點需與 app.js 的 compactQuery 一致 */
+@media (max-width: 900px), (max-height: 520px) {
+  :root {
+    --dock-h: 58px;
+    --safe-t: env(safe-area-inset-top, 0px);
+    --safe-b: env(safe-area-inset-bottom, 0px);
+  }
+
+  body.walk-active {
+    --dock-h: 0px;
+  }
+
+  #zoneBar, #minimapBox, #campusFooter, .top-tools {
+    display: none;
+  }
+
+  /* 頂部：校徽＋標題一行，搜尋收成圖示 */
+  #topHeader {
+    top: calc(8px + var(--safe-t));
+    left: 10px;
+    right: 10px;
+    gap: 8px;
+    align-items: center;
+    z-index: 26;
+  }
+
+  .brand-card {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 6px 12px 6px 6px;
+    gap: 8px;
+  }
+
+  .school-logo-img {
+    width: 32px;
+    height: 32px;
+  }
+
+  .brand-text {
+    min-width: 0;
+  }
+
+  .brand-text h1 {
+    font-size: 14.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .brand-text small {
+    display: none;
+  }
+
+  #mobileSearchBtn {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 46px;
+    height: 46px;
+    padding: 0;
+    font-size: 18px;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  .search-box {
+    display: none;
+    order: 3;
+    flex: 1 1 100%;
+    max-width: none;
+  }
+
+  body.search-open .search-box {
+    display: block;
+  }
+
+  .search-input-wrap input {
+    font-size: 16px; /* iOS 輸入框小於 16px 時會自動放大頁面 */
+  }
+
+  /* 羅盤：只留小圓盤 */
+  #compassBox {
+    top: calc(var(--safe-t) + 64px);
+    right: 10px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  #compassResetBtn {
+    width: 52px;
+    height: 52px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 0 10px rgba(0, 0, 0, 0.6);
+  }
+
+  .compass-caption, .mouse-mode-switch, .pan-dpad-grid {
+    display: none;
+  }
+
+  .c-dir {
+    font-size: 8.5px;
+  }
+
+  .c-dir.c-n {
+    top: 3px;
+    font-size: 9.5px;
+  }
+
+  .c-needle {
+    width: 6px;
+    height: 24px;
+  }
+
+  /* 底部工具列 */
+  #mobileDock {
+    display: flex;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: calc(var(--dock-h) + var(--safe-b));
+    padding: 0 4px var(--safe-b);
+    background: rgba(11, 18, 26, 0.94);
+    border-top: 1px solid var(--border-line);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 30;
+  }
+
+  #mobileDock button {
+    flex: 1;
+    border: 0;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    cursor: pointer;
+  }
+
+  #mobileDock button span {
+    font-size: 19px;
+    line-height: 1;
+  }
+
+  #mobileDock button.active {
+    color: var(--accent-gold);
+  }
+
+  body.walk-active #mobileDock,
+  body.walk-active #navStatusBar {
+    display: none;
+  }
+
+  /* 底部滑出面板：路線導航、大樓介紹、學程導覽、更多 */
+  #leftNavBox,
+  #detailDrawer,
+  #programsDrawer,
+  #moreSheet {
+    position: absolute;
+    left: 0;
+    right: 0;
     top: auto;
-    bottom: 42px;
-    max-height: 54vh;
+    bottom: calc(var(--dock-h) + var(--safe-b));
+    width: auto;
+    max-height: 58dvh;
+    overflow-y: auto;
+    border-radius: 16px 16px 0 0;
+    padding: 14px 16px 16px;
+    z-index: 24;
+  }
+
+  #leftNavBox {
+    display: none;
+  }
+
+  #leftNavBox.open {
+    display: flex;
+  }
+
+  #closeNavBoxBtn {
+    display: inline-block;
+  }
+
+  .nav-select-row select {
+    font-size: 16px;
+    padding: 8px;
+  }
+
+  #leftNavBox .act-btn {
+    padding: 11px 12px;
+    font-size: 14px;
+  }
+
+  #moreSheet {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  #moreSheet h3 {
+    margin: 0;
+    font-size: 14px;
+    color: var(--accent-gold);
+  }
+
+  .more-label {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .more-themes {
+    display: flex;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+  }
+
+  .more-themes button {
+    flex: 1;
+    padding: 9px 4px;
+  }
+
+  #moreSheet .act-btn {
+    padding: 11px 12px;
+    font-size: 13.5px;
+    text-align: left;
+  }
+
+  .drawer-head h2 {
+    font-size: 17px;
+  }
+
+  /* 縮小的大樓介紹：改放左上角，避開底部列 */
+  .floating-reopen-pill {
+    top: calc(var(--safe-t) + 66px);
+    left: 10px;
+    right: auto;
+    bottom: auto;
+    max-width: calc(100vw - 90px);
+    padding: 8px 14px;
+    font-size: 12.5px;
+  }
+
+  .floating-reopen-pill span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* 帶路狀態列 */
+  #navStatusBar {
+    left: 8px;
+    right: 8px;
+    transform: none;
+    bottom: calc(var(--dock-h) + var(--safe-b) + 8px);
+    max-width: none;
+    padding: 8px 10px;
+    gap: 6px 8px;
+  }
+
+  .nav-info {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .nav-info b {
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .nav-info small {
+    font-size: 11px;
+  }
+
+  .nav-actions {
+    flex: 1 1 100%;
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .nav-actions .act-btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 8px 6px;
+    font-size: 11.5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .nav-actions .close-btn {
+    flex: none;
+  }
+
+  /* 漫步控制列：精簡為兩列 (角色／視角／速度／返回 + 快速起點)，方向改用搖桿 */
+  #walkHudBar {
+    left: 8px;
+    right: 8px;
+    transform: none;
+    width: auto;
+    bottom: calc(8px + var(--safe-b));
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .walk-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  .walk-head > div:first-child,
+  .walk-char-select .hud-sub-sep,
+  #toggleHudCollapseBtn,
+  .walk-dpad {
+    display: none;
+  }
+
+  .walk-char-select,
+  .walk-spawns {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .walk-char-select::-webkit-scrollbar,
+  .walk-spawns::-webkit-scrollbar {
+    display: none;
+  }
+
+  .char-chip,
+  .spawn-chip,
+  #exitWalkBtn {
+    flex: none;
+    white-space: nowrap;
+    padding: 6px 10px;
+  }
+
+  /* 「返回鳥瞰」固定在列尾，不隨角色按鈕捲動而被推出畫面 */
+  #exitWalkBtn {
+    position: sticky;
+    right: 0;
+    background: #2A3644;
+    box-shadow: -10px 0 12px rgba(14, 22, 32, 0.95);
+  }
+
+  .walk-controls-row {
+    flex-wrap: nowrap;
+  }
+
+  body.walk-active #walkJoystick {
+    display: block;
+    position: absolute;
+    left: 18px;
+    bottom: calc(var(--safe-b) + 108px);
+    width: 124px;
+    height: 124px;
+    border-radius: 50%;
+    background: rgba(15, 24, 34, 0.5);
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+    touch-action: none;
+    z-index: 23;
+  }
+
+  .joy-knob {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 52px;
+    height: 52px;
+    margin: -26px 0 0 -26px;
+    border-radius: 50%;
+    background: var(--accent-gold);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45);
+    pointer-events: none;
+  }
+
+  /* 3D 標籤縮小，減少遮擋 */
+  .b-label {
+    font-size: 11px;
+    padding: 3px 8px;
+    gap: 4px;
+  }
+
+  .b-label .b-fl {
+    display: none;
+  }
+
+  .road-label {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+
+  .road-label.primary {
+    font-size: 10.5px;
+  }
+
+  .cardinal-label {
+    font-size: 10.5px;
+    padding: 3px 8px;
+  }
+
+  .cardinal-label small {
+    display: none;
+  }
+
+  #campusToast {
+    top: calc(var(--safe-t) + 64px);
+    left: 10px;
+    right: 72px;
+    transform: none;
+    padding: 8px 14px;
+    border-radius: 14px;
+    font-size: 12.5px;
+    text-align: center;
+  }
+}
+
+/* 手機橫向：面板改放右側，保留左側地圖 */
+@media (max-height: 520px) and (orientation: landscape) {
+  :root {
+    --dock-h: 46px;
+  }
+
+  #leftNavBox,
+  #detailDrawer,
+  #programsDrawer,
+  #moreSheet {
+    left: auto;
+    right: 8px;
+    width: min(380px, 55vw);
+    top: calc(var(--safe-t) + 62px);
+    bottom: calc(var(--dock-h) + var(--safe-b) + 8px);
+    max-height: none;
+    border-radius: 16px;
+  }
+
+  #mobileDock button {
+    flex-direction: row;
+    gap: 6px;
+    font-size: 12px;
+  }
+
+  #mobileDock button span {
+    font-size: 16px;
+  }
+
+  body.walk-active #walkJoystick {
+    bottom: calc(var(--safe-b) + 92px);
+    width: 104px;
+    height: 104px;
+  }
+
+  #walkHudBar {
+    right: auto;
+    width: min(560px, calc(100vw - 16px));
   }
 }
