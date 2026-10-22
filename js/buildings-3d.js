@@ -252,14 +252,11 @@ window.CampusBuilder3D = (function () {
     });
 
     // 4b. 校內人行步道 (磚色鋪面，與中庭步道同色系)
-    const walkwayMat = getMat("#B68F66", {
-      roughness: 0.8,
-      polygonOffset: true,
-      polygonOffsetFactor: -2,
-      polygonOffsetUnits: -2
-    });
+    // 頂面 y = 0.10：高於球場廣場鋪面 (0.06)、低於黑色車道 (0.14)，與車道交接處不會共平面閃爍
+    // (場景啟用 logarithmicDepthBuffer，polygonOffset 無法分開深度，必須靠實際高度差)
+    const walkwayMat = getMat("#B68F66", { roughness: 0.8 });
     (DATA.walkways || []).forEach(r => {
-      addPolylineRoad(envGroup, r.points, r.width || 3.5, 0.07, walkwayMat, false, null, 0.14);
+      addPolylineRoad(envGroup, r.points, r.width || 3.5, 0.03, walkwayMat, false, null, 0.14);
     });
 
     // 5. 平面圖特色地景與廣場還原 (aa190fc6a5da5710e0aea63299779c6c.PNG)

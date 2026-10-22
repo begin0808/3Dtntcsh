@@ -267,6 +267,25 @@
     theta: 0.0
   };
 
+  // 直向螢幕 (手機) 水平視野很窄：加大視角並把全覽鏡頭拉遠，讓東西兩側校界都能入鏡
+  const CAMPUS_HALF_WIDTH = 175; // 校界東西半寬 (公尺)
+  const MAX_ORBIT_RADIUS = 700;
+
+  function getBirdFov() {
+    return camera.aspect < 1 ? 55 : 45;
+  }
+
+  // 直向螢幕改用較接近正上方的俯角，南北狹長的校園可填滿畫面高度
+  function getOverviewPhi() {
+    return camera.aspect < 1 ? 0.5 : DEFAULT_OVERVIEW.phi;
+  }
+
+  function getOverviewRadius() {
+    const halfHFov = Math.atan(Math.tan(THREE.MathUtils.degToRad(getBirdFov()) / 2) * camera.aspect);
+    const needed = CAMPUS_HALF_WIDTH / Math.tan(halfHFov);
+    return Math.min(MAX_ORBIT_RADIUS, Math.max(DEFAULT_OVERVIEW.radius, needed));
+  }
+
   const camControl = {
     target: new THREE.Vector3(...DEFAULT_OVERVIEW.target),
     spherical: { radius: DEFAULT_OVERVIEW.radius, phi: DEFAULT_OVERVIEW.phi, theta: DEFAULT_OVERVIEW.theta },
@@ -309,8 +328,8 @@
 
 
     camControl.targetGoal.set(...DEFAULT_OVERVIEW.target);
-    camControl.sphericalGoal.radius = DEFAULT_OVERVIEW.radius;
-    camControl.sphericalGoal.phi = DEFAULT_OVERVIEW.phi;
+    camControl.sphericalGoal.radius = getOverviewRadius();
+    camControl.sphericalGoal.phi = getOverviewPhi();
     camControl.sphericalGoal.theta = DEFAULT_OVERVIEW.theta;
     showToast("🏠 已回到預設全校最佳全覽畫面（按住滑鼠左鍵可直接前後左右平移）");
   }
@@ -848,7 +867,7 @@
       showToast("🎮 已進入「地面漫步冒險模式」！使用 W/A/S/D 或方向鍵操控附中同學跑動");
     } else {
       if (studentAvatarGroup) studentAvatarGroup.visible = false;
-      camera.fov = 45;
+      camera.fov = getBirdFov();
       camera.near = 2.0;
       camera.far = 1300;
       camera.updateProjectionMatrix();
@@ -1838,6 +1857,8 @@
     // 10. 視窗縮放處理
     window.addEventListener("resize", onWindowResize);
     onWindowResize();
+    camControl.spherical.radius = camControl.sphericalGoal.radius = getOverviewRadius();
+    camControl.spherical.phi = camControl.sphericalGoal.phi = getOverviewPhi();
 
     initCompactUI();
   }
@@ -1963,11 +1984,16 @@
     } catch (err) { /* 同上 */ }
     if (!hintSeen && (touchQuery.matches || isCompactLayout())) showGestureHint();
 
-    // 漫步跑步／步行切換
+    // 漫步跑步／步行切換 (手機與觸控裝置預設步行，搖桿操作較好控制)
     const paceBtn = document.getElementById("walkPaceBtn");
+    const renderPace = () => {
+      paceBtn.innerHTML = state.walkPace === "run" ? "🏃 跑步" : "🚶 步行";
+    };
+    if (touchQuery.matches || isCompactLayout()) state.walkPace = "walk";
+    renderPace();
     paceBtn.addEventListener("click", () => {
       state.walkPace = state.walkPace === "run" ? "walk" : "run";
-      paceBtn.innerHTML = state.walkPace === "run" ? "🏃 跑步" : "🚶 步行";
+      renderPace();
       showToast(state.walkPace === "run" ? "🏃 已切換為跑步速度" : "🚶 已切換為步行速度");
     });
 
@@ -1987,8 +2013,10 @@
         oy *= maxLen / len;
       }
       knob.style.transform = `translate(${ox}px, ${oy}px)`;
-      state.walkJoy.x = ox / maxLen;
-      state.walkJoy.y = oy / maxLen;
+      // 平方曲線：輕推時慢慢走、推到底才全速，方便微調
+      const strength = Math.min(len, maxLen) / maxLen;
+      state.walkJoy.x = (ox / maxLen) * strength;
+      state.walkJoy.y = (oy / maxLen) * strength;
     };
     const releaseJoy = () => {
       joyPointer = null;
@@ -2016,6 +2044,7 @@
     const h = window.innerHeight;
     renderer.setSize(w, h);
     camera.aspect = w / h;
+    if (!state.walkMode) camera.fov = getBirdFov();
     camera.updateProjectionMatrix();
   }
 
@@ -2158,7 +2187,7 @@
 
   // ================= 主動畫迴圈 =================
   // 所有移動量皆以「每秒」計算再乘上實際經過時間 dt，速度不受螢幕更新率 (60/120/144Hz) 影響
-  const WALK_SPEED = { run: 43, walk: 10 };   // 漫步移動速度 (公尺/秒)
+  const WALK_SPEED = { run: 43, walk: 8 };    // 漫步移動速度 (公尺/秒)
   const WALK_LIMB_RATE = { run: 13, walk: 7 }; // 擺臂擺腿頻率 (弧度/秒)
   const WALK_TURN_SPEED = 1.7;                 // 轉向速度 (弧度/秒)
   const NAV_WALK_SPEED = 14;                   // 模擬帶路小人 1x 速度 (公尺/秒)
