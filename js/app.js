@@ -1064,6 +1064,58 @@
     return { path, distance: Math.round(distMap[endNodeId] || 0) };
   }
 
+  // 建立嚴格沿著黑色道路行走的平滑導航軌跡 (直線段嚴格平行道路中心線，轉彎處微幅平滑倒角，絕不橫切草皮或大樓)
+  function createRoadRouteCurve(points, cornerRadius = 1.8) {
+    if (!points || points.length < 2) return null;
+    if (points.length === 2) {
+      const cp = new THREE.CurvePath();
+      cp.add(new THREE.LineCurve3(points[0], points[1]));
+      return cp;
+    }
+
+    const cp = new THREE.CurvePath();
+    let prevEnd = points[0].clone();
+
+    for (let i = 1; i < points.length - 1; i++) {
+      const pPrev = points[i - 1];
+      const pCurr = points[i];
+      const pNext = points[i + 1];
+
+      const v1 = new THREE.Vector3().subVectors(pCurr, pPrev);
+      const v2 = new THREE.Vector3().subVectors(pNext, pCurr);
+      const len1 = v1.length();
+      const len2 = v2.length();
+
+      if (len1 < 0.01 || len2 < 0.01) continue;
+
+      const dir1 = v1.clone().normalize();
+      const dir2 = v2.clone().normalize();
+
+      const dot = dir1.dot(dir2);
+      if (dot > 0.999) {
+        continue;
+      }
+
+      const r = Math.min(cornerRadius, len1 * 0.45, len2 * 0.45);
+      const filletStart = new THREE.Vector3().copy(pCurr).subScaledVector(dir1, r);
+      const filletEnd = new THREE.Vector3().copy(pCurr).addScaledVector(dir2, r);
+
+      if (prevEnd.distanceTo(filletStart) > 0.05) {
+        cp.add(new THREE.LineCurve3(prevEnd.clone(), filletStart.clone()));
+      }
+
+      cp.add(new THREE.QuadraticBezierCurve3(filletStart.clone(), pCurr.clone(), filletEnd.clone()));
+      prevEnd.copy(filletEnd);
+    }
+
+    const lastPt = points[points.length - 1];
+    if (prevEnd.distanceTo(lastPt) > 0.05) {
+      cp.add(new THREE.LineCurve3(prevEnd.clone(), lastPt.clone()));
+    }
+
+    return cp;
+  }
+
   function startNavigation(fromBuildingId, toBuildingId, roomLabel = "") {
     state.navStartId = fromBuildingId;
     state.navEndId = toBuildingId;
@@ -1080,17 +1132,16 @@
     }
 
     const pts = [];
-    if (fromBld) pts.push(new THREE.Vector3(fromBld.x, 0.7, fromBld.z));
     res.path.forEach(nid => {
       const n = DATA.navNodes[nid];
-      if (n) pts.push(new THREE.Vector3(n.x, 0.7, n.z));
+      if (n) pts.push(new THREE.Vector3(n.x, 0.75, n.z));
     });
-    if (toBld) pts.push(new THREE.Vector3(toBld.x, 0.7, toBld.z));
 
     if (pts.length >= 2) {
-      const curve = new THREE.CatmullRomCurve3(pts);
+      const curve = createRoadRouteCurve(pts, 1.8);
       state.navCurve = curve;
-      const tubeGeo = new THREE.TubeGeometry(curve, 64, 0.65, 8, false);
+      const segments = Math.max(64, Math.min(256, Math.round(res.distance * 0.85)));
+      const tubeGeo = new THREE.TubeGeometry(curve, segments, 0.65, 8, false);
       const tubeMat = new THREE.MeshBasicMaterial({ color: "#FFD23F" });
       const tubeMesh = new THREE.Mesh(tubeGeo, tubeMat);
       routeGroup.add(tubeMesh);
@@ -1102,7 +1153,7 @@
       routeGroup.add(startPin, endPin);
     }
 
-    const totalMeters = Math.max(25, res.distance + 18);
+    const totalMeters = Math.max(25, res.distance);
     const walkMins = Math.max(1, Math.round(totalMeters / 68));
 
     const navBar = document.getElementById("navStatusBar");
