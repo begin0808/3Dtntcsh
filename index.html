@@ -154,14 +154,21 @@
       </div>
     </div>
 
-    <!-- 底部：A* 導航狀態列 -->
+    <!-- 底部：A* 導航狀態列 (含播放/暫停、速度切換、俯瞰視角高度切換與即時進度條) -->
     <div id="navStatusBar" class="glass-card" hidden>
       <div class="nav-info">
         <b id="navRouteTitle">導航路線</b>
         <small id="navRouteMeta"></small>
       </div>
-      <button type="button" class="act-btn pri" id="simWalkBtn">🚶 模擬沿路帶路</button>
-      <button type="button" class="close-btn" id="clearNavBtn" title="清除導航">✕</button>
+      <div class="nav-actions">
+        <button type="button" class="act-btn pri" id="simWalkBtn">🚶 模擬沿路帶路</button>
+        <button type="button" class="act-btn" id="walkSpeedBtn" title="點擊切換帶路速度 (1x / 2x / 0.5x)">⚡ 1x 速度</button>
+        <button type="button" class="act-btn" id="walkCamHeightBtn" title="點擊切換俯瞰視角高度 (高空全景 / 中景跟隨 / 近距特寫)">🔭 俯瞰：高空全景</button>
+        <button type="button" class="close-btn" id="clearNavBtn" title="清除導航">✕</button>
+      </div>
+      <div class="nav-walk-bar" id="navWalkProgressWrap" hidden>
+        <div class="nav-walk-progress-inner" id="navWalkProgressBar"></div>
+      </div>
     </div>
 
     <!-- 版權與系統資訊視窗 -->

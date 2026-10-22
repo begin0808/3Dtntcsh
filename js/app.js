@@ -15,8 +15,12 @@
     navStartId: "main_gate",
     navEndId: null,
     navWalking: false,
+    navPaused: false,
     navProgress: 0,
     navCurve: null,
+    navDistance: 300,
+    navSpeedMultiplier: 1.0,
+    navCamHeightLevel: 0,
     walkMode: false,       // 地面漫步模式
     walkChar: "boy",       // 'boy' | 'girl'
     walkView: "third_person", // 'third_person' | 'first_person'
@@ -1159,6 +1163,20 @@
       routeGroup.add(startPin, endPin);
     }
 
+    state.navDistance = res.distance;
+    state.navWalking = false;
+    state.navPaused = false;
+    state.navProgress = 0;
+    walkerMesh.visible = false;
+    const simBtn = document.getElementById("simWalkBtn");
+    if (simBtn) simBtn.innerHTML = "🚶 模擬沿路帶路";
+    const wrap = document.getElementById("navWalkProgressWrap");
+    if (wrap) {
+      wrap.hidden = true;
+      const bar = document.getElementById("navWalkProgressBar");
+      if (bar) bar.style.width = "0%";
+    }
+
     const totalMeters = Math.max(25, res.distance);
     const walkMins = Math.max(1, Math.round(totalMeters / 68));
 
@@ -1175,12 +1193,64 @@
     }
   }
 
+  function applyNavCameraPreset() {
+    const level = state.navCamHeightLevel || 0;
+    const heightBtn = document.getElementById("walkCamHeightBtn");
+    if (level === 0) {
+      camControl.sphericalGoal.radius = 140;
+      camControl.sphericalGoal.phi = 0.94;
+      if (heightBtn) heightBtn.innerHTML = "🔭 俯瞰：高空全景";
+      showToast("🔭 視角切換：高空全景 (可綜覽沿途各大樓)");
+    } else if (level === 1) {
+      camControl.sphericalGoal.radius = 95;
+      camControl.sphericalGoal.phi = 1.02;
+      if (heightBtn) heightBtn.innerHTML = "🚁 俯瞰：中景跟隨";
+      showToast("🚁 視角切換：中景跟隨");
+    } else {
+      camControl.sphericalGoal.radius = 55;
+      camControl.sphericalGoal.phi = 1.12;
+      if (heightBtn) heightBtn.innerHTML = "👀 俯瞰：近距特寫";
+      showToast("👀 視角切換：近距特寫");
+    }
+  }
+
   function startSimulatedWalk() {
     if (!state.navCurve) return;
     if (state.walkMode) toggleWalkMode(false);
+    const simBtn = document.getElementById("simWalkBtn");
+    const wrap = document.getElementById("navWalkProgressWrap");
+
+    // 1. 如果正在帶路中 -> 點擊執行「暫停」
+    if (state.navWalking) {
+      state.navWalking = false;
+      state.navPaused = true;
+      if (simBtn) simBtn.innerHTML = "▶️ 繼續帶路";
+      showToast("⏸️ 已暫停帶路");
+      return;
+    }
+
+    // 2. 如果處於暫停狀態 -> 點擊執行「繼續」
+    if (state.navPaused) {
+      state.navWalking = true;
+      state.navPaused = false;
+      if (simBtn) simBtn.innerHTML = "⏸️ 暫停帶路";
+      showToast("▶️ 繼續沿路帶路");
+      return;
+    }
+
+    // 3. 尚未開始或已抵達終點 -> 點擊執行「開始」或「重新開始」
+    if (state.navProgress >= 1) {
+      state.navProgress = 0;
+    }
     state.navWalking = true;
-    state.navProgress = 0;
+    state.navPaused = false;
     walkerMesh.visible = true;
+    if (simBtn) simBtn.innerHTML = "⏸️ 暫停帶路";
+    if (wrap) wrap.hidden = false;
+
+    // 將視角提升至高空俯瞰全景，能綜覽路過的大樓
+    applyNavCameraPreset();
+    showToast("🚶 開始模擬沿路帶路導覽！");
   }
 
   // ================= 搜尋引擎 =================
@@ -1529,10 +1599,43 @@
       startSimulatedWalk();
     });
 
+    const speedBtn = document.getElementById("walkSpeedBtn");
+    if (speedBtn) {
+      speedBtn.addEventListener("click", () => {
+        if (state.navSpeedMultiplier === 1.0) {
+          state.navSpeedMultiplier = 2.0;
+          speedBtn.innerHTML = "⚡ 2x 快速";
+          showToast("⚡ 帶路速度：2x 快速");
+        } else if (state.navSpeedMultiplier === 2.0) {
+          state.navSpeedMultiplier = 0.5;
+          speedBtn.innerHTML = "⚡ 0.5x 慢速";
+          showToast("⚡ 帶路速度：0.5x 慢速");
+        } else {
+          state.navSpeedMultiplier = 1.0;
+          speedBtn.innerHTML = "⚡ 1x 速度";
+          showToast("⚡ 帶路速度：1x 正常");
+        }
+      });
+    }
+
+    const heightBtn = document.getElementById("walkCamHeightBtn");
+    if (heightBtn) {
+      heightBtn.addEventListener("click", () => {
+        state.navCamHeightLevel = ((state.navCamHeightLevel || 0) + 1) % 3;
+        applyNavCameraPreset();
+      });
+    }
+
     document.getElementById("clearNavBtn").addEventListener("click", () => {
       while (routeGroup.children.length) routeGroup.remove(routeGroup.children[0]);
       walkerMesh.visible = false;
       state.navWalking = false;
+      state.navPaused = false;
+      state.navProgress = 0;
+      const simBtn = document.getElementById("simWalkBtn");
+      if (simBtn) simBtn.innerHTML = "🚶 模擬沿路帶路";
+      const wrap = document.getElementById("navWalkProgressWrap");
+      if (wrap) wrap.hidden = true;
       document.getElementById("navStatusBar").hidden = true;
     });
 
@@ -1819,16 +1922,28 @@
       }
 
       if (state.navWalking && state.navCurve) {
-        state.navProgress += 0.0028;
+        const totalDist = Math.max(30, state.navDistance || 300);
+        // 基準移動速度約 14 公尺/秒 (以 60 FPS 計算每幀約 0.23 公尺)
+        const baseStep = 0.23 / totalDist;
+        state.navProgress += baseStep * (state.navSpeedMultiplier || 1.0);
+
+        const progressBar = document.getElementById("navWalkProgressBar");
+        if (progressBar) {
+          progressBar.style.width = `${Math.min(100, Math.round(state.navProgress * 100))}%`;
+        }
+
         if (state.navProgress >= 1) {
           state.navProgress = 1;
           state.navWalking = false;
+          state.navPaused = false;
+          const simBtn = document.getElementById("simWalkBtn");
+          if (simBtn) simBtn.innerHTML = "🔄 重新帶路";
           showToast("🎉 已抵達目的地！");
         }
         const pt = state.navCurve.getPointAt(state.navProgress);
         walkerMesh.position.copy(pt);
         camControl.targetGoal.set(pt.x, 2.5, pt.z);
-        camControl.sphericalGoal.radius = 46;
+        // 不強制覆蓋 sphericalGoal.radius，讓使用者也能自由用滑鼠滾輪隨時縮放視角高度！
       }
 
       camControl.target.lerp(camControl.targetGoal, 0.1);
