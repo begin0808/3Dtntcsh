@@ -410,6 +410,11 @@ window.CAMPUS_DATA = {
     { points: [[-118.5, -16.5], [-118.5, -10.0]], width: 3.5 },
     // 東側主幹道 (z = 40) 斜向至圖書館西側正門，經原美術教室南端外側
     { points: [[76.0, 40.0], [107.0, 23.0]], width: 3.0 },
+    // 迎賓大道東側斜向穿過北側圓形廣場至行政大樓北側正門
+    { points: [[5.5, -145.8], [34.0, -124.0], [41.0, -103.5]], width: 3.0 },
+    // 迎賓大道西側至活動中心東側入口、敬業樓東北側入口
+    { points: [[-5.5, -132.0], [-10.0, -132.0]], width: 3.0 },
+    { points: [[-5.5, -101.0], [-9.0, -101.0]], width: 3.0 },
     // 圖書館北側道路至資訊應用學程北側入口
     { points: [[122.0, -3.0], [122.0, 0.0]], width: 3.0 }
   ],
@@ -967,16 +972,23 @@ window.CAMPUS_DATA = {
     "n_roundabout_e": { x: 14, z: -162, label: "校門圓環東側出入口" },
     "n_ne_diag": { x: 74, z: -122, label: "東北斜向車道轉折點" },
     "n_sshed": { x: 74, z: -92, label: "學生車棚旁（東幹道）" },
+    "n_admin_walk_road": { x: 0, z: -150, label: "迎賓大道（行政大樓步道口）" },
+    "n_admin_plaza": { x: 34, z: -124, label: "行政大樓北側圓形廣場" },
+    "n_admin_entrance": { x: 41, z: -103.5, label: "行政大樓北側正門" },
+    "n_act_road": { x: 0, z: -132, label: "迎賓大道（活動中心東口）" },
+    "n_act_entrance": { x: -10, z: -132, label: "活動中心東側入口" },
     "n_blvd_m": { x: 0, z: -125, label: "中央迎賓大道" },
+    "n_jingye_road": { x: 0, z: -101, label: "迎賓大道（敬業樓東北口）" },
+    "n_jingye_entrance": { x: -9, z: -101, label: "敬業樓東北側入口" },
     "n_blvd_s": { x: 0, z: -96, label: "迎賓大道行政大樓路口" },
-    "n_act": { x: -36, z: -156, label: "活動中心北門車道" },
+    "n_act": { x: -36, z: -156, label: "活動中心北側車道" },
     "n_wshed": { x: -54, z: -188, label: "西側車棚前" },
 
     // 2. 敬業／樂耕／行政 東西向校道 (z = -75)
     "n_west_rd_m1": { x: -80, z: -75, label: "西側主幹道（敬業樓口）" },
-    "n_jingye": { x: -36, z: -75, label: "敬業樓前" },
+    "n_jingye": { x: -36, z: -75, label: "敬業樓南側道路" },
     "n_legeng_n": { x: 0, z: -75, label: "樂耕樓北門道路" },
-    "n_admin": { x: 43, z: -75, label: "行政大樓前" },
+    "n_admin": { x: 43, z: -75, label: "行政大樓南側道路" },
     "n_east_rd_n": { x: 74, z: -75, label: "東側主幹道北路口" },
 
     // 3. 東側主幹道 (x = 74)
@@ -1078,8 +1090,15 @@ window.CAMPUS_DATA = {
   navEdges: [
     // 1. 校門進場與迎賓大道
     ["n_gate", "n_roundabout"],
-    ["n_roundabout", "n_blvd_m"],
-    ["n_blvd_m", "n_blvd_s"],
+    ["n_roundabout", "n_admin_walk_road"],
+    ["n_admin_walk_road", "n_act_road"],
+    ["n_act_road", "n_blvd_m"],
+    ["n_blvd_m", "n_jingye_road"],
+    ["n_jingye_road", "n_blvd_s"],
+    ["n_act_road", "n_act_entrance"],
+    ["n_jingye_road", "n_jingye_entrance"],
+    ["n_admin_walk_road", "n_admin_plaza"], // 斜向步道穿過圓形廣場
+    ["n_admin_plaza", "n_admin_entrance"],
     ["n_blvd_s", "n_legeng_n"],
     ["n_roundabout", "n_roundabout_w"],
     ["n_roundabout_w", "n_act"],
@@ -1206,9 +1225,9 @@ window.CAMPUS_DATA = {
   // 建築物對應導航節點 (直達建築正門入口／路口迎賓玄關，絕不射入建築中央或斜切草坪)
   buildingNavNode: {
     main_gate: "n_gate",
-    admin: "n_admin",
-    jingye: "n_jingye",
-    activity: "n_act",
+    admin: "n_admin_entrance",
+    jingye: "n_jingye_entrance",
+    activity: "n_act_entrance",
     west_shed: "n_wshed",
     student_shed: "n_sshed",
     legeng: "n_legeng_n",
