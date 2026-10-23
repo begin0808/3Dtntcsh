@@ -415,6 +415,8 @@ window.CAMPUS_DATA = {
     // 迎賓大道西側至活動中心東側入口、敬業樓東北側入口
     { points: [[-5.5, -132.0], [-10.0, -132.0]], width: 3.0 },
     { points: [[-5.5, -101.0], [-9.0, -101.0]], width: 3.0 },
+    // 迎賓大道南端至樂耕樓一樓中央穿堂北口
+    { points: [[0.0, -60.0], [0.0, -53.5]], width: 6.0 },
     // 圖書館北側道路至資訊應用學程北側入口
     { points: [[122.0, -3.0], [122.0, 0.0]], width: 3.0 }
   ],
@@ -987,7 +989,8 @@ window.CAMPUS_DATA = {
     // 2. 敬業／樂耕／行政 東西向校道 (z = -75)
     "n_west_rd_m1": { x: -80, z: -75, label: "西側主幹道（敬業樓口）" },
     "n_jingye": { x: -36, z: -75, label: "敬業樓南側道路" },
-    "n_legeng_n": { x: 0, z: -75, label: "樂耕樓北門道路" },
+    "n_legeng_n": { x: 0, z: -75, label: "樂耕樓北側十字路口（圓形花圃）" },
+    "n_legeng_entrance": { x: 0, z: -53.5, label: "樂耕樓一樓中央穿堂北口" },
     "n_admin": { x: 43, z: -75, label: "行政大樓南側道路" },
     "n_east_rd_n": { x: 74, z: -75, label: "東側主幹道北路口" },
 
@@ -1034,7 +1037,7 @@ window.CAMPUS_DATA = {
     "n_quad_c": { x: 0, z: -3, label: "中庭十字步道中心" },
     "n_liyong": { x: -42, z: -3, label: "利用樓中庭走廊" },
     "n_housheng": { x: 42, z: -3, label: "厚生樓中庭走廊" },
-    "n_zhengde_n": { x: 0, z: 28, label: "正德樓中庭穿堂北口" },
+    "n_zhengde_n": { x: 0, z: 33.75, label: "正德樓一樓中央穿堂北口" },
     "n_zhengde_s": { x: 0, z: 48, label: "正德樓南側穿堂口" },
     "n_zhengde_s2": { x: 0, z: 86, label: "正德樓南側車道口" },
 
@@ -1188,7 +1191,8 @@ window.CAMPUS_DATA = {
     ["n_far_east_s2", "n_far_east_end"],
 
     // 7. 中庭教學區步道
-    ["n_legeng_n", "n_quad_c"],
+    ["n_legeng_n", "n_legeng_entrance"],
+    ["n_legeng_entrance", "n_quad_c"], // 穿過樂耕樓一樓中央穿堂
     ["n_quad_c", "n_liyong"],
     ["n_quad_c", "n_housheng"],
     ["n_quad_c", "n_zhengde_n"],
@@ -1230,7 +1234,7 @@ window.CAMPUS_DATA = {
     activity: "n_act_entrance",
     west_shed: "n_wshed",
     student_shed: "n_sshed",
-    legeng: "n_legeng_n",
+    legeng: "n_legeng_entrance",
     liyong: "n_liyong",
     zhengde: "n_zhengde_n",
     housheng: "n_housheng",
