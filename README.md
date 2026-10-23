@@ -2,6 +2,8 @@
 
 以 **Three.js (WebGL)** 打造的國立南大附中 3D 互動校園導覽，涵蓋全校 35 處建築與場地、115 學年度班級教室配置、特色學程科館介紹、校園步行路線導航與地面漫步模式。純前端靜態網頁，電腦與手機皆可使用。
 
+👉 **線上瀏覽：<https://begin0808.github.io/3Dtntcsh/>**
+
 ## ✨ 主要功能
 
 - **🏫 全校 3D 建築導覽**：行政大樓、敬業樓、樂耕樓、利用樓、正德樓、厚生樓、圖書館大樓、各專門學程科館（餐飲、食品加工、機械、畜產、土木、園藝等）、體育場館與球場。點選建築可查看介紹、各樓層教室配置與樓層剖面。
@@ -36,7 +38,6 @@ data/school-year.js   每學年更新資料：學年度、建築名稱與介紹�
 data/campus-data.js   校園結構資料：建築位置與外觀、學程、道路、導航路網
 manifest.webmanifest  「加到主畫面」設定
 assets/               校徽、App 圖示 (icons/)、社群分享預覽圖 (og-image.png)
-TODO.md               待辦事項
 ```
 
 ### 每學年更新（行政人員）
@@ -75,6 +76,11 @@ TODO.md               待辦事項
 
 ## 📜 版權與資料來源
 
-- © 國立臺南大學附屬高級中學。班級教室配置與校園空間資料由本校彙整建置。
-- 校園周邊街道與校界資料引用自 [OpenStreetMap](https://www.openstreetmap.org/way/161510567)（© OpenStreetMap contributors，ODbL 授權）。
+- © [國立臺南大學附屬高級中學](https://www.tntcsh.tn.edu.tw/)。班級教室配置與校園空間資料由本校彙整建置。
+- 校園周邊街道與校界資料引用自 [OpenStreetMap](https://www.openstreetmap.org/way/161510567)（[© OpenStreetMap contributors](https://www.openstreetmap.org/copyright)，ODbL 授權）。
 - 3D 引擎：[Three.js](https://threejs.org/)（MIT License）。
+
+## 🧑‍🏫 開發者與意見回饋
+
+- 系統開發：李佳恩老師
+- 歡迎來信提供建議與指正：[begin@gm.tntcsh.tn.edu.tw](mailto:begin@gm.tntcsh.tn.edu.tw)

@@ -1602,6 +1602,30 @@ body.theme-brick #themeSwitcher button.active {
   color: var(--accent-gold);
 }
 
+/* 版權說明文字可選取複製 (整體介面預設不可選取，避免拖曳地圖時誤選文字) */
+#copyrightModal,
+#copyrightModal * {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+#copyrightModal .modal-inner {
+  cursor: auto;
+}
+
+/* 頁尾的學校與 OpenStreetMap 連結 */
+.footer-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.35);
+  text-underline-offset: 2px;
+}
+
+.footer-link:hover {
+  color: var(--accent-gold);
+  text-decoration-color: var(--accent-gold);
+}
+
 .copy-link-btn {
   border: 0;
   background: rgba(255, 210, 63, 0.16);

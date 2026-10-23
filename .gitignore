@@ -14,3 +14,6 @@ d1e8d63ca67ed612bb52f370f34697f4.png
 Thumbs.db
 node_modules/
 .vercel/
+
+# 開發待辦清單 (僅留在本機，不上傳)
+TODO.md
