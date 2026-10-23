@@ -1047,6 +1047,13 @@
       return [west, east].map(([x1, x2]) => makeObstacle((x1 + x2) / 2, b.z, x2 - x1, b.d));
     });
 
+  // 操場本身可走入，但司令台 (平台＋階梯) 不能穿越 (尺寸與 3D 模型共用)
+  if (BUILDER.trackSolidRects) {
+    DATA.buildings.forEach(b => {
+      BUILDER.trackSolidRects(b).forEach(r => walkObstacles.push(makeObstacle(b.x + r.cx, b.z + r.cz, r.w, r.d)));
+    });
+  }
+
   // 有高圍網的露天球場 (例如網球場)：圍網擋住，只能從大門進出 (圍網線段與 3D 模型共用同一份計算)
   const FENCE_THICKNESS = 0.2;
   if (BUILDER.courtFenceSegments) {

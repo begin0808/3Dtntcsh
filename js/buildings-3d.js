@@ -1333,6 +1333,19 @@ window.CampusBuilder3D = (function () {
     registerThemeObject("pixel", voxels);
   }
 
+  // ================= 田徑場司令台 =================
+  // offsetX：距操場東緣 (b.w / 2) 的距離；w 為平台深度 (東西)、d 為寬度 (南北)
+  const REVIEWING_STAND = { offsetX: 5.2, w: 6.2, d: 18.0, deckH: 1.2, roofY: 5.2, stairW: 4.0, stepDepth: 0.5 };
+
+  // 操場內不可穿越的實體 (本地座標矩形)：司令台平台與正面階梯
+  function trackSolidRects(b) {
+    if (b.style !== "track") return [];
+    const S = REVIEWING_STAND;
+    const front = -S.w / 2 - S.stepDepth * 3; // 階梯最前緣
+    const back = S.w / 2;
+    return [{ cx: b.w / 2 + S.offsetX + (front + back) / 2, cz: 0, w: back - front, d: S.d }];
+  }
+
   // ================= 球場圍網 =================
   // b.fence = { height, gateSide: "north" | "south" | "east" | "west", gateAt, gateWidth }
   // gateAt：大門中心的本地座標 (南北兩側為 x、東西兩側為 z)；省略則在該側中央
@@ -1635,34 +1648,81 @@ window.CampusBuilder3D = (function () {
         g1.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(markPts), laneLineMat));
       });
 
-      // 5. 東側司令台 (位於 100 公尺直道延伸跑道外側草坪 x = b.w / 2 + 5.2，面向田徑場西側)
+      // 5. 東側司令台 (位於 100 公尺直道延伸跑道外側草坪，正面朝西面向田徑場)
+      // 本地座標：-X 為正面 (朝跑道)、+X 為後方；尺寸與漫步碰撞共用 REVIEWING_STAND
+      const S = REVIEWING_STAND;
       const stageGroup = new THREE.Group();
-      stageGroup.position.set(b.w / 2 + 5.2, 0, 0);
+      stageGroup.position.set(b.w / 2 + S.offsetX, 0, 0);
+      const standMat = getMat("#E9E4D8", { roughness: 0.8 });
+      const trimMat = getMat("#9A958C", { roughness: 0.85 });
+      const halfW = S.w / 2;
+      const halfD = S.d / 2;
+      const wallH = S.roofY - S.deckH;
 
-      const stageBase = new THREE.Mesh(new THREE.BoxGeometry(6.2, 3.2, 18.0), whiteMat);
-      stageBase.position.y = 1.6;
-      stageBase.castShadow = true;
-      stageGroup.add(stageBase);
+      // (a) 高起平台 (含深色踢腳)
+      const deck = new THREE.Mesh(new THREE.BoxGeometry(S.w, S.deckH, S.d), standMat);
+      deck.position.y = S.deckH / 2;
+      deck.castShadow = true;
+      deck.receiveShadow = true;
+      stageGroup.add(deck);
+      const plinth = new THREE.Mesh(new THREE.BoxGeometry(S.w + 0.1, 0.25, S.d + 0.1), trimMat);
+      plinth.position.y = 0.125;
+      stageGroup.add(plinth);
 
-      const blueSeats = new THREE.Mesh(new THREE.BoxGeometry(4.8, 1.6, 15.0), getMat("#28669E"));
-      blueSeats.position.set(-0.4, 2.4, 0);
-      stageGroup.add(blueSeats);
-
-      const stageCanopy = new THREE.Mesh(new THREE.BoxGeometry(7.6, 0.55, 20.0), whiteMat);
-      stageCanopy.position.y = 6.2;
-      stageCanopy.castShadow = true;
-      stageGroup.add(stageCanopy);
-
-      const flagBoard = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.4, 2.4), getMat("#E03A3E"));
-      flagBoard.position.set(2.4, 4.4, 0);
-      stageGroup.add(flagBoard);
-
-      [-1, 1].forEach(dir => {
-        const ramp = new THREE.Mesh(new THREE.BoxGeometry(3.6, 1.8, 2.2), whiteMat);
-        ramp.rotation.y = dir * 0.42;
-        ramp.position.set(-2.8, 0.9, dir * 5.2);
-        stageGroup.add(ramp);
+      // (b) 後牆與兩側牆：從平台面直達屋頂，撐住屋頂板
+      const backWall = new THREE.Mesh(new THREE.BoxGeometry(0.4, wallH, S.d), standMat);
+      backWall.position.set(halfW - 0.2, S.deckH + wallH / 2, 0);
+      backWall.castShadow = true;
+      stageGroup.add(backWall);
+      [-1, 1].forEach(side => {
+        const sideWall = new THREE.Mesh(new THREE.BoxGeometry(S.w, wallH, 0.4), standMat);
+        sideWall.position.set(0, S.deckH + wallH / 2, side * (halfD - 0.2));
+        sideWall.castShadow = true;
+        stageGroup.add(sideWall);
       });
+
+      // (c) 屋頂板：略向正面懸挑，並有收邊
+      const roof = new THREE.Mesh(new THREE.BoxGeometry(S.w + 0.8, 0.4, S.d + 0.6), standMat);
+      roof.position.set(-0.4, S.roofY + 0.2, 0);
+      roof.castShadow = true;
+      stageGroup.add(roof);
+      const roofTrim = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.25, S.d + 0.6), trimMat);
+      roofTrim.position.set(-halfW - 0.8, S.roofY + 0.2, 0);
+      stageGroup.add(roofTrim);
+
+      // (d) 後牆紅色看板與講台
+      const banner = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.5, 6.0), getMat("#C8323A"));
+      banner.position.set(halfW - 0.45, S.deckH + wallH * 0.6, 0);
+      stageGroup.add(banner);
+      const lectern = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.1, 1.1), getMat("#7A5034", { roughness: 0.7 }));
+      lectern.position.set(-halfW + 1.6, S.deckH + 0.55, 0);
+      lectern.castShadow = true;
+      stageGroup.add(lectern);
+
+      // (e) 正面欄杆 (中央留階梯開口)
+      const railMat = getMat("#5E646B", { roughness: 0.5, metalness: 0.4 });
+      const railLen = halfD - S.stairW / 2 - 0.4;
+      [-1, 1].forEach(side => {
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, railLen), railMat);
+        rail.position.set(-halfW + 0.15, S.deckH + 0.95, side * (S.stairW / 2 + railLen / 2));
+        stageGroup.add(rail);
+        for (let i = 0; i <= 4; i++) {
+          const post = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.95, 0.08), railMat);
+          post.position.set(-halfW + 0.15, S.deckH + 0.475, side * (S.stairW / 2 + (railLen * i) / 4));
+          stageGroup.add(post);
+        }
+      });
+
+      // (f) 正面中央階梯 (往跑道方向逐級下降)
+      const stepCount = 3;
+      for (let i = 0; i < stepCount; i++) {
+        const h = S.deckH * (stepCount - i) / (stepCount + 1);
+        const step = new THREE.Mesh(new THREE.BoxGeometry(S.stepDepth, h, S.stairW), standMat);
+        step.position.set(-halfW - S.stepDepth * (i + 0.5), h / 2, 0);
+        step.castShadow = true;
+        step.receiveShadow = true;
+        stageGroup.add(step);
+      }
 
       g1.add(stageGroup);
 
@@ -3662,6 +3722,7 @@ window.CampusBuilder3D = (function () {
     createBuildingMesh,
     setVisualTheme,
     groundPassageHalfWidth: style => GROUND_PASSAGE_HALF_WIDTH[style] || 0,
-    courtFenceSegments
+    courtFenceSegments,
+    trackSolidRects
   };
 })();
