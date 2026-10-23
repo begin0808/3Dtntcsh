@@ -1047,6 +1047,18 @@
       return [west, east].map(([x1, x2]) => makeObstacle((x1 + x2) / 2, b.z, x2 - x1, b.d));
     });
 
+  // 有高圍網的露天球場 (例如網球場)：圍網擋住，只能從大門進出 (圍網線段與 3D 模型共用同一份計算)
+  const FENCE_THICKNESS = 0.2;
+  if (BUILDER.courtFenceSegments) {
+    DATA.buildings.filter(b => b.fence).forEach(b => {
+      BUILDER.courtFenceSegments(b).forEach(([[x1, z1], [x2, z2]]) => {
+        const len = Math.hypot(x2 - x1, z2 - z1);
+        if (len < 0.2) return;
+        walkObstacles.push(makeObstacle(b.x + (x1 + x2) / 2, b.z + (z1 + z2) / 2, len, FENCE_THICKNESS, -Math.atan2(z2 - z1, x2 - x1)));
+      });
+    });
+  }
+
   const walkPassages = DATA.navEdges
     .filter(([a, b]) => DATA.navNodes[a] && DATA.navNodes[b])
     .map(([a, b]) => [DATA.navNodes[a], DATA.navNodes[b]]);

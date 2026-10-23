@@ -1333,6 +1333,113 @@ window.CampusBuilder3D = (function () {
     registerThemeObject("pixel", voxels);
   }
 
+  // ================= 球場圍網 =================
+  // b.fence = { height, gateSide: "north" | "south" | "east" | "west", gateWidth }
+  // 回傳圍網各段線段 (建築本地座標)，大門所在那一側在中央斷開；3D 模型與漫步碰撞共用
+  const FENCE_INSET = 0.25;
+  function courtFenceSegments(b) {
+    if (!b.fence) return [];
+    const hw = b.w / 2 - FENCE_INSET;
+    const hd = b.d / 2 - FENCE_INSET;
+    const sides = {
+      north: [[-hw, -hd], [hw, -hd]],
+      east: [[hw, -hd], [hw, hd]],
+      south: [[hw, hd], [-hw, hd]],
+      west: [[-hw, hd], [-hw, -hd]]
+    };
+    const segs = [];
+    Object.entries(sides).forEach(([side, [a, c]]) => {
+      if (side !== b.fence.gateSide) {
+        segs.push([a, c]);
+        return;
+      }
+      // 大門在該側中央：拆成兩段，中間留 gateWidth 的開口
+      const len = Math.hypot(c[0] - a[0], c[1] - a[1]);
+      const ux = (c[0] - a[0]) / len;
+      const uz = (c[1] - a[1]) / len;
+      const g1 = len / 2 - (b.fence.gateWidth || 3) / 2;
+      const g2 = len / 2 + (b.fence.gateWidth || 3) / 2;
+      segs.push([a, [a[0] + ux * g1, a[1] + uz * g1]]);
+      segs.push([[a[0] + ux * g2, a[1] + uz * g2], c]);
+    });
+    return segs;
+  }
+
+  // 鐵絲網 (菱形網目) 透明貼圖：遠看呈半透明網幕，不會擋住球場
+  let chainLinkTexture = null;
+  function getChainLinkTexture() {
+    if (chainLinkTexture) return chainLinkTexture;
+    chainLinkTexture = makeTextCanvas(64, 64, (ctx, w, h) => {
+      ctx.clearRect(0, 0, w, h);
+      ctx.strokeStyle = "rgba(38, 62, 48, 1)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(0, h / 2); ctx.lineTo(w / 2, 0); ctx.lineTo(w, h / 2); ctx.lineTo(w / 2, h); ctx.closePath();
+      ctx.stroke();
+    });
+    if (chainLinkTexture) {
+      chainLinkTexture.wrapS = chainLinkTexture.wrapT = THREE.RepeatWrapping;
+    }
+    return chainLinkTexture;
+  }
+
+  function addCourtFence(parent, b) {
+    const H = b.fence.height || 4;
+    const CELL = 0.5; // 網目大小 (m)
+    const postMat = getMat("#2F4A3B", { roughness: 0.45, metalness: 0.5 });
+    const tex = getChainLinkTexture();
+    const meshMat = new THREE.MeshStandardMaterial({
+      color: tex ? "#FFFFFF" : "#2F4A3B",
+      map: tex || null,
+      transparent: true,
+      opacity: tex ? 1 : 0.25,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      roughness: 0.6,
+      metalness: 0.3
+    });
+    const postGeo = new THREE.CylinderGeometry(0.07, 0.07, H, 8);
+    const g = new THREE.Group();
+    g.name = "court-fence";
+
+    courtFenceSegments(b).forEach(([[x1, z1], [x2, z2]]) => {
+      const len = Math.hypot(x2 - x1, z2 - z1);
+      if (len < 0.2) return;
+      const angle = -Math.atan2(z2 - z1, x2 - x1);
+      const mx = (x1 + x2) / 2;
+      const mz = (z1 + z2) / 2;
+
+      // 網片：依長寬調整 UV，讓網目維持固定大小
+      const panelGeo = new THREE.PlaneGeometry(len, H - 0.1);
+      const uv = panelGeo.attributes.uv;
+      for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * len / CELL, uv.getY(i) * (H - 0.1) / CELL);
+      const panel = new THREE.Mesh(panelGeo, meshMat);
+      panel.position.set(mx, H / 2, mz);
+      panel.rotation.y = angle;
+      panel.renderOrder = 2;
+      g.add(panel);
+
+      // 上、中、下橫桿
+      [0.08, H / 2, H - 0.04].forEach(y => {
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(len, 0.07, 0.07), postMat);
+        rail.position.set(mx, y, mz);
+        rail.rotation.y = angle;
+        g.add(rail);
+      });
+
+      // 立柱：約每 3m 一支，兩端各一支
+      const n = Math.max(1, Math.round(len / 3));
+      for (let i = 0; i <= n; i++) {
+        const t = i / n;
+        const post = new THREE.Mesh(postGeo, postMat);
+        post.position.set(x1 + (x2 - x1) * t, H / 2, z1 + (z2 - z1) * t);
+        post.castShadow = true;
+        g.add(post);
+      }
+    });
+    parent.add(g);
+  }
+
   // 斜屋頂用：沿南北向屋脊 (x = 0) 排成一列的凸粒與體素方塊
   function addRidgeThemeDecor(parent, b, length, ridgeTopY) {
     const studPos = [];
@@ -2281,6 +2388,9 @@ window.CampusBuilder3D = (function () {
         root.add(canopyGroup);
         root.userData.floorGroups[2] = canopyGroup;
       }
+
+      // 露天球場高圍網
+      if (b.fence) addCourtFence(root, b);
 
       return root;
     }
@@ -3544,6 +3654,7 @@ window.CampusBuilder3D = (function () {
     buildCampusGrounds,
     createBuildingMesh,
     setVisualTheme,
-    groundPassageHalfWidth: style => GROUND_PASSAGE_HALF_WIDTH[style] || 0
+    groundPassageHalfWidth: style => GROUND_PASSAGE_HALF_WIDTH[style] || 0,
+    courtFenceSegments
   };
 })();

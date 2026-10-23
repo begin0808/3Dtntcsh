@@ -832,6 +832,8 @@ window.CAMPUS_DATA = {
       style: "sport_court",
       courtLayout: "tennis_3",
       covered: false,
+      // 露天網球場四周高圍網 (防止球打出場外)，南側中央留大門 (對齊導航入口 n_tennis_entrance)
+      fence: { height: 4.0, gateSide: "south", gateWidth: 3.0 },
       colors: {
         main: "#9D2F2A",
         secondary: "#3F8A4F",
