@@ -76,7 +76,7 @@ assets/               校徽、App 圖示 (icons/)、社群分享預覽圖 (og-i
 
 ## 📜 版權與資料來源
 
-- © [國立臺南大學附屬高級中學](https://www.tntcsh.tn.edu.tw/)。班級教室配置與校園空間資料由本校彙整建置。
+- © 國立臺南大學附屬高級中學（學校官網：[www.tntcsh.tn.edu.tw](https://www.tntcsh.tn.edu.tw/)）。班級教室配置與校園空間資料由本校彙整建置。
 - 校園周邊街道與校界資料引用自 [OpenStreetMap](https://www.openstreetmap.org/way/161510567)（[© OpenStreetMap contributors](https://www.openstreetmap.org/copyright)，ODbL 授權）。
 - 3D 引擎：[Three.js](https://threejs.org/)（MIT License）。
 
