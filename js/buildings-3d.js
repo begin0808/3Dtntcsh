@@ -1334,8 +1334,9 @@ window.CampusBuilder3D = (function () {
   }
 
   // ================= 球場圍網 =================
-  // b.fence = { height, gateSide: "north" | "south" | "east" | "west", gateWidth }
-  // 回傳圍網各段線段 (建築本地座標)，大門所在那一側在中央斷開；3D 模型與漫步碰撞共用
+  // b.fence = { height, gateSide: "north" | "south" | "east" | "west", gateAt, gateWidth }
+  // gateAt：大門中心的本地座標 (南北兩側為 x、東西兩側為 z)；省略則在該側中央
+  // 回傳圍網各段線段 (建築本地座標)，大門處斷開；3D 模型與漫步碰撞共用
   const FENCE_INSET = 0.25;
   function courtFenceSegments(b) {
     if (!b.fence) return [];
@@ -1353,12 +1354,18 @@ window.CampusBuilder3D = (function () {
         segs.push([a, c]);
         return;
       }
-      // 大門在該側中央：拆成兩段，中間留 gateWidth 的開口
+      // 大門所在的一側：拆成兩段，中間留 gateWidth 的開口
       const len = Math.hypot(c[0] - a[0], c[1] - a[1]);
       const ux = (c[0] - a[0]) / len;
       const uz = (c[1] - a[1]) / len;
-      const g1 = len / 2 - (b.fence.gateWidth || 3) / 2;
-      const g2 = len / 2 + (b.fence.gateWidth || 3) / 2;
+      const isNS = side === "north" || side === "south";
+      const gateAt = b.fence.gateAt;
+      // 大門中心距該段起點 a 的距離
+      const center = gateAt === undefined
+        ? len / 2
+        : (isNS ? (gateAt - a[0]) * ux : (gateAt - a[1]) * uz);
+      const g1 = Math.max(0, center - (b.fence.gateWidth || 3) / 2);
+      const g2 = Math.min(len, center + (b.fence.gateWidth || 3) / 2);
       segs.push([a, [a[0] + ux * g1, a[1] + uz * g1]]);
       segs.push([[a[0] + ux * g2, a[1] + uz * g2], c]);
     });

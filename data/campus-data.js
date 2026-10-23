@@ -404,7 +404,7 @@ window.CAMPUS_DATA = {
   //   南步道 z = -16.5：露天籃球場南側與北排球場北側之間 → 北排球場、匹克球場
   // 步道起點設在西側主幹道內緣 (x = -82)，端點圓角藏在車道下方，不與車道重疊在同一平面
   walkways: [
-    { points: [[-82.0, -42.5], [-142.0, -42.5], [-142.0, -48.0]], width: 3.5 },
+    { points: [[-82.0, -42.5], [-156.0, -42.5], [-156.0, -48.0]], width: 3.5 },
     { points: [[-110.0, -42.5], [-110.0, -37.0]], width: 3.5 },
     { points: [[-82.0, -16.5], [-143.0, -16.5], [-143.0, -12.0]], width: 3.5 },
     { points: [[-118.5, -16.5], [-118.5, -10.0]], width: 3.5 },
@@ -832,8 +832,8 @@ window.CAMPUS_DATA = {
       style: "sport_court",
       courtLayout: "tennis_3",
       covered: false,
-      // 露天網球場四周高圍網 (防止球打出場外)，南側中央留大門 (對齊導航入口 n_tennis_entrance)
-      fence: { height: 4.0, gateSide: "south", gateWidth: 3.0 },
+      // 露天網球場四周高圍網 (防止球打出場外)；大門在南側靠西端 (gateAt 為大門中心的本地 x 座標，對齊導航入口 n_tennis_entrance)
+      fence: { height: 4.0, gateSide: "south", gateAt: -14.0, gateWidth: 3.0 },
       colors: {
         main: "#9D2F2A",
         secondary: "#3F8A4F",
@@ -1044,8 +1044,8 @@ window.CAMPUS_DATA = {
     // 7b. 西側球場區人行步道 (walkways)：每座球場各自的入口
     "n_lane_n_110": { x: -110, z: -42.5, label: "球場北步道（露天籃球場北口）" },
     "n_obasket_entrance": { x: -110, z: -37, label: "露天籃球場北側入口" },
-    "n_lane_n_142": { x: -142, z: -42.5, label: "球場北步道西端" },
-    "n_tennis_entrance": { x: -142, z: -48, label: "網球場南側入口" },
+    "n_lane_n_156": { x: -156, z: -42.5, label: "球場北步道西端" },
+    "n_tennis_entrance": { x: -156, z: -48, label: "網球場西南角入口" },
     "n_lane_s_118": { x: -118.5, z: -16.5, label: "球場南步道（匹克球場北口）" },
     "n_pickle_entrance": { x: -118.5, z: -10, label: "匹克球場北側入口" },
     "n_lane_s_143": { x: -143, z: -16.5, label: "球場南步道西端" },
@@ -1109,8 +1109,8 @@ window.CAMPUS_DATA = {
     // 2b. 西側球場區人行步道
     ["n_west_rd_42", "n_lane_n_110"],
     ["n_lane_n_110", "n_obasket_entrance"],
-    ["n_lane_n_110", "n_lane_n_142"],
-    ["n_lane_n_142", "n_tennis_entrance"],
+    ["n_lane_n_110", "n_lane_n_156"],
+    ["n_lane_n_156", "n_tennis_entrance"],
     ["n_west_rd_16", "n_lane_s_118"],
     ["n_lane_s_118", "n_pickle_entrance"],
     ["n_lane_s_118", "n_lane_s_143"],
