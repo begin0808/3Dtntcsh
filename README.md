@@ -83,4 +83,4 @@ assets/               校徽、App 圖示 (icons/)、社群分享預覽圖 (og-i
 ## 🧑‍🏫 開發者與意見回饋
 
 - 系統開發：李佳恩老師
-- 歡迎來信提供建議與指正：[begin@gm.tntcsh.tn.edu.tw](mailto:begin@gm.tntcsh.tn.edu.tw)
+- 歡迎來信提供建議與指正：[begin@gm.tntcsh.tn.edu.tw](https://mail.google.com/mail/?view=cm&fs=1&to=begin@gm.tntcsh.tn.edu.tw&su=%E5%8D%97%E5%A4%A7%E9%99%84%E4%B8%AD%203D%20%E6%A0%A1%E5%9C%92%E5%B0%8E%E8%A6%BD%20%E6%84%8F%E8%A6%8B%E5%9B%9E%E9%A5%8B)（點擊以 Gmail 開啟新郵件）
