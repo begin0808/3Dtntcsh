@@ -1137,6 +1137,8 @@
   function toggleWalkMode(enable, spawnId = "gate") {
     state.walkMode = enable;
     document.body.classList.toggle("walk-active", enable);
+    // 進入地面漫步時取消已規劃的導航路線 (路線、帶路人偶與狀態列)
+    if (enable) clearNavigation();
     if (!enable) {
       state.walkJoy.x = 0;
       state.walkJoy.y = 0;
@@ -1608,6 +1610,22 @@
     }
 
     return cp;
+  }
+
+  // 清除導航：移除路線與起終點標記、停止模擬帶路、收起導航狀態列
+  function clearNavigation() {
+    while (routeGroup.children.length) routeGroup.remove(routeGroup.children[0]);
+    walkerMesh.visible = false;
+    state.navCurve = null;
+    state.navWalking = false;
+    state.navPaused = false;
+    state.navProgress = 0;
+    state.navApproach = false;
+    const simBtn = document.getElementById("simWalkBtn");
+    if (simBtn) simBtn.innerHTML = "🚶 模擬沿路帶路";
+    const wrap = document.getElementById("navWalkProgressWrap");
+    if (wrap) wrap.hidden = true;
+    document.getElementById("navStatusBar").hidden = true;
   }
 
   // 導航目標：建築 id (走該建築主入口) 或 extraNavTargets 的 id (同棟建築的其他入口)
@@ -2192,19 +2210,7 @@
       });
     }
 
-    document.getElementById("clearNavBtn").addEventListener("click", () => {
-      while (routeGroup.children.length) routeGroup.remove(routeGroup.children[0]);
-      walkerMesh.visible = false;
-      state.navWalking = false;
-      state.navPaused = false;
-      state.navProgress = 0;
-      state.navApproach = false;
-      const simBtn = document.getElementById("simWalkBtn");
-      if (simBtn) simBtn.innerHTML = "🚶 模擬沿路帶路";
-      const wrap = document.getElementById("navWalkProgressWrap");
-      if (wrap) wrap.hidden = true;
-      document.getElementById("navStatusBar").hidden = true;
-    });
+    document.getElementById("clearNavBtn").addEventListener("click", clearNavigation);
 
     // 9. 版權視窗關閉
     const copyModal = document.getElementById("copyrightModal");
