@@ -1092,6 +1092,15 @@ html, body {
   color: var(--accent-gold);
 }
 
+/* 滑鼠移上、啟用中或下拉選單展開時：金底深色字 (需寫在 .pri-pill 之後，否則金色文字會蓋過而看不見) */
+.mode-pill-btn.pri-pill:hover,
+.mode-pill-btn.pri-pill.active,
+.dropdown-toggle[aria-expanded="true"] {
+  background: var(--accent-gold);
+  border-color: var(--accent-gold);
+  color: #141C24;
+}
+
 /* 右上角：3D 動態方位羅盤指北針 + 視角平移控制盤 */
 #compassBox {
   position: absolute;
