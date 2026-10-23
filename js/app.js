@@ -1806,28 +1806,43 @@
       return;
     }
 
+    // 依符合程度排序 (數字越小越前面)：
+    // 0 處室／教室名稱或代碼完全相同 → 1 大樓名稱相同或開頭相同 → 2 處室／教室名稱開頭相同
+    // → 3 大樓名稱包含 → 4 處室／教室名稱包含 → 5 大樓只有介紹或英文名提到
     const matches = [];
     DATA.buildings.forEach(b => {
-      if (b.name.toLowerCase().includes(q) || (b.englishName && b.englishName.toLowerCase().includes(q)) || b.summary.toLowerCase().includes(q)) {
-        matches.push({
-          kind: "building",
-          title: b.name,
-          sub: `${b.floors}F ・ ${b.summary.slice(0, 32)}...`,
-          buildingId: b.id
-        });
-      }
+      const name = b.name.toLowerCase();
+      let rank = -1;
+      if (name.startsWith(q)) rank = 1;
+      else if (name.includes(q)) rank = 3;
+      else if ((b.englishName && b.englishName.toLowerCase().includes(q)) || b.summary.toLowerCase().includes(q)) rank = 5;
+      if (rank < 0) return;
+      matches.push({
+        kind: "building",
+        rank,
+        title: b.name,
+        sub: `${b.floors}F ・ ${b.summary.slice(0, 32)}...`,
+        buildingId: b.id
+      });
     });
 
     roomEntries.forEach(rm => {
-      if (rm.name.toLowerCase().includes(q) || rm.code.toLowerCase().includes(q)) {
-        matches.push({
-          kind: "room",
-          title: `${rm.name}`,
-          sub: `位於：${rm.buildingName} — ${rm.floor} 樓`,
-          rm
-        });
-      }
+      const name = rm.name.toLowerCase();
+      const code = rm.code.toLowerCase();
+      let rank = -1;
+      if (name === q || code === q) rank = 0;
+      else if (name.startsWith(q)) rank = 2;
+      else if (name.includes(q) || code.includes(q)) rank = 4;
+      if (rank < 0) return;
+      matches.push({
+        kind: "room",
+        rank,
+        title: `${rm.name}`,
+        sub: `位於：${rm.buildingName} — ${rm.floor} 樓`,
+        rm
+      });
     });
+    matches.sort((a, b) => a.rank - b.rank); // 同等級維持原本的建築／樓層順序
 
     listEl.innerHTML = matches.slice(0, 12).map((m, idx) => `
       <li data-idx="${idx}">
