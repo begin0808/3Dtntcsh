@@ -1334,14 +1334,14 @@ window.CampusBuilder3D = (function () {
   }
 
   // ================= 田徑場司令台 =================
-  // offsetX：距操場東緣 (b.w / 2) 的距離；w 為平台深度 (東西)、d 為寬度 (南北)
-  const REVIEWING_STAND = { offsetX: 5.2, w: 6.2, d: 18.0, deckH: 1.2, roofY: 5.2, stairW: 4.0, stepDepth: 0.5 };
+  // offsetX：距操場東緣 (b.w / 2) 的距離；w 為平台深度 (東西)、d 為寬度 (南北)；依實景照片：白磁磚厚平屋頂、前粗柱後細柱、台上藍色座位、正面左右兩座樓梯
+  const REVIEWING_STAND = { offsetX: 5.2, w: 6.2, d: 18.0, deckH: 1.3, roofY: 5.6, roofT: 0.9, stairOut: 1.6, landingW: 3.4, flightRun: 2.4 };
 
   // 操場內不可穿越的實體 (本地座標矩形)：司令台平台與正面階梯
   function trackSolidRects(b) {
     if (b.style !== "track") return [];
     const S = REVIEWING_STAND;
-    const front = -S.w / 2 - S.stepDepth * 3; // 階梯最前緣
+    const front = -S.w / 2 - S.stairOut; // 正面樓梯最前緣
     const back = S.w / 2;
     return [{ cx: b.w / 2 + S.offsetX + (front + back) / 2, cz: 0, w: back - front, d: S.d }];
   }
@@ -1653,76 +1653,114 @@ window.CampusBuilder3D = (function () {
       const S = REVIEWING_STAND;
       const stageGroup = new THREE.Group();
       stageGroup.position.set(b.w / 2 + S.offsetX, 0, 0);
-      const standMat = getMat("#E9E4D8", { roughness: 0.8 });
-      const trimMat = getMat("#9A958C", { roughness: 0.85 });
+      const tileMat = getMat("#F2F2EE", { roughness: 0.55 });   // 屋頂、柱子、樓梯白磁磚
+      const faceMat = getMat("#D9DAD5", { roughness: 0.85 });   // 平台正面灰白洗石
+      const trimMat = getMat("#FAFAF7", { roughness: 0.6 });    // 平台上緣白色收邊
+      const railMat = getMat("#5E646B", { roughness: 0.5, metalness: 0.4 });
       const halfW = S.w / 2;
       const halfD = S.d / 2;
-      const wallH = S.roofY - S.deckH;
+      const roofBottom = S.roofY;
+      const add = (geo, mat, x, y, z, shadow = true) => {
+        const m = new THREE.Mesh(geo, mat);
+        m.position.set(x, y, z);
+        m.castShadow = shadow;
+        m.receiveShadow = true;
+        stageGroup.add(m);
+        return m;
+      };
 
-      // (a) 高起平台 (含深色踢腳)
-      const deck = new THREE.Mesh(new THREE.BoxGeometry(S.w, S.deckH, S.d), standMat);
-      deck.position.y = S.deckH / 2;
-      deck.castShadow = true;
-      deck.receiveShadow = true;
-      stageGroup.add(deck);
-      const plinth = new THREE.Mesh(new THREE.BoxGeometry(S.w + 0.1, 0.25, S.d + 0.1), trimMat);
-      plinth.position.y = 0.125;
-      stageGroup.add(plinth);
+      // (a) 高起平台：灰白正面＋略外凸的白色上緣收邊
+      add(new THREE.BoxGeometry(S.w, S.deckH, S.d), faceMat, 0, S.deckH / 2, 0);
+      add(new THREE.BoxGeometry(S.w + 0.3, 0.22, S.d + 0.3), trimMat, -0.15, S.deckH - 0.11, 0);
 
-      // (b) 後牆與兩側牆：從平台面直達屋頂，撐住屋頂板
-      const backWall = new THREE.Mesh(new THREE.BoxGeometry(0.4, wallH, S.d), standMat);
-      backWall.position.set(halfW - 0.2, S.deckH + wallH / 2, 0);
-      backWall.castShadow = true;
-      stageGroup.add(backWall);
-      [-1, 1].forEach(side => {
-        const sideWall = new THREE.Mesh(new THREE.BoxGeometry(S.w, wallH, 0.4), standMat);
-        sideWall.position.set(0, S.deckH + wallH / 2, side * (halfD - 0.2));
-        sideWall.castShadow = true;
-        stageGroup.add(sideWall);
+      // (b) 台上藍色階梯座位 (兩端綠色) 與後方矮牆
+      const seatBlue = getMat("#2D63C8", { roughness: 0.6 });
+      const seatGreen = getMat("#3E8B5A", { roughness: 0.6 });
+      const tiers = 3;
+      const tierDepth = 0.75;
+      const seatEnd = 2.2; // 兩端綠色座位寬度
+      for (let t = 0; t < tiers; t++) {
+        const h = 0.4 * (t + 1);
+        const x = halfW - 0.4 - tierDepth * (tiers - t - 0.5);
+        add(new THREE.BoxGeometry(tierDepth, h, S.d - 2 * (1.0 + seatEnd)), seatBlue, x, S.deckH + h / 2, 0);
+        [-1, 1].forEach(side => add(new THREE.BoxGeometry(tierDepth, h, seatEnd), seatGreen, x, S.deckH + h / 2, side * (halfD - 1.0 - seatEnd / 2)));
+      }
+      add(new THREE.BoxGeometry(0.3, 1.5, S.d - 1.0), tileMat, halfW - 0.15, S.deckH + 0.75, 0);
+
+      // (c) 柱子：前排兩根粗方柱 (落地)，後排一排細柱 (後方開放，可看穿)
+      add(new THREE.BoxGeometry(1.2, roofBottom, 1.2), tileMat, -halfW + 0.6, roofBottom / 2, -halfD + 0.6);
+      add(new THREE.BoxGeometry(1.2, roofBottom, 1.2), tileMat, -halfW + 0.6, roofBottom / 2, halfD - 0.6);
+      [-halfD + 0.4, -halfD / 3, 0, halfD / 3, halfD - 0.4].forEach(z => {
+        add(new THREE.BoxGeometry(0.55, roofBottom, 0.55), tileMat, halfW - 0.3, roofBottom / 2, z);
       });
 
-      // (c) 屋頂板：略向正面懸挑，並有收邊
-      const roof = new THREE.Mesh(new THREE.BoxGeometry(S.w + 0.8, 0.4, S.d + 0.6), standMat);
-      roof.position.set(-0.4, S.roofY + 0.2, 0);
-      roof.castShadow = true;
-      stageGroup.add(roof);
-      const roofTrim = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.25, S.d + 0.6), trimMat);
-      roofTrim.position.set(-halfW - 0.8, S.roofY + 0.2, 0);
-      stageGroup.add(roofTrim);
+      // (d) 白磁磚厚平屋頂 (四周外挑) 與屋頂下橫樑
+      add(new THREE.BoxGeometry(S.w + 2.4, S.roofT, S.d + 3.2), tileMat, -0.5, roofBottom + S.roofT / 2, 0);
+      add(new THREE.BoxGeometry(0.5, 0.6, S.d), tileMat, halfW - 0.3, roofBottom - 0.3, 0, false);       // 後樑
+      add(new THREE.BoxGeometry(0.5, 0.6, S.d), tileMat, -halfW + 0.6, roofBottom - 0.3, 0, false);      // 前樑
+      [-halfD / 3, halfD / 3].forEach(z => add(new THREE.BoxGeometry(S.w, 0.5, 0.4), tileMat, 0, roofBottom - 0.25, z, false));
 
-      // (d) 後牆紅色看板與講台
-      const banner = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.5, 6.0), getMat("#C8323A"));
-      banner.position.set(halfW - 0.45, S.deckH + wallH * 0.6, 0);
-      stageGroup.add(banner);
-      const lectern = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.1, 1.1), getMat("#7A5034", { roughness: 0.7 }));
-      lectern.position.set(-halfW + 1.6, S.deckH + 0.55, 0);
-      lectern.castShadow = true;
-      stageGroup.add(lectern);
+      // 屋頂擴音喇叭
+      const hornMat = getMat("#6B6F73", { roughness: 0.5, metalness: 0.4 });
+      [-halfD + 1.5, -3, 3, halfD - 1.5].forEach(z => {
+        add(new THREE.CylinderGeometry(0.28, 0.16, 0.35, 12), hornMat, -halfW + 0.2, roofBottom + S.roofT + 0.18, z, false);
+      });
 
-      // (e) 正面欄杆 (中央留階梯開口)
-      const railMat = getMat("#5E646B", { roughness: 0.5, metalness: 0.4 });
-      const railLen = halfD - S.stairW / 2 - 0.4;
+      // (e) 後樑中央懸掛國旗 (面向跑道)
+      const flagTex = makeTextCanvas(192, 128, (ctx, w, h) => {
+        ctx.fillStyle = "#FE0000";
+        ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = "#000095";
+        ctx.fillRect(0, 0, w / 2, h / 2);
+        const cx = w / 4, cy = h / 4;
+        ctx.fillStyle = "#FFFFFF";
+        ctx.beginPath();
+        for (let i = 0; i < 24; i++) {
+          const a = (i / 24) * Math.PI * 2;
+          const r = i % 2 === 0 ? 26 : 15;
+          ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#000095";
+        ctx.beginPath(); ctx.arc(cx, cy, 13, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#FFFFFF";
+        ctx.beginPath(); ctx.arc(cx, cy, 11, 0, Math.PI * 2); ctx.fill();
+      });
+      const flag = add(new THREE.PlaneGeometry(2.1, 1.4), flagTex ? new THREE.MeshStandardMaterial({ map: flagTex, roughness: 0.7, side: THREE.DoubleSide }) : getMat("#FE0000"), halfW - 0.6, roofBottom - 1.4, 0, false);
+      flag.rotation.y = -Math.PI / 2; // 面向 -X (跑道)
+
+      // (f) 正面左右兩座樓梯：由兩側往中央爬升，中央為平台前的迎賓平台；外側為白色斜向擋牆
+      const stairFront = -halfW - S.stairOut;
+      const stairX = -halfW - S.stairOut / 2;
+      add(new THREE.BoxGeometry(S.stairOut, S.deckH, S.landingW), tileMat, stairX, S.deckH / 2, 0);            // 中央平台
+      const steps = 6;
+      const stepRun = S.flightRun / steps;
       [-1, 1].forEach(side => {
-        const rail = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, railLen), railMat);
-        rail.position.set(-halfW + 0.15, S.deckH + 0.95, side * (S.stairW / 2 + railLen / 2));
-        stageGroup.add(rail);
-        for (let i = 0; i <= 4; i++) {
-          const post = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.95, 0.08), railMat);
-          post.position.set(-halfW + 0.15, S.deckH + 0.475, side * (S.stairW / 2 + (railLen * i) / 4));
-          stageGroup.add(post);
+        for (let i = 0; i < steps; i++) {
+          const h = S.deckH * (i + 1) / (steps + 1);
+          const z = side * (S.landingW / 2 + S.flightRun - stepRun * (i + 0.5));
+          add(new THREE.BoxGeometry(S.stairOut, h, stepRun), tileMat, stairX, h / 2, z);
+        }
+        // 白色斜向擋牆 (樓梯正面外側，沿樓梯坡度)
+        const slope = Math.atan2(S.deckH, S.flightRun);
+        const len = Math.hypot(S.deckH, S.flightRun);
+        const cheek = add(new THREE.BoxGeometry(0.25, 0.45, len), tileMat, stairFront - 0.12, S.deckH / 2 + 0.2, side * (S.landingW / 2 + S.flightRun / 2));
+        cheek.rotation.x = side * slope;
+      });
+
+      // (g) 平台兩端前緣金屬欄杆
+      [-1, 1].forEach(side => {
+        const z1 = side * (halfD - 1.3);
+        const z2 = side * (S.landingW / 2 + S.flightRun + 0.3);
+        const len = Math.abs(z1 - z2);
+        const zc = (z1 + z2) / 2;
+        add(new THREE.BoxGeometry(0.08, 0.08, len), railMat, -halfW + 0.15, S.deckH + 1.0, zc, false);
+        add(new THREE.BoxGeometry(0.06, 0.06, len), railMat, -halfW + 0.15, S.deckH + 0.5, zc, false);
+        for (let i = 0; i <= 3; i++) {
+          add(new THREE.BoxGeometry(0.07, 1.0, 0.07), railMat, -halfW + 0.15, S.deckH + 0.5, z2 + (z1 - z2) * i / 3, false);
         }
       });
-
-      // (f) 正面中央階梯 (往跑道方向逐級下降)
-      const stepCount = 3;
-      for (let i = 0; i < stepCount; i++) {
-        const h = S.deckH * (stepCount - i) / (stepCount + 1);
-        const step = new THREE.Mesh(new THREE.BoxGeometry(S.stepDepth, h, S.stairW), standMat);
-        step.position.set(-halfW - S.stepDepth * (i + 0.5), h / 2, 0);
-        step.castShadow = true;
-        step.receiveShadow = true;
-        stageGroup.add(step);
-      }
 
       g1.add(stageGroup);
 
