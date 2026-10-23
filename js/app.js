@@ -1433,6 +1433,9 @@
     document.querySelectorAll("#themeSwitcher button, .more-themes button").forEach(btn => {
       btn.classList.toggle("active", btn.dataset.theme === themeName);
     });
+    const themeMenuLabel = document.getElementById("themeMenuLabel");
+    const activeThemeBtn = document.querySelector(`#themeSwitcher button[data-theme="${themeName}"]`);
+    if (themeMenuLabel && activeThemeBtn) themeMenuLabel.textContent = activeThemeBtn.textContent.trim();
 
     document.body.classList.toggle("theme-pixel", themeName === "pixel");
     document.body.classList.toggle("theme-brick", themeName === "brick");
@@ -2184,6 +2187,9 @@
       if (e.target.id === "copyrightModal") copyModal.hidden = true;
     });
 
+    // 9b. 頂部下拉選單 (瀏覽功能、視覺風格)
+    initDropdowns();
+
     // 10. 視窗縮放處理
     window.addEventListener("resize", onWindowResize);
     onWindowResize();
@@ -2191,6 +2197,39 @@
     camControl.spherical.phi = camControl.sphericalGoal.phi = getOverviewPhi();
 
     initCompactUI();
+  }
+
+  // ================= 頂部下拉選單 =================
+  // 點按鈕展開；選了項目、點選單外或按 Esc 就收起；同時只開一個
+  function initDropdowns() {
+    const dropdowns = Array.from(document.querySelectorAll(".top-tools .dropdown"));
+    const closeAll = except => {
+      dropdowns.forEach(dd => {
+        if (dd === except) return;
+        dd.querySelector(".dropdown-menu").hidden = true;
+        dd.querySelector(".dropdown-toggle").setAttribute("aria-expanded", "false");
+      });
+    };
+    dropdowns.forEach(dd => {
+      const toggle = dd.querySelector(".dropdown-toggle");
+      const menu = dd.querySelector(".dropdown-menu");
+      toggle.addEventListener("click", e => {
+        e.stopPropagation();
+        const willOpen = menu.hidden;
+        closeAll(dd);
+        menu.hidden = !willOpen;
+        toggle.setAttribute("aria-expanded", String(willOpen));
+      });
+      menu.addEventListener("click", e => {
+        if (e.target.closest(".dropdown-item")) closeAll();
+      });
+    });
+    document.addEventListener("click", e => {
+      if (!e.target.closest(".top-tools .dropdown")) closeAll();
+    });
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape") closeAll();
+    });
   }
 
   // ================= 手機／平板精簡介面 =================
