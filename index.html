@@ -72,24 +72,17 @@
       </div>
 
       <!-- 頂部右側：一鍵最佳全覽、地面漫步、專門學程導覽與三種視覺主題切換 -->
-      <!-- 頂部右側：「瀏覽功能」與「視覺風格」兩個下拉選單 -->
+      <!-- 頂部右側：最佳全覽、地面漫步、特色學程三個按鈕，以及視覺風格下拉選單 -->
       <div class="top-tools">
-        <div class="dropdown">
-          <button type="button" class="mode-pill-btn pri-pill glass-card dropdown-toggle" id="modeMenuBtn" aria-haspopup="true" aria-expanded="false">
-            🧭 瀏覽功能 <span class="caret">▾</span>
-          </button>
-          <div class="dropdown-menu glass-card" role="menu" aria-label="瀏覽功能" hidden>
-            <button type="button" id="resetBestViewBtn" class="dropdown-item" role="menuitem">
-              🏠 最佳全覽視角<small>回到全校全覽與正北朝上</small>
-            </button>
-            <button type="button" id="walkModeBtn" class="dropdown-item" role="menuitem">
-              🚶 地面實境漫步<small>以同學角色在校園中行走</small>
-            </button>
-            <button type="button" id="programsToggleBtn" class="dropdown-item" role="menuitem">
-              🎓 特色學程導覽<small>學術與 7 大專門學程科館</small>
-            </button>
-          </div>
-        </div>
+        <button type="button" id="resetBestViewBtn" class="mode-pill-btn pri-pill glass-card" title="回到全校全覽與正北朝上">
+          🏠 最佳全覽視角
+        </button>
+        <button type="button" id="walkModeBtn" class="mode-pill-btn glass-card" title="以同學角色在校園中行走">
+          🚶 地面實境漫步
+        </button>
+        <button type="button" id="programsToggleBtn" class="mode-pill-btn glass-card" title="學術與 7 大專門學程科館">
+          🎓 特色學程導覽
+        </button>
         <div class="dropdown">
           <button type="button" class="mode-pill-btn glass-card dropdown-toggle" id="themeMenuBtn" aria-haspopup="true" aria-expanded="false">
             <span id="themeMenuLabel">☀️ 晴空寫實</span> <span class="caret">▾</span>
