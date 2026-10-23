@@ -1667,11 +1667,11 @@
       state.navCurve = curve;
       const segments = Math.max(64, Math.min(256, Math.round(res.distance * 0.85)));
       const tubeGeo = new THREE.TubeGeometry(curve, segments, 0.65, 8, false);
-      const tubeMat = new THREE.MeshBasicMaterial({ color: "#FFD23F" });
+      const tubeMat = new THREE.MeshBasicMaterial({ color: "#1E7BFF" }); // 導航藍：與磚色步道、黃色選取標示明顯區分
       const tubeMesh = new THREE.Mesh(tubeGeo, tubeMat);
       routeGroup.add(tubeMesh);
 
-      const startPin = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 0.6, 20), new THREE.MeshBasicMaterial({ color: "#4CC3D9" }));
+      const startPin = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 0.6, 20), new THREE.MeshBasicMaterial({ color: "#22C55E" }));
       startPin.position.copy(pts[0]);
       const endPin = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 0.7, 20), new THREE.MeshBasicMaterial({ color: "#FF595E" }));
       endPin.position.copy(pts[pts.length - 1]);
