@@ -75,7 +75,7 @@
     walkMode: false,       // 地面漫步模式
     walkChar: "boy",       // 'boy' | 'girl'
     walkView: "third_person", // 'third_person' | 'first_person'
-    walkPace: "run",       // 'run' | 'walk'
+    walkPace: "walk",      // 'run' | 'walk' (所有裝置預設步行)
     walkJoy: { x: 0, y: 0 }, // 觸控搖桿輸入，x = 轉向、y = 前後 (-1..1)
     walkPos: new THREE.Vector3(2.0, 0, -200),
     walkYaw: Math.PI,      // 0 = 朝北(-Z), Math.PI = 朝南(+Z), -Math.PI/2 = 朝東(+X), Math.PI/2 = 朝西(-X)
@@ -2387,12 +2387,11 @@
     } catch (err) { /* 同上 */ }
     if (!hintSeen && (touchQuery.matches || isCompactLayout())) showGestureHint();
 
-    // 漫步跑步／步行切換 (手機與觸控裝置預設步行，搖桿操作較好控制)
+    // 漫步跑步／步行切換 (預設步行)
     const paceBtn = document.getElementById("walkPaceBtn");
     const renderPace = () => {
       paceBtn.innerHTML = state.walkPace === "run" ? "🏃 跑步" : "🚶 步行";
     };
-    if (touchQuery.matches || isCompactLayout()) state.walkPace = "walk";
     renderPace();
     paceBtn.addEventListener("click", () => {
       state.walkPace = state.walkPace === "run" ? "walk" : "run";
