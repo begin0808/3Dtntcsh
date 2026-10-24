@@ -1195,8 +1195,28 @@ window.CampusBuilder3D = (function () {
   // 座標方向約定：
   // - 東西向建築 (isEW = b.w >= b.d)：rooms 陣列索引 0..N-1 由西側 (-X) 排至東側 (+X)
   // - 南北向建築 (isEW = false)：rooms 陣列索引 0..N-1 由北側 (-Z) 排至南側 (+Z)
-  // 一樓中央穿堂 (行人可貫穿南北，中軸對齊世界座標 x = 0)：建築 style → 穿堂半寬 (m)
-  const GROUND_PASSAGE_HALF_WIDTH = { legeng: 6.0, zhengde: 4.0 };
+  // 一樓穿堂 (b.groundPassages，設定見 data/campus-data.js) 換算為建築本地座標
+  // 回傳 { cut, center, half }：cut 為被穿堂切開的本地軸 (南北向通行切開 x 軸、東西向通行切開 z 軸)
+  function localPassages(b) {
+    return (b.groundPassages || []).map(p => (p.axis === "z"
+      ? { cut: "x", center: p.at - b.x, half: p.halfWidth }
+      : { cut: "z", center: p.at - b.z, half: p.halfWidth }));
+  }
+
+  // 從區間 [a, c] 扣除若干區間 holes，回傳剩下的線段
+  function subtractIntervals(a, c, holes) {
+    let segs = [[a, c]];
+    holes.forEach(([h1, h2]) => {
+      const next = [];
+      segs.forEach(([s1, s2]) => {
+        if (h2 <= s1 || h1 >= s2) { next.push([s1, s2]); return; }
+        if (h1 > s1) next.push([s1, h1]);
+        if (h2 < s2) next.push([h2, s2]);
+      });
+      segs = next;
+    });
+    return segs.filter(([s1, s2]) => s2 - s1 > 0.05);
+  }
 
   function buildFloorInterior(b, floorIndex, yBase, fh) {
     const fg = new THREE.Group();
@@ -1225,39 +1245,42 @@ window.CampusBuilder3D = (function () {
         common: "#9BB0A5"
       };
 
-      const span = (isEW ? b.w - 1.2 : b.d - 1.2) / count;
+      const longLen = isEW ? b.w : b.d;
+      const span = (longLen - 1.2) / count;
+      // 一樓穿堂範圍內不放教室方塊：與穿堂重疊的方塊會被裁掉，保持通道淨空
+      const roomAxis = isEW ? "x" : "z";
+      const holes = floorIndex === 1
+        ? localPassages(b).filter(p => p.cut === roomAxis).map(p => [p.center - p.half - 0.3, p.center + p.half + 0.3])
+        : [];
       rooms.forEach((rm, idx) => {
-        // 一樓中央穿堂 (樂耕樓、正德樓) 不生成教室方塊，保持通道淨空
-        const passageHalfW = GROUND_PASSAGE_HALF_WIDTH[b.style];
-        if (passageHalfW && floorIndex === 1) {
-          const rxCheck = isEW ? (-b.w / 2 + 0.6 + span * (idx + 0.5)) : 0;
-          const hallCenter = -b.x;
-          if (rm.code === "LG4" || rm.type === "common" || rm.name.includes("穿堂") || rm.name.includes("玄關") || Math.abs(rxCheck - hallCenter) < passageHalfW + 0.8) {
-            return;
-          }
-        }
+        if (holes.length && (rm.name.includes("穿堂") || rm.name.includes("玄關"))) return;
         const cHex = roomColors[rm.type] || "#CFD4D8";
         const rMat = getMat(cHex, { roughness: 0.65 });
-        const rw = isEW ? span * 0.9 : (b.w - 2.6);
-        const rd = isEW ? (b.d - 2.6) : span * 0.9;
-        const rx = isEW ? (-b.w / 2 + 0.6 + span * (idx + 0.5)) : 0;
-        const rz = isEW ? 0 : (-b.d / 2 + 0.6 + span * (idx + 0.5));
+        const center = -longLen / 2 + 0.6 + span * (idx + 0.5);
+        subtractIntervals(center - span * 0.45, center + span * 0.45, holes).forEach(([s1, s2]) => {
+          const c = (s1 + s2) / 2;
+          const len = s2 - s1;
+          const rw = isEW ? len : (b.w - 2.6);
+          const rd = isEW ? (b.d - 2.6) : len;
+          const rx = isEW ? c : 0;
+          const rz = isEW ? 0 : c;
 
-        const roomBlock = new THREE.Mesh(new THREE.BoxGeometry(rw, fh * 0.45, rd), rMat);
-        roomBlock.position.set(rx, 0.25 + fh * 0.225, rz);
-        roomBlock.castShadow = true;
-        roomBlock.receiveShadow = true;
-        roomBlock.userData = {
-          isRoom: true,
-          buildingId: b.id,
-          buildingName: b.name,
-          floor: floorIndex,
-          roomCode: rm.code,
-          roomName: rm.name,
-          roomType: rm.type,
-          worldOffset: new THREE.Vector3(rx, yBase + fh * 0.5, rz)
-        };
-        fg.add(roomBlock);
+          const roomBlock = new THREE.Mesh(new THREE.BoxGeometry(rw, fh * 0.45, rd), rMat);
+          roomBlock.position.set(rx, 0.25 + fh * 0.225, rz);
+          roomBlock.castShadow = true;
+          roomBlock.receiveShadow = true;
+          roomBlock.userData = {
+            isRoom: true,
+            buildingId: b.id,
+            buildingName: b.name,
+            floor: floorIndex,
+            roomCode: rm.code,
+            roomName: rm.name,
+            roomType: rm.type,
+            worldOffset: new THREE.Vector3(rx, yBase + fh * 0.5, rz)
+          };
+          fg.add(roomBlock);
+        });
       });
     }
 
@@ -3172,54 +3195,41 @@ window.CampusBuilder3D = (function () {
       const yBase = (f - 1) * fh;
       const fg = buildFloorInterior(b, f, yBase, fh);
 
-      if (GROUND_PASSAGE_HALF_WIDTH[b.style] && f === 1) {
-        // 一樓中央穿堂 (樂耕樓寬 12m、正德樓寬 8m，貫穿南北，行人可直接穿堂進出中庭)
-        const hallCenter = -b.x; // 對齊世界座標 x = 0 中軸線
-        const hallHalfW = GROUND_PASSAGE_HALF_WIDTH[b.style];
+      let railMat = secMat;
+      if (b.style === "liyong") railMat = getMat("#689F4E");     // 利用樓招牌蘋果綠腰帶 (`161523.jpg`)
+      if (b.style === "book_depot") railMat = getMat("#B8CF78"); // 書庫萊姆綠窗台線 (`160532.jpg`)
+      if (b.style === "library") railMat = getMat("#DEC0B8");    // 圖書館粉褐腰帶 (`160422.jpg`)
+      if (b.style === "farm_mgmt") railMat = getMat("#9CC2D6");  // 農經館冰藍拱廊 (`160514.jpg`)
 
-        // 西翼實體建築外殼
-        const wLeft = (hallCenter - hallHalfW) - (-b.w / 2);
-        const xLeft = -b.w / 2 + wLeft / 2;
-        const leftShell = new THREE.Mesh(new THREE.BoxGeometry(wLeft, fh - 0.18, b.d), mainMat);
-        leftShell.position.set(xLeft, fh / 2, 0);
-        leftShell.castShadow = true;
-        leftShell.receiveShadow = true;
-        fg.add(leftShell);
-
-        // 東翼實體建築外殼
-        const wRight = (b.w / 2) - (hallCenter + hallHalfW);
-        const xRight = (hallCenter + hallHalfW) + wRight / 2;
-        const rightShell = new THREE.Mesh(new THREE.BoxGeometry(wRight, fh - 0.18, b.d), mainMat);
-        rightShell.position.set(xRight, fh / 2, 0);
-        rightShell.castShadow = true;
-        rightShell.receiveShadow = true;
-        fg.add(rightShell);
-
-        // 穿堂貫通通道花崗石地坪與挑高天花板
-        const hallFloor = new THREE.Mesh(new THREE.BoxGeometry(hallHalfW * 2, 0.22, b.d + 1.2), getMat("#D4D0C8"));
-        hallFloor.position.set(hallCenter, 0.11, 0);
-        hallFloor.receiveShadow = true;
-        fg.add(hallFloor);
-
-        const hallCeiling = new THREE.Mesh(new THREE.BoxGeometry(hallHalfW * 2, 0.24, b.d), mainMat);
-        hallCeiling.position.set(hallCenter, fh - 0.12, 0);
-        fg.add(hallCeiling);
-
-        // 穿堂兩側門面構造柱
-        [-hallHalfW, hallHalfW].forEach(px => {
-          const pCol = new THREE.Mesh(new THREE.BoxGeometry(0.8, fh - 0.18, b.d), secMat);
-          pCol.position.set(hallCenter + px, fh / 2, 0);
-          fg.add(pCol);
+      const passages = f === 1 ? localPassages(b) : [];
+      if (passages.length) {
+        // 一樓穿堂：外殼依穿堂切成數段，穿堂處留空並加上地坪、天花板與兩側柱
+        // (同一棟的穿堂需同方向；樂耕樓、正德樓為南北向，利用樓、厚生樓為東西向)
+        const cut = passages[0].cut;
+        const L = cut === "x" ? b.w : b.d; // 被切開方向的總長
+        const T = cut === "x" ? b.d : b.w; // 穿堂長度 (建築厚度)
+        const box = (along, h, across, pos, y, mat, shadow = false) => {
+          const geo = cut === "x" ? new THREE.BoxGeometry(along, h, across) : new THREE.BoxGeometry(across, h, along);
+          const m = new THREE.Mesh(geo, mat);
+          if (cut === "x") m.position.set(pos, y, 0);
+          else m.position.set(0, y, pos);
+          m.castShadow = shadow;
+          m.receiveShadow = true;
+          fg.add(m);
+          return m;
+        };
+        const hallFloorMat = getMat("#D4D0C8");
+        subtractIntervals(-L / 2, L / 2, passages.map(p => [p.center - p.half, p.center + p.half])).forEach(([s1, s2]) => {
+          const len = s2 - s1;
+          const mid = (s1 + s2) / 2;
+          box(len, fh - 0.18, T, mid, fh / 2, mainMat, true);
+          if (len > 1.6) box(len - 1.2, fh * 0.38, T + 0.14, mid, fh * 0.56, glassMat);
+          box(len + 0.3, fh * 0.28, T + 0.36, mid, fh * 0.22, railMat, true);
         });
-
-        // 東西兩翼玻璃窗帶與窗台 (穿堂區完全挑空開放)
-        [ [wLeft, xLeft], [wRight, xRight] ].forEach(([w, x]) => {
-          const win = new THREE.Mesh(new THREE.BoxGeometry(w - 1.2, fh * 0.38, b.d + 0.14), glassMat);
-          win.position.set(x, fh * 0.56, 0);
-          fg.add(win);
-          const ledge = new THREE.Mesh(new THREE.BoxGeometry(w + 0.3, fh * 0.28, b.d + 0.36), secMat);
-          ledge.position.set(x, fh * 0.22, 0);
-          fg.add(ledge);
+        passages.forEach(p => {
+          box(p.half * 2, 0.22, T + 1.2, p.center, 0.11, hallFloorMat);
+          box(p.half * 2, 0.24, T, p.center, fh - 0.12, mainMat);
+          [-p.half, p.half].forEach(o => box(0.8, fh - 0.18, T, p.center + o, fh / 2, secMat));
         });
       } else {
         const wallShell = new THREE.Mesh(new THREE.BoxGeometry(b.w, fh - 0.18, b.d), mainMat);
@@ -3235,12 +3245,6 @@ window.CampusBuilder3D = (function () {
         );
         winBand.position.y = fh * 0.56;
         fg.add(winBand);
-
-        let railMat = secMat;
-        if (b.style === "liyong") railMat = getMat("#689F4E");     // 利用樓招牌蘋果綠腰帶 (`161523.jpg`)
-        if (b.style === "book_depot") railMat = getMat("#B8CF78"); // 書庫萊姆綠窗台線 (`160532.jpg`)
-        if (b.style === "library") railMat = getMat("#DEC0B8");    // 圖書館粉褐腰帶 (`160422.jpg`)
-        if (b.style === "farm_mgmt") railMat = getMat("#9CC2D6");  // 農經館冰藍拱廊 (`160514.jpg`)
 
         const ledge = new THREE.Mesh(
           new THREE.BoxGeometry(b.w + 0.36, fh * 0.28, b.d + 0.36),
@@ -3492,9 +3496,14 @@ window.CampusBuilder3D = (function () {
     // 5. 厚生樓 (`housheng`) — 紅磚垂直壁柱 + 4F 頂層半圓形鏤空拱廊 + 雙座藍波浪入口門廊 (`161527.jpg`)
     if (b.style === "housheng") {
       const brickMat = getMat("#B86B52");
+      const passageZ = localPassages(b).filter(p => p.cut === "z");
       for (let pz = -b.d * 0.44; pz <= b.d * 0.44; pz += 6.2) {
-        const pilaster = new THREE.Mesh(new THREE.BoxGeometry(b.w + 0.5, totalH + 0.4, 0.75), brickMat);
-        pilaster.position.set(0, totalH / 2, pz);
+        // 落在一樓穿堂上的壁柱從二樓起砌，不擋通道
+        const overPassage = passageZ.some(p => Math.abs(pz - p.center) < p.half + 0.4);
+        const y0 = overPassage ? fh : 0;
+        const h = totalH + 0.4 - y0;
+        const pilaster = new THREE.Mesh(new THREE.BoxGeometry(b.w + 0.5, h, 0.75), brickMat);
+        pilaster.position.set(0, y0 + h / 2, pz);
         root.add(pilaster);
       }
       [-14, 14].forEach(pz => {
@@ -3759,7 +3768,7 @@ window.CampusBuilder3D = (function () {
     buildCampusGrounds,
     createBuildingMesh,
     setVisualTheme,
-    groundPassageHalfWidth: style => GROUND_PASSAGE_HALF_WIDTH[style] || 0,
+    subtractIntervals,
     courtFenceSegments,
     trackSolidRects
   };

@@ -521,6 +521,8 @@ window.CAMPUS_DATA = {
       x: -1.875, z: -46.0, w: 93.75, d: 15.0, rotY: 0,
       floors: 3, floorHeight: 5.4,
       style: "legeng",
+      // 一樓穿堂 (行人可穿越)：axis 為通行方向；at 為穿堂中線的世界座標 (axis "z" 時為 x、axis "x" 時為 z)；halfWidth 為半寬 (m)
+      groundPassages: [{ axis: "z", at: 0, halfWidth: 6.0 }],              // 中央穿堂 (南北向，對齊中庭中軸)
       colors: {
         main: "#F2F0EA",
         secondary: "#B8B3A8",
@@ -536,6 +538,10 @@ window.CAMPUS_DATA = {
       x: -56.0, z: -2.375, w: 14.5, d: 72.25, rotY: 0,
       floors: 2, floorHeight: 5.4,
       style: "liyong",
+      groundPassages: [
+        { axis: "x", at: -34.5, halfWidth: 2.5 },                         // 北端：與樂耕樓交會處，東西向通往中庭
+        { axis: "x", at: 29.75, halfWidth: 2.5 }                          // 南端：與正德樓交會處，東西向通往中庭
+      ],
       colors: {
         main: "#E2E6EC",
         secondary: "#7D807D",
@@ -551,6 +557,7 @@ window.CAMPUS_DATA = {
       x: 3.625, z: 42.0, w: 104.75, d: 16.5, rotY: 0,
       floors: 3, floorHeight: 5.4,
       style: "zhengde",
+      groundPassages: [{ axis: "z", at: 0, halfWidth: 4.0 }],              // 中央穿堂 (南北向，對齊中庭中軸)
       colors: {
         main: "#EAE5D9",
         secondary: "#8A877E",
@@ -566,6 +573,7 @@ window.CAMPUS_DATA = {
       x: 56.0, z: -3.0, w: 14.5, d: 78.0, rotY: 0,
       floors: 4, floorHeight: 5.4,
       style: "housheng",
+      groundPassages: [{ axis: "x", at: 29.75, halfWidth: 2.5 }],          // 南端：與正德樓交會處，東西向通往中庭
       colors: {
         main: "#ECE7DF",
         secondary: "#B86B52",

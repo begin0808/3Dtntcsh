@@ -1036,15 +1036,19 @@
     sin: Math.sin(rotY)
   });
 
-  // 一樓有中央穿堂的建築 (樂耕樓、正德樓) 拆成東西兩翼，穿堂整個寬度都可以走 (穿堂中軸在 x = 0)
+  // 一樓有穿堂的建築 (b.groundPassages) 依穿堂切成數段障礙物，穿堂整個寬度都可以走
+  // 南北向通行的穿堂 (axis "z") 切開 x 方向；東西向通行的穿堂 (axis "x") 切開 z 方向
   const walkObstacles = DATA.buildings
     .filter(b => !WALK_PASSABLE_STYLES.has(b.style))
     .flatMap(b => {
-      const hallHalfW = BUILDER.groundPassageHalfWidth ? BUILDER.groundPassageHalfWidth(b.style) : 0;
-      if (!hallHalfW) return [makeObstacle(b.x, b.z, b.w, b.d, b.rotY || 0)];
-      const west = [b.x - b.w / 2, -hallHalfW];
-      const east = [hallHalfW, b.x + b.w / 2];
-      return [west, east].map(([x1, x2]) => makeObstacle((x1 + x2) / 2, b.z, x2 - x1, b.d));
+      const passages = b.groundPassages || [];
+      if (!passages.length || !BUILDER.subtractIntervals) return [makeObstacle(b.x, b.z, b.w, b.d, b.rotY || 0)];
+      const cutX = passages[0].axis === "z";
+      const [a, c] = cutX ? [b.x - b.w / 2, b.x + b.w / 2] : [b.z - b.d / 2, b.z + b.d / 2];
+      const holes = passages.map(p => [p.at - p.halfWidth, p.at + p.halfWidth]);
+      return BUILDER.subtractIntervals(a, c, holes).map(([s1, s2]) => (cutX
+        ? makeObstacle((s1 + s2) / 2, b.z, s2 - s1, b.d)
+        : makeObstacle(b.x, (s1 + s2) / 2, b.w, s2 - s1)));
     });
 
   // 操場本身可走入，但司令台 (平台＋階梯) 不能穿越 (尺寸與 3D 模型共用)
