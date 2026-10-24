@@ -409,8 +409,8 @@ window.CAMPUS_DATA = {
 
   // 校內人行步道 (以磚色鋪面繪製，與黑色車道區分；導航節點見 navNodes 7b)
   // 西側球場區兩條東西向步道，讓每座球場都有自己的入口：
-  //   北步道 z = -42.5：風雨球場南側與露天籃球場北側之間 → 網球場、露天籃球場
-  //   南步道 z = -16.5：露天籃球場南側與北排球場北側之間 → 北排球場、匹克球場
+  //   北步道 z = -42.5：風雨球場南側與露天籃球場北側之間 → 紅土網球場、露天籃球場
+  //   南步道 z = -16.5：露天籃球場南側與硬地網球場北側之間 → 硬地網球場、匹克球場
   // 步道起點設在西側主幹道內緣 (x = -82)，端點圓角藏在車道下方，不與車道重疊在同一平面
   walkways: [
     { points: [[-82.0, -42.5], [-156.0, -42.5], [-156.0, -48.0]], width: 3.5 },
@@ -848,7 +848,7 @@ window.CAMPUS_DATA = {
     },
     {
       id: "tennis_courts",
-      englishName: "Outdoor Tennis Courts",
+      englishName: "Outdoor Clay Tennis Courts",
       category: "sport",
       zone: "west_sport",
       x: -142.0, z: -71.0, w: 34.0, d: 46.0, rotY: 0,
@@ -859,10 +859,10 @@ window.CAMPUS_DATA = {
       // 露天網球場四周高圍網 (防止球打出場外)；大門在南側靠西端 (gateAt 為大門中心的本地 x 座標，對齊導航入口 n_tennis_entrance)
       fence: { height: 4.0, gateSide: "south", gateAt: -14.0, gateWidth: 3.0 },
       colors: {
-        main: "#9D2F2A",
-        secondary: "#3F8A4F",
+        main: "#A9502F",      // 紅土場外圍 (略深)
+        secondary: "#C8673C", // 紅土球場面
         accent: "#F4F6F8",
-        roof: "#9D2F2A"
+        roof: "#A9502F"
       },
     },
     {
@@ -901,13 +901,13 @@ window.CAMPUS_DATA = {
     },
     {
       id: "covered_volleyball_n",
-      englishName: "North Covered Volleyball Courts",
+      englishName: "Covered Hard Tennis Courts",
       category: "sport",
       zone: "west_sport",
       x: -143.0, z: 3.0, w: 32.0, d: 30.0, rotY: 0,
       floors: 1, floorHeight: 15.6,
       style: "sport_court",
-      courtLayout: "volleyball_2",
+      courtLayout: "tennis_2",
       covered: true,
       colors: {
         main: "#CD5B45",
@@ -1077,11 +1077,11 @@ window.CAMPUS_DATA = {
     "n_lane_n_110": { x: -110, z: -42.5, label: "球場北步道（露天籃球場北口）" },
     "n_obasket_entrance": { x: -110, z: -37, label: "露天籃球場北側入口" },
     "n_lane_n_156": { x: -156, z: -42.5, label: "球場北步道西端" },
-    "n_tennis_entrance": { x: -156, z: -48, label: "網球場西南角入口" },
+    "n_tennis_entrance": { x: -156, z: -48, label: "紅土網球場西南角入口" },
     "n_lane_s_118": { x: -118.5, z: -16.5, label: "球場南步道（匹克球場北口）" },
     "n_pickle_entrance": { x: -118.5, z: -10, label: "匹克球場北側入口" },
     "n_lane_s_143": { x: -143, z: -16.5, label: "球場南步道西端" },
-    "n_vball_n_entrance": { x: -143, z: -12, label: "北座風雨排球場北側入口" },
+    "n_vball_n_entrance": { x: -143, z: -12, label: "硬地網球場北側入口" },
     "n_west_rd_s2": { x: -80, z: 86, label: "西側主幹道（游泳館南口）" },
     "n_swim_loop": { x: -105, z: 88, label: "游泳館聯絡車道" },
     "n_swim": { x: -116, z: 86, label: "游泳館正門" },

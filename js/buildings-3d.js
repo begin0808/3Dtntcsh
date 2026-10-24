@@ -343,7 +343,7 @@ window.CampusBuilder3D = (function () {
     westSportPlaza.receiveShadow = true;
     envGroup.add(westSportPlaza);
 
-    // 網球場與北區風雨排球場之間的深灰黑色棚架／鋪面區 (-143, -29)
+    // 紅土網球場與硬地網球場之間的深灰黑色棚架／鋪面區 (-143, -29)
     const westDarkPad = new THREE.Mesh(
       new THREE.BoxGeometry(31.0, 0.45, 17.5),
       getMat("#2C3034", { roughness: 0.8 })
@@ -2545,9 +2545,9 @@ window.CampusBuilder3D = (function () {
       } else if (b.courtLayout === "basketball_1") {
         // 1 面東西向露天標準籃球場
         addEWGreenCourt(0, 0, 22.0, 12.6, "basketball");
-      } else if (b.courtLayout === "volleyball_2") {
-        // 北區 2 面東西向風雨排球場
-        [-7.2, 7.2].forEach(cz => addEWGreenCourt(0, cz, 22.5, 10.6, "volleyball"));
+      } else if (b.courtLayout === "tennis_2") {
+        // 2 面東西向風雨硬地網球場 (資料 id 仍為 covered_volleyball_n)
+        [-7.4, 7.4].forEach(cz => addEWGreenCourt(0, cz, 23.8, 11.0, "tennis"));
       } else if (b.courtLayout === "volleyball_4") {
         // 南區 2×2 共 4 面東西向風雨排球場 + 中央南北向黑線分隔
         const midDiv = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.25, b.d), netMat);
