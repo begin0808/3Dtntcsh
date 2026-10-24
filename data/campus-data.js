@@ -398,6 +398,15 @@ window.CAMPUS_DATA = {
     { points: [[-174.0, 201.2], [-80.0, 193.3], [4.0, 186.0], [74.0, 181.0], [136.0, 180.5], [168.0, 180.3]], width: 7.5 }
   ],
 
+  // 中庭四棟教學大樓的轉角：角落沒有教室，只有走廊相連 (各層都有，樓層數取相鄰兩棟較矮者)
+  // x1/x2/z1/z2 為世界座標範圍；rails 為不接走廊、需加欄杆的邊 (二樓以上)，一樓這些邊為開放通道
+  corridorLinks: [
+    { x1: -51.75, x2: -48.75, z1: -41.5, z2: -38.5, floors: 2, rails: ["north", "west"] },  // 西北角：利用樓 ↔ 樂耕樓
+    { x1: -51.75, x2: -48.75, z1: 33.75, z2: 36.75, floors: 2, rails: ["south", "west"] },  // 西南角：利用樓 ↔ 正德樓
+    { x1: 45.0, x2: 48.75, z1: -41.5, z2: -38.5, floors: 3, rails: ["north", "south"] },    // 東北角：樂耕樓 ↔ 厚生樓
+    { x1: 48.75, x2: 51.75, z1: 30.75, z2: 33.75, floors: 3, rails: ["east", "west"] }      // 東南角：厚生樓 ↔ 正德樓
+  ],
+
   // 校內人行步道 (以磚色鋪面繪製，與黑色車道區分；導航節點見 navNodes 7b)
   // 西側球場區兩條東西向步道，讓每座球場都有自己的入口：
   //   北步道 z = -42.5：風雨球場南側與露天籃球場北側之間 → 網球場、露天籃球場
@@ -524,7 +533,7 @@ window.CAMPUS_DATA = {
       // corridor：面向中庭的各層走廊 (side 為走廊所在側、width 為寬度 m)，一樓走廊可通行；
       // groundPassages：一樓穿堂，axis 為通行方向；at 為穿堂中線的世界座標 (axis "z" 時為 x、axis "x" 時為 z)；halfWidth 為半寬 (m)
       groundPassages: [{ axis: "z", at: 0, halfWidth: 6.0 }],              // 中央穿堂 (南北向，對齊中庭中軸)
-      corridor: { side: "south", width: 3.0 },                              // 面向中庭的各層走廊 (西端穿過轉角連通量體，一樓通往利用樓西側)
+      corridor: { side: "south", width: 3.0 },                              // 面向中庭的各層走廊 (兩端經 corridorLinks 接利用樓、厚生樓走廊)
       colors: {
         main: "#F2F0EA",
         secondary: "#B8B3A8",
@@ -540,7 +549,7 @@ window.CAMPUS_DATA = {
       x: -56.0, z: -2.375, w: 14.5, d: 72.25, rotY: 0,
       floors: 2, floorHeight: 5.4,
       style: "liyong",
-      corridor: { side: "east", width: 3.0 },                               // 面向中庭的各層走廊 (南北兩端接上正德樓、樂耕樓走廊)
+      corridor: { side: "east", width: 3.0 },                               // 面向中庭的各層走廊 (南北兩端經 corridorLinks 接正德樓、樂耕樓走廊)
       colors: {
         main: "#E2E6EC",
         secondary: "#7D807D",
@@ -557,7 +566,7 @@ window.CAMPUS_DATA = {
       floors: 3, floorHeight: 5.4,
       style: "zhengde",
       groundPassages: [{ axis: "z", at: 0, halfWidth: 4.0 }],              // 中央穿堂 (南北向，對齊中庭中軸)
-      corridor: { side: "north", width: 3.0 },                              // 面向中庭的各層走廊 (西端穿過轉角連通量體，一樓通往利用樓西側)
+      corridor: { side: "north", width: 3.0 },                              // 面向中庭的各層走廊 (兩端經 corridorLinks 接利用樓、厚生樓走廊)
       colors: {
         main: "#EAE5D9",
         secondary: "#8A877E",
@@ -570,11 +579,10 @@ window.CAMPUS_DATA = {
       englishName: "Hou-Sheng Building (Newly Built, Awaiting Inspection)",
       category: "teaching",
       zone: "quad",
-      x: 56.0, z: -3.0, w: 14.5, d: 78.0, rotY: 0,
+      x: 56.0, z: -5.625, w: 14.5, d: 72.75, rotY: 0,                        // 南端止於 z = 30.75，與正德樓之間只以走廊相連
       floors: 4, floorHeight: 5.4,
       style: "housheng",
       corridor: { side: "west", width: 3.0 },                               // 面向中庭的各層走廊
-      groundPassages: [{ axis: "x", at: 35.25, halfWidth: 1.5 }],          // 南端：正德樓北側走廊往東延伸，穿過厚生樓南端通往東側停車場
       colors: {
         main: "#ECE7DF",
         secondary: "#B86B52",

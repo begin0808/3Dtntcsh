@@ -1037,7 +1037,7 @@
     sin: Math.sin(rotY)
   });
 
-  // 建築一樓的實體範圍 (與 3D 模型共用)：扣掉一樓走廊與穿堂，並含樂耕樓、正德樓西端的轉角連通量體
+  // 建築一樓的實體範圍 (與 3D 模型共用)：扣掉一樓走廊與穿堂 (中庭轉角只有走廊相連，不列為障礙)
   const walkObstacles = DATA.buildings
     .filter(b => !WALK_PASSABLE_STYLES.has(b.style))
     .flatMap(b => {

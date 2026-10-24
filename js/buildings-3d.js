@@ -1188,55 +1188,85 @@ window.CampusBuilder3D = (function () {
       [168.0, 126.0, 1.25]
     ].forEach(([x, z, s]) => addTree(x, z, s, "mahogany"));
 
+    addCorridorLinks(envGroup, DATA.corridorLinks || []);
+
     return envGroup;
+  }
+
+  // 中庭四個轉角的走廊連接段：各層樓板、四角柱、二樓以上不接走廊的邊加欄杆、頂層加屋頂
+  // (一樓沒有欄杆，即為從大樓外側走進中庭走廊的通道)
+  function addCorridorLinks(parent, links) {
+    const fh = 5.4; // 與中庭四棟教學大樓樓高相同
+    const structMat = getMat("#EAE6DE", { roughness: 0.8 });
+    const railMat = getMat("#B8B3A8");
+    const floorMat = getMat("#D8D4CA", { roughness: 0.85 });
+    const addBox = (w, h, d, x, y, z, mat) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+      m.position.set(x, y, z);
+      m.castShadow = true;
+      m.receiveShadow = true;
+      parent.add(m);
+    };
+    links.forEach(L => {
+      const w = L.x2 - L.x1;
+      const d = L.z2 - L.z1;
+      const cx = (L.x1 + L.x2) / 2;
+      const cz = (L.z1 + L.z2) / 2;
+      for (let f = 1; f <= L.floors; f++) {
+        const y0 = (f - 1) * fh;
+        addBox(w, f === 1 ? 0.22 : 0.24, d, cx, y0 + (f === 1 ? 0.11 : 0.12), cz, floorMat);
+        [[L.x1, L.z1], [L.x1, L.z2], [L.x2, L.z1], [L.x2, L.z2]].forEach(([x, z]) => {
+          addBox(0.45, fh - 0.18, 0.45, x + (x === L.x1 ? 0.25 : -0.25), y0 + fh / 2, z + (z === L.z1 ? 0.25 : -0.25), structMat);
+        });
+        if (f >= 2) {
+          (L.rails || []).forEach(side => {
+            const y = y0 + 0.24 + 0.525;
+            if (side === "north") addBox(w, 1.05, 0.22, cx, y, L.z1 + 0.11, railMat);
+            if (side === "south") addBox(w, 1.05, 0.22, cx, y, L.z2 - 0.11, railMat);
+            if (side === "west") addBox(0.22, 1.05, d, L.x1 + 0.11, y, cz, railMat);
+            if (side === "east") addBox(0.22, 1.05, d, L.x2 - 0.11, y, cz, railMat);
+          });
+        }
+        if (f === L.floors) addBox(w, 0.3, d, cx, y0 + fh - 0.15, cz, structMat);
+      }
+    });
   }
 
   // 為每棟大樓建立樓層房間分割與門牌資料
   // 座標方向約定：
   // - 東西向建築 (isEW = b.w >= b.d)：rooms 陣列索引 0..N-1 由西側 (-X) 排至東側 (+X)
   // - 南北向建築 (isEW = false)：rooms 陣列索引 0..N-1 由北側 (-Z) 排至南側 (+Z)
-  // ================= 走廊、穿堂與轉角連通 (3D 模型與漫步碰撞共用的純計算) =================
+  // ================= 走廊與穿堂 (3D 模型與漫步碰撞共用的純計算) =================
   // 皆為建築本地座標 (建築中心為原點，x 向東、z 向南)
   // b.corridor = { side, width }：教學大樓面向中庭的走廊，每層都有，一樓可通行 (設定見 data/campus-data.js)
-  // CORNER_CONNECTORS：樂耕樓、正德樓西端往西延伸、與利用樓相接的 1–2F 轉角量體，走廊也延伸穿過，
-  //   一樓走廊在外端開口，即為從利用樓西側走進中庭走廊的通道
-  const CORNER_CONNECTORS = { legeng: { width: 14.5, floors: 2 }, zhengde: { width: 14.5, floors: 2 } };
+  // 四個轉角沒有教室，只有走廊相連 (DATA.corridorLinks，於 buildCampusGrounds 建置)
 
-  // 該樓層的量體分段：主體 (main) 與轉角連通 (connector)，各自記錄頂樓樓層
-  function buildingParts(b, floor) {
-    const parts = [{ part: "main", x1: -b.w / 2, x2: b.w / 2, z1: -b.d / 2, z2: b.d / 2, topFloor: b.floors }];
-    const conn = CORNER_CONNECTORS[b.style];
-    if (conn && floor <= conn.floors) {
-      parts.push({ part: "connector", x1: -b.w / 2 - conn.width, x2: -b.w / 2, z1: -b.d / 2, z2: b.d / 2, topFloor: conn.floors });
-    }
-    return parts;
+  // 整棟量體範圍
+  function buildingRect(b) {
+    return { x1: -b.w / 2, x2: b.w / 2, z1: -b.d / 2, z2: b.d / 2 };
   }
 
-  // 走廊長條 (每個量體分段各一條)
-  function corridorRects(b, floor) {
+  // 走廊長條
+  function corridorRects(b) {
     const c = b.corridor;
     if (!c) return [];
-    return buildingParts(b, floor).map(p => {
-      const r = { ...p };
-      if (c.side === "south") r.z1 = p.z2 - c.width;
-      if (c.side === "north") r.z2 = p.z1 + c.width;
-      if (c.side === "east") r.x1 = p.x2 - c.width;
-      if (c.side === "west") r.x2 = p.x1 + c.width;
-      return r;
-    });
+    const r = buildingRect(b);
+    if (c.side === "south") r.z1 = r.z2 - c.width;
+    if (c.side === "north") r.z2 = r.z1 + c.width;
+    if (c.side === "east") r.x1 = r.x2 - c.width;
+    if (c.side === "west") r.x2 = r.x1 + c.width;
+    return [r];
   }
 
   // 室內實體 (牆殼) 範圍：量體扣掉走廊，一樓再扣掉穿堂
   function solidRects(b, floor) {
     const c = b.corridor;
-    let rects = buildingParts(b, floor).map(p => {
-      const r = { ...p };
-      if (c && c.side === "south") r.z2 -= c.width;
-      if (c && c.side === "north") r.z1 += c.width;
-      if (c && c.side === "east") r.x2 -= c.width;
-      if (c && c.side === "west") r.x1 += c.width;
-      return r;
-    });
+    const r = buildingRect(b);
+    if (c && c.side === "south") r.z2 -= c.width;
+    if (c && c.side === "north") r.z1 += c.width;
+    if (c && c.side === "east") r.x2 -= c.width;
+    if (c && c.side === "west") r.x1 += c.width;
+    let rects = [r];
     if (floor === 1) {
       localPassages(b).forEach(p => {
         const hole = [[p.center - p.half, p.center + p.half]];
@@ -1552,27 +1582,6 @@ window.CampusBuilder3D = (function () {
       }
     });
     parent.add(g);
-  }
-
-  // 轉角連通量體的樓板與剖面用室內空間塊 (牆殼與走廊由逐層建置處理)
-  function addConnectorInterior(root, b, fh) {
-    const conn = CORNER_CONNECTORS[b.style];
-    if (!conn) return;
-    const slabMat = getMat("#D8D4CA", { roughness: 0.85 });
-    const roomMat = getMat("#9BB0A5", { roughness: 0.65 });
-    const lane = roomLane(b);
-    const cx = -b.w / 2 - conn.width / 2;
-    for (let f = 1; f <= conn.floors; f++) {
-      const fg = root.userData.floorGroups[f];
-      if (!fg) continue;
-      const slab = new THREE.Mesh(new THREE.BoxGeometry(conn.width, 0.24, b.d - 0.3), slabMat);
-      slab.position.set(cx, 0.12, 0);
-      slab.receiveShadow = true;
-      fg.add(slab);
-      const room = new THREE.Mesh(new THREE.BoxGeometry(conn.width - 1.6, fh * 0.45, lane.size - 1.6), roomMat);
-      room.position.set(cx, 0.25 + fh * 0.225, lane.center);
-      fg.add(room);
-    }
   }
 
   // 斜屋頂用：沿南北向屋脊 (x = 0) 排成一列的凸粒與體素方塊
@@ -3294,8 +3303,7 @@ window.CampusBuilder3D = (function () {
       if (b.style === "farm_mgmt") railMat = getMat("#9CC2D6");  // 農經館冰藍拱廊 (`160514.jpg`)
 
       const isEW = b.w >= b.d;
-      const connectorLedgeMat = getMat("#689F4E"); // 轉角連通量體腰帶 (銜接利用樓蘋果綠腰帶)
-      const addBox = (w, h, d, x, y, z, mat, shadow = false) => {
+      const addBox =(w, h, d, x, y, z, mat, shadow = false) => {
         const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
         m.position.set(x, y, z);
         m.castShadow = shadow;
@@ -3314,11 +3322,11 @@ window.CampusBuilder3D = (function () {
         const gw = isEW ? rw - 1.2 : rw + 0.14;
         const gd = isEW ? rd + 0.14 : rd - 1.2;
         if (gw > 0.3 && gd > 0.3) addBox(gw, fh * 0.38, gd, cx, fh * 0.56, cz, glassMat);
-        addBox(rw + 0.36, fh * 0.28, rd + 0.36, cx, fh * 0.22, cz, r.part === "connector" ? connectorLedgeMat : railMat, true);
+        addBox(rw + 0.36, fh * 0.28, rd + 0.36, cx, fh * 0.22, cz, railMat, true);
       });
 
-      // (2) 走廊：外緣柱列；二樓以上外緣欄杆矮牆；各量體頂樓加走廊屋頂；轉角連通外端二樓以上封牆 (一樓開口為通道)
-      corridorRects(b, f).forEach(r => {
+      // (2) 走廊：外緣柱列；二樓以上外緣欄杆矮牆；頂樓加走廊屋頂
+      corridorRects(b).forEach(r => {
         const side = b.corridor.side;
         const alongX = side === "north" || side === "south";
         const cw = b.corridor.width;
@@ -3332,9 +3340,8 @@ window.CampusBuilder3D = (function () {
           : addBox(thick, h, lenAlong, outer + inward * off, y, along, mat, shadow));
         const n = Math.max(1, Math.round(len / 4.2));
         for (let i = 0; i <= n; i++) put(0.45, fh - 0.18, 0.45, a1 + (len * i) / n, fh / 2, 0.25, mainMat, true);
-        if (f >= 2) put(len, 1.05, 0.22, a1 + len / 2, 0.24 + 0.525, 0.11, r.part === "connector" ? connectorLedgeMat : railMat, true);
-        if (f === r.topFloor) put(len, 0.3, cw, a1 + len / 2, fh - 0.15, cw / 2, mainMat, true);
-        if (r.part === "connector" && f >= 2) put(0.3, fh - 0.18, cw, a1 + 0.15, fh / 2, cw / 2, mainMat, true);
+        if (f >= 2) put(len, 1.05, 0.22, a1 + len / 2, 0.24 + 0.525, 0.11, railMat, true);
+        if (f === b.floors) put(len, 0.3, cw, a1 + len / 2, fh - 0.15, cw / 2, mainMat, true);
       });
 
       // (3) 一樓穿堂：地坪、天花板與兩側柱 (限建築範圍內)
@@ -3452,7 +3459,7 @@ window.CampusBuilder3D = (function () {
       root.add(redStair);
     }
 
-    // 3. 樂耕樓 (`legeng`) — 北向正面玄關入口穿堂門廊 + 金色「樂 耕 樓」大字 + 西端 1–2F 轉角連通利用樓 + 南向雙梯塔 (還原 20261020_125222.jpg)
+    // 3. 樂耕樓 (`legeng`) — 北向正面玄關入口穿堂門廊 + 金色「樂 耕 樓」大字 + 南向雙梯塔 (還原 20261020_125222.jpg)
     if (b.style === "legeng") {
       const centerOffsetX = -b.x; // 對齊世界座標 x = 0 中軸線
       const goldMat = getMat("#C59B27", { metalness: 0.5, roughness: 0.25 });
@@ -3513,19 +3520,11 @@ window.CampusBuilder3D = (function () {
         greyTower.castShadow = true;
         root.add(greyTower);
       });
-      // 西北角 1F & 2F 轉角連通建築體：將樂耕樓 1F、2F (315 教室端) 往西延伸 14.5m 與利用樓北端 (215 教室端) 無縫連通
-      // (牆殼、窗帶、腰帶與走廊由逐層建置依 CORNER_CONNECTORS 處理，這裡只補樓板與剖面用的室內空間塊)
-      addConnectorInterior(root, b, fh);
-
       addSolarPanels(topGroup, b.w, b.d, fh, 5);
     }
 
-    // 4. 正德樓 (`zhengde`) — 西端 1–2F 轉角直接連通利用樓 1–2F + 屋頂太陽能板 (`161518.jpg`, `161523.jpg`)
+    // 4. 正德樓 (`zhengde`) — 屋頂太陽能板 (`161518.jpg`, `161523.jpg`)
     if (b.style === "zhengde") {
-      // 西南角 1F & 2F 轉角連通建築體：將正德樓 1F、2F (105 教室端) 往西延伸 14.5m 與利用樓南端 (111/210 教室端) 無縫連通
-      // (牆殼、窗帶、腰帶與走廊由逐層建置依 CORNER_CONNECTORS 處理，這裡只補樓板與剖面用的室內空間塊)
-      addConnectorInterior(root, b, fh);
-
       addSolarPanels(topGroup, b.w, b.d, fh, 6);
     }
 
