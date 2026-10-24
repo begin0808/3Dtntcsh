@@ -186,8 +186,9 @@
         const span = (isEW ? b.w - 1.2 : b.d - 1.2) / Math.max(count, 1);
 
         rooms.forEach((rm, idx) => {
-          const rx = rm.relX !== undefined ? rm.relX : (isEW ? (-b.w / 2 + 0.6 + span * (idx + 0.5)) : 0);
-          const rz = rm.relZ !== undefined ? rm.relZ : (isEW ? 0 : (-b.d / 2 + 0.6 + span * (idx + 0.5)));
+          const laneCenter = BUILDER.roomLane ? BUILDER.roomLane(b).center : 0; // 教室排在走廊內側
+          const rx = rm.relX !== undefined ? rm.relX : (isEW ? (-b.w / 2 + 0.6 + span * (idx + 0.5)) : laneCenter);
+          const rz = rm.relZ !== undefined ? rm.relZ : (isEW ? laneCenter : (-b.d / 2 + 0.6 + span * (idx + 0.5)));
           const fh = b.floorHeight || 5.4;
           const wy = (fl - 1) * fh + fh * 0.62;
           roomEntries.push({
@@ -1036,19 +1037,12 @@
     sin: Math.sin(rotY)
   });
 
-  // 一樓有穿堂的建築 (b.groundPassages) 依穿堂切成數段障礙物，穿堂整個寬度都可以走
-  // 南北向通行的穿堂 (axis "z") 切開 x 方向；東西向通行的穿堂 (axis "x") 切開 z 方向
+  // 建築一樓的實體範圍 (與 3D 模型共用)：扣掉一樓走廊與穿堂，並含樂耕樓、正德樓西端的轉角連通量體
   const walkObstacles = DATA.buildings
     .filter(b => !WALK_PASSABLE_STYLES.has(b.style))
     .flatMap(b => {
-      const passages = b.groundPassages || [];
-      if (!passages.length || !BUILDER.subtractIntervals) return [makeObstacle(b.x, b.z, b.w, b.d, b.rotY || 0)];
-      const cutX = passages[0].axis === "z";
-      const [a, c] = cutX ? [b.x - b.w / 2, b.x + b.w / 2] : [b.z - b.d / 2, b.z + b.d / 2];
-      const holes = passages.map(p => [p.at - p.halfWidth, p.at + p.halfWidth]);
-      return BUILDER.subtractIntervals(a, c, holes).map(([s1, s2]) => (cutX
-        ? makeObstacle((s1 + s2) / 2, b.z, s2 - s1, b.d)
-        : makeObstacle(b.x, (s1 + s2) / 2, b.w, s2 - s1)));
+      if (b.rotY || !BUILDER.groundSolidRects) return [makeObstacle(b.x, b.z, b.w, b.d, b.rotY || 0)];
+      return BUILDER.groundSolidRects(b).map(r => makeObstacle(r.cx, r.cz, r.w, r.d));
     });
 
   // 操場本身可走入，但司令台 (平台＋階梯) 不能穿越 (尺寸與 3D 模型共用)
